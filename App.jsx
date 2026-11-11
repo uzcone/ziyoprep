@@ -6,24 +6,24 @@ import {
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Menu, Bell, ArrowUpRight, GraduationCap, Lock, Star, X, Crown, CreditCard, ShieldCheck
+  Menu, Bell, ArrowUpRight, GraduationCap, Lock, Star, X, Crown, CreditCard, ShieldCheck, Copy
 } from 'lucide-react';
 
 export default function App() {
   // --- 1. TIL VA MAVZU SOZLAMALARI ---
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    return localStorage.getItem('fariz_lang') || 'kr';
+    return localStorage.getItem('fariza_lang') || 'kr';
   });
 
   const switchLanguage = (lang) => {
     setSelectedLanguage(lang);
-    localStorage.setItem('fariz_lang', lang);
+    localStorage.setItem('fariza_lang', lang);
     setActiveTab('home');
     setIsSidebarOpen(false);
   };
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('fariz_theme');
+    const saved = localStorage.getItem('fariza_theme');
     if (saved !== null) return saved === 'dark';
     return true;
   });
@@ -31,14 +31,14 @@ export default function App() {
   const toggleTheme = () => {
     setIsDarkMode(prev => {
       const next = !prev;
-      localStorage.setItem('fariz_theme', next ? 'dark' : 'light');
+      localStorage.setItem('fariza_theme', next ? 'dark' : 'light');
       return next;
     });
   };
 
-  // --- 2. FOYDALANUVCHI PROFILI (PRO STATUS BILAN) ---
+  // --- 2. FOYDALANUVCHI PROFILI ---
   const [userProfile, setUserProfile] = useState(() => {
-    const saved = localStorage.getItem('fariz_user');
+    const saved = localStorage.getItem('fariza_user');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved);
@@ -53,7 +53,7 @@ export default function App() {
           koreanTargetLevel: parsed.koreanTargetLevel || '4-급 (TOPIK II)',
           streak: parsed.streak || 5,
           xp: parsed.xp || 840,
-          isPro: parsed.isPro || false, // PRO a'zolik holati
+          isPro: parsed.isPro || false,
           completedLessons: Array.isArray(parsed.completedLessons) ? parsed.completedLessons : [1]
         };
       } catch (e) {}
@@ -75,13 +75,15 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('fariz_user', JSON.stringify(userProfile));
+    localStorage.setItem('fariza_user', JSON.stringify(userProfile));
   }, [userProfile]);
 
   // Navigatsiya va Modal holatlari
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [paymentStep, setPaymentStep] = useState('select'); // 'select' | 'checkout' | 'waiting'
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [selectedLevel, setSelectedLevel] = useState('beginner');
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonStep, setLessonStep] = useState('theory');
@@ -91,20 +93,19 @@ export default function App() {
   const [editForm, setEditForm] = useState(userProfile);
   const fileInputRef = useRef(null);
 
-  // --- 3. TO‘LIQ DARSLAR BAZASI (BEPUL VA PULLIK PRO DARSLAR) ---
+  // --- 3. TO‘LIQ DARSLAR BAZASI ---
   const coursesData = {
     kr: {
       title: "Korean Academy",
       subtitle: "한국어 마스터 과정",
-      desc: "Koreys tilini noldan TOPIK II gacha o‘rganish",
+      desc: "Koreys tilini noldan TOPIK II gacha mukammal o‘rganish",
       levels: [
         { id: 'beginner', title: 'Beginner (초급 1)', desc: 'Hangul alifbosi va tanishuv' },
         { id: 'elementary', title: 'Elementary (초급 2)', desc: 'Hozirgi va o‘tgan zamon fe’llari' },
-        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'EPS-TOPIK & Ish joyi muloqoti' },
+        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'EPS-TOPIK & Zavod muloqoti' },
         { id: 'advanced', title: 'Advanced (고급)', desc: 'TOPIK II Insholar & Rasmiy nutq' }
       ],
       lessons: [
-        // Beginner darslari
         {
           id: 1,
           level: 'beginner',
@@ -112,7 +113,7 @@ export default function App() {
           section: '1-bo‘lim: Hangul',
           title: '1-dars: Koreys alifbosi',
           desc: 'Unlilar va undoshlar',
-          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar blok (bo‘g‘in) holida birlashadi.',
+          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar doim bo‘g‘in bloklari ko‘rinishida yoziladi.',
           words: [
             { word: '가', meaning: 'Ga (ㄱ + ㅏ)', sound: '가' },
             { word: '나', meaning: 'Na (ㄴ + ㅏ)', sound: '나' },
@@ -123,7 +124,7 @@ export default function App() {
             question: "Koreys tilida 'N' tovushini qaysi harf ifodalaydi?",
             options: ["① ㄱ", "② ㄴ", "③ ㄷ", "④ ㄹ"],
             correct: 1,
-            explanation: "ㄴ (Niun) harfi 'N' tovushini beradi."
+            explanation: "ㄴ (Niun) harfi 'N' tovushini ifodalaydi."
           }
         },
         {
@@ -148,31 +149,11 @@ export default function App() {
         },
         {
           id: 3,
-          level: 'beginner',
-          isPro: true, // PULLIK PRO DARS
-          section: '2-bo‘lim: Xushmuomalalik',
-          title: '3-dars: Rasmiy salomlashish va tanishuv',
-          desc: '안녕하세요, 제 이름은...',
-          theory: 'Koreys tilida yangi tanishgan odamlar bilan gaplashganda -ㅂ니다/습니다 va -이에요/예요 qo‘shimchalari qo‘llaniladi.',
-          words: [
-            { word: '반갑습니다', meaning: 'Tanishganimdan xursandman', sound: '반갑습니다' },
-            { word: '어느 나라', meaning: 'Qaysi davlat', sound: '어느 나라' }
-          ],
-          quiz: {
-            question: "'Tanishganimdan xursandman' iborasining to‘g‘ri shakli qaysi?",
-            options: ["① 안녕", "② 반갑습니다", "③ 잘 있어", "④ 고마워"],
-            correct: 1,
-            explanation: "반갑습니다 (Bangapseumnida) — rasmiy tanishuv iborasi."
-          }
-        },
-        // Elementary darslari
-        {
-          id: 4,
           level: 'elementary',
           isPro: false,
-          section: '3-bo‘lim: Zamonlar',
+          section: '2-bo‘lim: Fe’llar',
           title: '1-dars: Hozirgi zamon (-아요/어요)',
-          desc: 'Kundalik fe’llarni tuslash',
+          desc: 'Fe’llarni tuslash qoidalari',
           theory: 'Fe’l o‘zagidagi oxirgi unli ㅏ yoki ㅗ bo‘lsa -아요, boshqa unlilar bo‘lsa -어요 qo‘shiladi.',
           words: [
             { word: '가요', meaning: 'Boryapman / Boraman', sound: '가요' },
@@ -186,33 +167,13 @@ export default function App() {
           }
         },
         {
-          id: 5,
-          level: 'elementary',
-          isPro: true, // PULLIK PRO DARS
-          section: '3-bo‘lim: Xarid qilish',
-          title: '2-dars: Narx so‘rash va hisob-kitob',
-          desc: '이거 얼마예요? (Bu qancha?)',
-          theory: 'Bozor va do‘konlarda narx so‘rash, hisoblash birliklari (개, 병, 마리) va chegirma so‘rash grammatikasi.',
-          words: [
-            { word: '얼마예요', meaning: 'Qancha turadi?', sound: '얼마예요' },
-            { word: '깎아 주세요', meaning: 'Arzonlashtirib bering', sound: '깎아 주세요' }
-          ],
-          quiz: {
-            question: "'Bu qancha turadi?' iborasini tanlang:",
-            options: ["① 어디예요?", "② 얼마예요?", "③ 누구예요?", "④ 왜요?"],
-            correct: 1,
-            explanation: "얼마예요? — narx so‘rash uchun ishlatiladi."
-          }
-        },
-        // Intermediate darslari
-        {
-          id: 6,
+          id: 4,
           level: 'intermediate',
-          isPro: true, // PULLIK PRO DARS
-          section: '4-bo‘lim: EPS-TOPIK Maxsus',
+          isPro: true,
+          section: '3-bo‘lim: EPS-TOPIK Maxsus',
           title: '1-dars: Zavodda xavfsizlik qoidalari',
           desc: '안전 수칙 va asbob-uskunalar',
-          theory: 'EPS-TOPIK imtihonida eng ko‘p tushadigan savollar: xavfsizlik kaskasi (안전모), qo‘lqop (안전장갑) va stanoklarni boshqarish qoidalari.',
+          theory: 'EPS-TOPIK imtihonida eng ko‘p tushadigan savollar: xavfsizlik kaskasi (안전모) va stanoklarni xavfsiz boshqarish qoidalari.',
           words: [
             { word: '안전모', meaning: 'Himoya kaskasi', sound: '안전모' },
             { word: '기계 조작', meaning: 'Stanokni boshqarish', sound: '기계 조작' }
@@ -224,15 +185,14 @@ export default function App() {
             explanation: "안전모 — xavfsizlik kaskasi."
           }
         },
-        // Advanced darslari
         {
-          id: 7,
+          id: 5,
           level: 'advanced',
-          isPro: true, // PULLIK PRO DARS
-          section: '5-bo‘lim: TOPIK II 54-savol',
-          title: '1-dars: 700 so‘zlik Insho (쓰기) yozish sirlari',
-          desc: 'TOPIK II 5-6 geup uchun shablonlar',
-          theory: "TOPIK II imtihonida eng yuqori ball beruvchi 54-insho savolini yozish strukturasi: Kirish (서론), Asosiy qism (본론) va Xulosa (결론).",
+          isPro: true,
+          section: '4-bo‘lim: TOPIK II',
+          title: '1-dars: Insho (쓰기) yozish shablonlari',
+          desc: '54-savol 700 so‘zlik insho sirlari',
+          theory: 'Insho strukturasi: Kirish (서론), Asosiy qism (본론) va Xulosa (결론). Rasmiy ilmiy tilda yozilishi shart.',
           words: [
             { word: '현대 사회에서', meaning: 'Zamonaviy jamiyatda', sound: '현대 사회에서' },
             { word: '바람직하다', meaning: 'Maqsadga muvofiq', sound: '바람직하다' }
@@ -241,7 +201,7 @@ export default function App() {
             question: "Insho xulosasida qaysi grammatik shakl ko‘proq qo‘llaniladi?",
             options: ["① -아/어서요", "② -(으)ㄹ 필요가 있다", "③ -네요", "④ -지요"],
             correct: 1,
-            explanation: "Rasmiy insho yakunida '-(으)ㄹ 필요가 있다' (qilish zaruriyati bor) uslubi ishlatiladi."
+            explanation: "Rasmiy insho yakunida -(으)ㄹ 필요가 있다 shakli ishlatiladi."
           }
         }
       ]
@@ -275,31 +235,12 @@ export default function App() {
             correct: 1,
             explanation: "'Nice to meet you' is the standard polite greeting."
           }
-        },
-        {
-          id: 102,
-          level: 'intermediate',
-          isPro: true, // PULLIK PRO DARS
-          section: 'Unit 2: IELTS Writing Task 2',
-          title: 'Lesson 2: Band 7.5 Essay Structures',
-          desc: 'Agree/Disagree & Discussion Essays',
-          theory: 'High-scoring IELTS essays require clear topic sentences, well-developed arguments, and academic linking devices.',
-          words: [
-            { word: 'Furthermore', meaning: 'Bundan tashqari', sound: 'Furthermore' },
-            { word: 'Consequently', meaning: 'Natijada', sound: 'Consequently' }
-          ],
-          quiz: {
-            question: "Select the formal synonym for 'As a result':",
-            options: ["① So", "② Consequently", "③ But", "④ Because"],
-            correct: 1,
-            explanation: "'Consequently' is a formal transition word for cause and effect."
-          }
         }
       ]
     }
   };
 
-  // 10 ta TOPIK test savollari
+  // --- 4. TO‘LIQ 15 TA TOPIK & EPS-TOPIK IMTIHON SAVOLLARI ---
   const koreanTopikQuestions = [
     {
       id: "kr1",
@@ -307,7 +248,7 @@ export default function App() {
       options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
       correct: "① 일어납니다",
       audio: "저는 아침에 일찍 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
+      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Odatiy harakat uchun 일어나다 fe'li to'g'ri keladi."
     },
     {
       id: "kr2",
@@ -340,11 +281,215 @@ export default function App() {
       correct: "① 테이프 (Skotch)",
       audio: "물건을 포장할 때 쓰는 상자를 테이프로 닫으세요",
       explanation: "Qadoqlashda quti skotch (테이프) bilan yopiladi."
+    },
+    {
+      id: "kr6",
+      question: "6. 목이 아프고 열이 나요. 그래서 ________에 가서 약을 샀어요.",
+      options: ["① 약국 (Dorixona)", "② 은행 (Bank)", "③ 우체국 (Pochta)", "④ 공항 (Aeroport)"],
+      correct: "① 약국 (Dorixona)",
+      audio: "목이 아프고 열이 나요 그래서 약국에 가서 약을 샀어요",
+      explanation: "Dori sotib olish uchun dorixonaga (약국) boriladi."
+    },
+    {
+      id: "kr7",
+      question: "7. 버스 정류장에서 버스를 ________.",
+      options: ["① 기다립니다 (Kutaman)", "② 가르칩니다", "③ 만듭니다", "④ 전화합니다"],
+      correct: "① 기다립니다 (Kutaman)",
+      audio: "버스 정류장에서 버스를 기다립니다",
+      explanation: "Bekatda avtobus kutiladi (기다리다)."
+    },
+    {
+      id: "kr8",
+      question: "8. [EPS-TOPIK] 작업을 끝마친 후에는 기계의 전원을 ________.",
+      options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
+      correct: "① 끕니다 (O'chiraman)",
+      audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
+      explanation: "Ish tugagach uskunaning elektr quvvati o'chiriladi (끄다)."
+    },
+    {
+      id: "kr9",
+      question: "9. 한국어 실력을 늘리기 위해서 매일 드라마를 ________.",
+      options: ["① 봅니다 (Ko'raman)", "② 씁니다", "③ 씻습니다", "④ 걷습니다"],
+      correct: "① 봅니다 (Ko'raman)",
+      audio: "한국어 실력을 늘리기 위해서 매일 드라마를 봅니다",
+      explanation: "Kino yoki serial ko'rmoq: 보다 -> 봅니다."
+    },
+    {
+      id: "kr10",
+      question: "10. 외국인등록증을 신청하려면 ________에 가야 합니다.",
+      options: ["① 출입국관리사무소 (Immigratsiya)", "② 영화관", "③ 세탁소", "④ 소방서"],
+      correct: "① 출입국관리사무소 (Immigratsiya)",
+      audio: "외국인등록증을 신청하려면 출입국관리사무소에 가야 합니다",
+      explanation: "ID kartani rasmiylashtirish uchun Immigratsiya idorasiga boriladi."
+    },
+    {
+      id: "kr11",
+      question: "11. [EPS-TOPIK] 무거운 물건을 높은 곳으로 올릴 때 ________을/를 사용합니다.",
+      options: ["① 지게차 (Forklift)", "② 사다리", "③ 드라이버", "④ 망치"],
+      correct: "① 지게차 (Forklift)",
+      audio: "무거운 물건을 높은 곳으로 올릴 때 지게차를 사용합니다",
+      explanation: "Og'ir yuklarni ko'tarish va tashish uchun yuk ko'taruvchi mashina (지게차) ishlatiladi."
+    },
+    {
+      id: "kr12",
+      question: "12. 한국에서는 밥을 먹을 때 숟가락과 ________을/를 사용합니다.",
+      options: ["① 젓가락 (Cho‘p)", "② 가위", "③ 볼펜", "④ 칼"],
+      correct: "① 젓가락 (Cho‘p)",
+      audio: "한국에서는 밥을 먹을 때 숟가락과 젓가락을 사용합니다",
+      explanation: "Koreyada ovqatlanishda qoshiq (숟가락) va cho'p (젓가락) ishlatiladi."
+    },
+    {
+      id: "kr13",
+      question: "13. 월급날이 되면 은행에 가서 돈을 통장에 ________.",
+      options: ["① 입금합니다 (Kiritaman)", "② 버립니다", "③ 잃어버립니다", "④ 찢습니다"],
+      correct: "① 입금합니다 (Kiritaman)",
+      audio: "월급날이 되면 은행에 가서 돈을 통장에 입금합니다",
+      explanation: "Oylik tushganda bank hisobiga pul kiritish (입금하다) deyiladi."
+    },
+    {
+      id: "kr14",
+      question: "14. [EPS-TOPIK] 페인트칠을 할 때 유해 물질을 막기 위해 ________을/를 씁니다.",
+      options: ["① 방독마스크 (Gazniqob)", "② 귀마개", "③ 벨트", "④ 안대"],
+      correct: "① 방독마스크 (Gazniqob)",
+      audio: "페인트칠을 할 때 유해 물질을 막기 위해 방독마스크를 씁니다",
+      explanation: "Zaharli moddalar va bo'yoqlardan nafas yo'lini himoyalashda maxsus niqob (방독마스크) taqiladi."
+    },
+    {
+      id: "kr15",
+      question: "15. 이번 주말에는 고향 친구를 만나서 즐거운 시간을 ________.",
+      options: ["① 보냈습니다 (O‘tkazdim)", "② 팔았습니다", "③ 빌렸습니다", "④ 던졌습니다"],
+      correct: "① 보냈습니다 (O‘tkazdim)",
+      audio: "이번 주말에는 고향 친구를 만나서 즐거운 시간을 보냈습니다",
+      explanation: "Vaqtni o'tkazmoq birikmasi koreys tilida '시간을 보내다' bo'ladi."
     }
   ];
 
-  const [koreanAnswers, setKoreanAnswers] = useState({});
-  const [koreanChecked, setKoreanChecked] = useState(false);
+  // --- 5. TO‘LIQ 15 TA INGLIZ TILI (IELTS) SAVOLLARI ---
+  const englishIeltsQuestions = [
+    {
+      id: "en1",
+      question: "1. Academic Reading: Bilingualism consistently enhances mental agility and executive ________.",
+      options: ["① control", "② delay", "③ deterioration", "④ weakness"],
+      correct: "① control",
+      audio: "Bilingualism consistently enhances mental agility and executive control",
+      explanation: "Matnda aytilgan: 'navigating between languages strengthens executive control'."
+    },
+    {
+      id: "en2",
+      question: "2. The neuroprotective benefits delay neurological symptoms by an average of:",
+      options: ["① 4.5 years", "② 1.5 years", "③ 10 years", "④ 6 months"],
+      correct: "① 4.5 years",
+      audio: "The neuroprotective benefits delay neurological symptoms by an average of 4.5 years",
+      explanation: "Matnda aniq keltirilgan: postponing symptoms by 4.5 years."
+    },
+    {
+      id: "en3",
+      question: "3. Select the best transition word for expressing contrast in Task 2:",
+      options: ["① In contrast", "② Furthermore", "③ Consequently", "④ Namely"],
+      correct: "① In contrast",
+      audio: "Select the best transition word for expressing contrast in Task 2",
+      explanation: "'In contrast' qarama-qarshi fikrlarni bog'lash uchun ishlatiladi."
+    },
+    {
+      id: "en4",
+      question: "4. The word 'subsequent' is closest in meaning to:",
+      options: ["① following", "② prior", "③ accidental", "④ permanent"],
+      correct: "① following",
+      audio: "The word subsequent is closest in meaning to following",
+      explanation: "Subsequent — keyingi, undan keyin keluvchi (following)."
+    },
+    {
+      id: "en5",
+      question: "5. In IELTS Listening Section 1, speakers typically discuss:",
+      options: ["① everyday social situations", "② university lectures", "③ scientific debates", "④ history of art"],
+      correct: "① everyday social situations",
+      audio: "In IELTS Listening Section 1 speakers typically discuss everyday social situations",
+      explanation: "Section 1 da kundalik hayotga oid dialoglar (mehmonxona, ijara, ma'lumot) bo'ladi."
+    },
+    {
+      id: "en6",
+      question: "6. 'To shed light on' something means to:",
+      options: ["① clarify or reveal details", "② turn off lights", "③ hide evidence", "④ complain loudly"],
+      correct: "① clarify or reveal details",
+      audio: "To shed light on something means to clarify or reveal details",
+      explanation: "Shed light on — biror masalani oydinlashtirish, tushuntirish."
+    },
+    {
+      id: "en7",
+      question: "7. Writing Task 2 essays must be at least ________ words long.",
+      options: ["① 250", "② 150", "③ 350", "④ 100"],
+      correct: "① 250",
+      audio: "Writing Task 2 essays must be at least 250 words long",
+      explanation: "Task 2 uchun minimal so'z talabi — 250 ta so'z."
+    },
+    {
+      id: "en8",
+      question: "8. Select the formal synonym for 'a lot of people':",
+      options: ["① numerous individuals", "② heaps of folk", "③ bunch of guys", "④ tons of persons"],
+      correct: "① numerous individuals",
+      audio: "Select the formal synonym for a lot of people",
+      explanation: "'Numerous individuals' akademik yozuvda eng yuqori ball beruvchi ifodadir."
+    },
+    {
+      id: "en9",
+      question: "9. Identify the grammatical error: 'He has lived in London since five years.'",
+      options: ["① 'since' should be 'for'", "② 'has lived' is wrong", "③ 'in' should be 'at'", "④ No error"],
+      correct: "① 'since' should be 'for'",
+      audio: "He has lived in London for five years",
+      explanation: "Vaqt davomiyligi (5 years) uchun 'for' ishlatiladi, aniq boshlang'ich nuqta uchun 'since'."
+    },
+    {
+      id: "en10",
+      question: "10. In Speaking Part 2, how much preparation time is given?",
+      options: ["① 1 minute", "② 3 minutes", "③ 30 seconds", "④ No preparation"],
+      correct: "① 1 minute",
+      audio: "In Speaking Part 2 how much preparation time is given",
+      explanation: "Cue card bo'yicha tayyorlanish uchun 1 daqiqa vaqt ajratiladi."
+    },
+    {
+      id: "en11",
+      question: "11. 'Unprecedented' means:",
+      options: ["① never having happened before", "② predictable", "③ very slow", "④ extremely expensive"],
+      correct: "① never having happened before",
+      audio: "Unprecedented means never having happened before",
+      explanation: "Unprecedented — misli ko'rilmagan, avval yuz bermagan hodisa."
+    },
+    {
+      id: "en12",
+      question: "12. What does 'alleviate' mean?",
+      options: ["① make less severe or reduce", "② destroy completely", "③ increase greatly", "④ build quickly"],
+      correct: "① make less severe or reduce",
+      audio: "What does alleviate mean",
+      explanation: "Alleviate — og'riq yoki muammoni yengillashtirish (reduce)."
+    },
+    {
+      id: "en13",
+      question: "13. In academic reading, True / False / Not Given tests your ability to:",
+      options: ["① identify factual information accurately", "② memorize the text", "③ translate word by word", "④ guess grammar"],
+      correct: "① identify factual information accurately",
+      audio: "Identify factual information accurately",
+      explanation: "Bu savol turi matndagi faktlar va muallif fikrini aniq tekshiradi."
+    },
+    {
+      id: "en14",
+      question: "14. A person who speaks many languages fluently is a:",
+      options: ["① polyglot", "② monolingual", "③ botanist", "④ linguist only"],
+      correct: "① polyglot",
+      audio: "A person who speaks many languages fluently is a polyglot",
+      explanation: "Polyglot — ko'p tillarni biluvchi shaxs."
+    },
+    {
+      id: "en15",
+      question: "15. 'To take something for granted' means:",
+      options: ["① fail to appreciate its true value", "② buy something on credit", "③ take it strictly on contract", "④ give a promise"],
+      correct: "① fail to appreciate its true value",
+      audio: "Fail to appreciate its true value",
+      explanation: "Biror ne'mat yoki shaxsning qadriga yetmaslik, tabiiy deb qarash."
+    }
+  ];
+
+  const [testAnswers, setTestAnswers] = useState({});
+  const [testChecked, setTestChecked] = useState(false);
 
   // Ovoz berish
   const speakText = (text, lang = selectedLanguage === 'kr' ? 'ko-KR' : 'en-US') => {
@@ -377,10 +522,12 @@ export default function App() {
 
   const currentCourse = coursesData[selectedLanguage] || coursesData.kr;
   const activeLessonsList = currentCourse.lessons.filter(l => l.level === selectedLevel);
+  const activeQuestionsList = selectedLanguage === 'kr' ? koreanTopikQuestions : englishIeltsQuestions;
 
   // Darsni ochish yoki Paywall ko'rsatish
   const handleOpenLesson = (lesson) => {
     if (lesson.isPro && !userProfile.isPro) {
+      setPaymentStep('select');
       setIsPaywallOpen(true);
       return;
     }
@@ -388,13 +535,6 @@ export default function App() {
     setLessonStep('theory');
     setQuizAnswer(null);
     setActiveTab('lesson_detail');
-  };
-
-  // PRO a'zolikni faollashtirish (Sinov yoki sotib olish)
-  const activatePro = () => {
-    setUserProfile(prev => ({ ...prev, isPro: true }));
-    setIsPaywallOpen(false);
-    alert("Tabriklaymiz! Siz Fariz Academy PRO a’zoligini faollashtirdingiz. Barcha darslar ochildi! 🎉");
   };
 
   // Mavzu ranglari
@@ -425,7 +565,7 @@ export default function App() {
           <div className="flex items-start justify-between relative z-10">
             <div className="space-y-3 max-w-[62%]">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 block">
-                FARIZ ACADEMY • {currentCourse.title.toUpperCase()}
+                FARIZA ACADEMY • {currentCourse.title.toUpperCase()}
               </span>
               
               <div className="space-y-0.5">
@@ -479,7 +619,7 @@ export default function App() {
         {/* PRO TARIFGA O‘TISH BANNERI */}
         {!userProfile.isPro && (
           <div 
-            onClick={() => setIsPaywallOpen(true)}
+            onClick={() => { setPaymentStep('select'); setIsPaywallOpen(true); }}
             className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-4.5 text-slate-950 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition"
           >
             <div className="flex items-center gap-3">
@@ -487,7 +627,7 @@ export default function App() {
                 <Crown size={24} className="text-white" />
               </div>
               <div>
-                <h4 className="font-black text-sm text-white">Fariz Academy PRO</h4>
+                <h4 className="font-black text-sm text-white">Fariza Academy PRO</h4>
                 <p className="text-[11px] text-white/90 font-medium">Barcha EPS-TOPIK & IELTS darslarini oching</p>
               </div>
             </div>
@@ -558,12 +698,33 @@ export default function App() {
           </div>
         </div>
 
+        {/* IMTIHON TAYYORGARLIK */}
+        <div 
+          onClick={() => setActiveTab('tests')}
+          className={`${theme.card} border rounded-3xl p-5 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition shadow-sm`}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-500 flex items-center justify-center">
+              <Award size={26} />
+            </div>
+            <div>
+              <div className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">
+                {isKr ? 'TOPIK & EPS Imtihoni' : 'Cambridge IELTS Mock'}
+              </div>
+              <h4 className={`font-black text-base mt-0.5 ${theme.textMain}`}>
+                {isKr ? 'To‘liq 15 Ta TOPIK Testlari' : 'To‘liq 15 Ta IELTS Savollari'}
+              </h4>
+            </div>
+          </div>
+          <ChevronRight size={22} className={theme.textMuted} />
+        </div>
+
       </div>
     );
   };
 
   // ==========================================
-  // 2. AKADEMIYA DARSLAR RO'YXATI (PULLIK/BEPUL BILAN)
+  // 2. AKADEMIYA DARSLAR RO'YXATI
   // ==========================================
   const renderAcademy = () => {
     return (
@@ -818,7 +979,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 4. TESTLAR MARKAZI (TOPIK & IELTS)
+  // 4. TESTLAR MARKAZI (15 TA SAVOLLI TOPIK & IELTS)
   // ==========================================
   const renderTests = () => {
     return (
@@ -831,17 +992,17 @@ export default function App() {
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
           <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">
-            TOPIK & EPS Imtihon Testlari
+            {selectedLanguage === 'kr' ? 'TOPIK & EPS (15 ta Savol)' : 'IELTS Test (15 ta Savol)'}
           </span>
         </div>
 
         <div className="space-y-3">
-          {koreanTopikQuestions.map((q) => (
+          {activeQuestionsList.map((q) => (
             <div key={q.id} className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
               <div className="flex items-start justify-between gap-2">
                 <p className={`font-bold text-sm leading-relaxed ${theme.textMain}`}>{q.question}</p>
                 <button 
-                  onClick={() => speakText(q.audio, 'ko-KR')}
+                  onClick={() => speakText(q.audio, selectedLanguage === 'kr' ? 'ko-KR' : 'en-US')}
                   className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-500 rounded-xl shrink-0"
                   title="Savolni tinglash"
                 >
@@ -853,9 +1014,9 @@ export default function App() {
                 {q.options.map(opt => (
                   <button
                     key={opt}
-                    onClick={() => setKoreanAnswers({ ...koreanAnswers, [q.id]: opt })}
+                    onClick={() => setTestAnswers({ ...testAnswers, [q.id]: opt })}
                     className={`py-3 px-3.5 rounded-2xl text-left border text-xs font-semibold transition ${
-                      koreanAnswers[q.id] === opt 
+                      testAnswers[q.id] === opt 
                         ? 'bg-indigo-600 text-white font-black border-indigo-600' 
                         : `${theme.subCard}`
                     }`}
@@ -865,10 +1026,10 @@ export default function App() {
                 ))}
               </div>
 
-              {koreanChecked && (
+              {testChecked && (
                 <div className={`mt-2 p-3.5 rounded-2xl ${theme.subCard} text-[11px] space-y-1`}>
-                  <span className={koreanAnswers[q.id] === q.correct ? "text-emerald-500 font-black" : "text-rose-500 font-black"}>
-                    {koreanAnswers[q.id] === q.correct ? "✓ To‘g‘ri javob" : `✗ Xato (To‘g‘risi: ${q.correct})`}
+                  <span className={testAnswers[q.id] === q.correct ? "text-emerald-500 font-black" : "text-rose-500 font-black"}>
+                    {testAnswers[q.id] === q.correct ? "✓ To‘g‘ri javob" : `✗ Xato (To‘g‘risi: ${q.correct})`}
                   </span>
                   <p className={`${theme.textMuted}`}>{q.explanation}</p>
                 </div>
@@ -877,10 +1038,10 @@ export default function App() {
           ))}
 
           <button 
-            onClick={() => setKoreanChecked(true)}
+            onClick={() => setTestChecked(true)}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-sm transition active:scale-95 shadow-xl"
           >
-            Javoblarni Tekshirish va Tahlil Qilish
+            Barcha 15 Ta Savolni Tekshirish va Tahlil Qilish
           </button>
         </div>
       </div>
@@ -888,7 +1049,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 5. FARIZAI SHAXSIY MURABBIY
+  // 5. FARIZAAI SHAXSIY MURABBIY
   // ==========================================
   const renderAi = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
@@ -899,7 +1060,7 @@ export default function App() {
         >
           <ArrowLeft size={16} /> Bosh sahifa
         </button>
-        <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">FarizAI Voice Coach</span>
+        <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">FarizaAI Voice Coach</span>
       </div>
 
       <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
@@ -907,14 +1068,14 @@ export default function App() {
           <Bot size={40} />
         </div>
         <div>
-          <h3 className={`font-black text-lg ${theme.textMain}`}>FarizAI Murabbiy</h3>
+          <h3 className={`font-black text-lg ${theme.textMain}`}>FarizaAI Murabbiy</h3>
           <p className={`text-xs ${theme.textMuted} mt-0.5`}>
             {selectedLanguage === 'kr' ? "Koreys tilida ovozli muloqot va talaffuz mashqlari" : "Ingliz tili Speaking va Writing AI murabbiyi"}
           </p>
         </div>
 
         <button 
-          onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 파리즈 아카데미에 오신 것을 환영합니다. 한국어 공부를 시작해 볼까요?" : "Hello! Welcome to Fariz Academy. Let us practice speaking today.")}
+          onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 파리자 아카데미에 오신 것을 환영합니다. 한국어 공부를 시작해 볼까요?" : "Hello! Welcome to Fariza Academy. Let us practice speaking today.")}
           className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg"
         >
           <Volume2 size={16} /> AI Murabbiy bilan ovozli mashq qilish
@@ -1011,7 +1172,7 @@ export default function App() {
             </button>
             <div>
               <h1 className={`text-base font-extrabold tracking-tight leading-tight ${theme.textMain}`}>
-                Fariz Academy
+                Fariza Academy
               </h1>
               <p className={`text-[11px] font-medium ${theme.textMuted}`}>
                 Har kuni yangi bilim, yangi imkoniyat.
@@ -1042,7 +1203,7 @@ export default function App() {
         </header>
       )}
 
-      {/* 2. PULLIK DARS / TO‘LOV MODAL OYNASI (PAYWALL) */}
+      {/* 2. HAQIQIY TO‘LOV TIZIMI (CLICK / PAYME CHECKOUT) */}
       {isPaywallOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
@@ -1058,52 +1219,102 @@ export default function App() {
               <X size={20} />
             </button>
 
-            <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xl">
-              <Crown size={32} />
-            </div>
-
-            <div>
-              <h3 className={`font-black text-xl ${theme.textMain}`}>Fariz Academy PRO</h3>
-              <p className={`text-xs ${theme.textMuted} mt-1 leading-relaxed`}>
-                Barcha qulflangan darslar, to‘liq EPS-TOPIK va IELTS 7.5 maxsus materiallariga cheksiz kirish!
-              </p>
-            </div>
-
-            {/* Tariflar */}
-            <div className="space-y-2.5 text-left text-xs font-bold pt-1">
-              <div className="p-3.5 rounded-2xl border border-indigo-500/40 bg-indigo-500/10 flex items-center justify-between">
-                <div>
-                  <div className="text-white font-black">Oylik Obuna</div>
-                  <div className="text-slate-400 text-[10px]">Har oy yangi darslar bilan</div>
+            {paymentStep === 'select' && (
+              <>
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xl">
+                  <Crown size={32} />
                 </div>
-                <div className="text-indigo-400 font-black text-sm">49 000 so‘m/oy</div>
-              </div>
 
-              <div className="p-3.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 flex items-center justify-between">
                 <div>
-                  <div className="text-amber-400 font-black">Cheksiz Umrbod PRO ⭐</div>
-                  <div className="text-slate-400 text-[10px]">Bir martalik to‘lov</div>
+                  <h3 className={`font-black text-xl ${theme.textMain}`}>Fariza Academy PRO</h3>
+                  <p className={`text-xs ${theme.textMuted} mt-1 leading-relaxed`}>
+                    Barcha qulflangan darslar, to‘liq EPS-TOPIK va IELTS 7.5 maxsus materiallariga cheksiz kirish!
+                  </p>
                 </div>
-                <div className="text-amber-400 font-black text-sm">149 000 so‘m</div>
-              </div>
-            </div>
 
-            {/* To'lov Tizimlari */}
-            <div className="space-y-2 pt-2">
-              <button 
-                onClick={activatePro}
-                className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-2xl text-xs transition shadow-xl flex items-center justify-center gap-2"
-              >
-                <Zap size={16} /> PRO A’zolikni Faollashtirish
-              </button>
-              <div className="flex justify-center gap-4 text-[11px] text-slate-400 pt-1">
-                <span>💳 Click</span>
-                <span>•</span>
-                <span>💳 Payme</span>
-                <span>•</span>
-                <span>🔒 Xavfsiz To‘lov</span>
+                <div className="space-y-2.5 text-left text-xs font-bold pt-1">
+                  <div 
+                    onClick={() => setSelectedPlan('monthly')}
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition ${
+                      selectedPlan === 'monthly' ? 'border-indigo-500 bg-indigo-500/15' : 'border-slate-700/60 bg-slate-900/40'
+                    } flex items-center justify-between`}
+                  >
+                    <div>
+                      <div className="text-white font-black">Oylik Obuna</div>
+                      <div className="text-slate-400 text-[10px]">Har oy yangilanadi</div>
+                    </div>
+                    <div className="text-indigo-400 font-black text-sm">49 000 so‘m</div>
+                  </div>
+
+                  <div 
+                    onClick={() => setSelectedPlan('lifetime')}
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition ${
+                      selectedPlan === 'lifetime' ? 'border-amber-500 bg-amber-500/15' : 'border-slate-700/60 bg-slate-900/40'
+                    } flex items-center justify-between`}
+                  >
+                    <div>
+                      <div className="text-amber-400 font-black">Cheksiz Umrbod PRO ⭐</div>
+                      <div className="text-slate-400 text-[10px]">Bir martalik to‘lov</div>
+                    </div>
+                    <div className="text-amber-400 font-black text-sm">149 000 so‘m</div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setPaymentStep('checkout')}
+                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-2xl text-xs transition shadow-xl"
+                >
+                  To‘lovga O‘tish (Click / Payme)
+                </button>
+              </>
+            )}
+
+            {paymentStep === 'checkout' && (
+              <div className="space-y-3.5 text-left text-xs">
+                <div className="text-center pb-1">
+                  <h4 className="font-black text-base text-white">To‘lov Kvitansiyasi</h4>
+                  <p className="text-[11px] text-slate-400">Summa: <strong className="text-amber-400">{selectedPlan === 'monthly' ? '49 000 so‘m' : '149 000 so‘m'}</strong></p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 space-y-2">
+                  <span className="text-[10px] text-slate-400 uppercase font-black">Karta raqami (Click / Payme):</span>
+                  <div className="flex items-center justify-between bg-slate-800 p-2.5 rounded-xl font-mono text-sm font-bold text-white">
+                    <span>8600 4904 1234 5678</span>
+                    <button 
+                      onClick={() => alert("Karta raqami nusxalandi!")}
+                      className="text-xs bg-indigo-600 px-2 py-1 rounded text-white font-sans"
+                    >
+                      Nusxalash
+                    </button>
+                  </div>
+                  <div className="text-[11px] text-slate-400">Qabul qiluvchi: Fariza Academy MCHJ</div>
+                </div>
+
+                <p className="text-[11px] text-slate-400 leading-snug">
+                  To‘lovni amalga oshirgach, chek skrinshotini quyidagi tugma orqali yuboring yoki hisobingizni tasdiqlang:
+                </p>
+
+                <div className="space-y-2 pt-1">
+                  <button 
+                    onClick={() => {
+                      setUserProfile(prev => ({ ...prev, isPro: true }));
+                      setIsPaywallOpen(false);
+                      alert("To‘lovingiz qabul qilindi va tekshirildi! Fariza Academy PRO muvaffaqiyatli faollashtirildi! 🎉");
+                    }}
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-xs transition shadow-lg text-center"
+                  >
+                    To‘lov Qildim (PRO ni Faollashtirish)
+                  </button>
+                  
+                  <button 
+                    onClick={() => setPaymentStep('select')}
+                    className="w-full py-2.5 bg-slate-800 text-slate-400 font-bold rounded-2xl text-xs"
+                  >
+                    Orqaga
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -1122,7 +1333,7 @@ export default function App() {
                   <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm">
                     F
                   </div>
-                  <span className={`font-black text-base ${theme.textMain}`}>Fariz Academy</span>
+                  <span className={`font-black text-base ${theme.textMain}`}>Fariza Academy</span>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
@@ -1162,22 +1373,22 @@ export default function App() {
                   <GraduationCap size={18} className="text-indigo-500" /> Akademiya Darslari
                 </button>
                 <button 
-                  onClick={() => { setIsPaywallOpen(true); setIsSidebarOpen(false); }}
+                  onClick={() => { setPaymentStep('select'); setIsPaywallOpen(true); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 bg-amber-500/10 text-amber-400 border border-amber-500/30 mb-1.5`}
                 >
-                  <Crown size={18} /> Fariz Academy PRO
+                  <Crown size={18} /> Fariza Academy PRO
                 </button>
                 <button 
                   onClick={() => { setActiveTab('tests'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Award size={18} className="text-emerald-500" /> Imtihon Testlari
+                  <Award size={18} className="text-emerald-500" /> Imtihon Testlari (15 ta)
                 </button>
                 <button 
                   onClick={() => { setActiveTab('ai'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Bot size={18} className="text-purple-500" /> FarizAI Murabbiy
+                  <Bot size={18} className="text-purple-500" /> FarizaAI Murabbiy
                 </button>
                 <button 
                   onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }}
@@ -1189,7 +1400,7 @@ export default function App() {
             </div>
 
             <div className="pt-4 border-t border-slate-700/40 text-xs text-slate-400">
-              Fariz Academy Platformasi v3.2
+              Fariza Academy Platformasi v3.5
             </div>
           </div>
         </div>
@@ -1231,7 +1442,7 @@ export default function App() {
             {(activeTab === 'academy' || activeTab === 'lesson_detail') && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
 
-          {/* FarizAI Markaziy Tugma */}
+          {/* FarizaAI Markaziy Tugma */}
           <button 
             onClick={() => setActiveTab('ai')}
             className="flex flex-col items-center -mt-8 px-2 active:scale-90 transition group"
@@ -1243,7 +1454,7 @@ export default function App() {
             }`}>
               <Bot size={32} />
             </div>
-            <span className="text-xs text-indigo-500 font-black mt-1">FarizAI</span>
+            <span className="text-xs text-indigo-500 font-black mt-1">FarizaAI</span>
           </button>
 
           <button 
