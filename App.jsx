@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef } = React;
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Compass, BookOpen, Headphones, PenTool, Mic, Bot, User, 
   Play, Pause, RotateCcw, CheckCircle2, XCircle, Award, 
@@ -8,18 +8,12 @@ import {
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check
 } from 'lucide-react';
 
-function App() {
-  // ... qolgan barcha kod o'zgarishsiz qoladi
-}
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-{
-  // --- 1. MAVZU (DARK / LIGHT) ---
+export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_theme');
     if (saved !== null) return saved === 'dark';
-    const hour = new Date().getHours();
-    return hour < 7 || hour >= 19;
+    const h = new Date().getHours();
+    return h < 7 || h >= 19;
   });
 
   const toggleTheme = () => {
@@ -30,18 +24,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     });
   };
 
-  // --- 2. O'QUVCHI PROFILI (BEGONA RASMLARSIZ, TOZA SAQLANISH) ---
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_user');
     if (saved) {
-      try { 
-        const parsed = JSON.parse(saved);
-        // Begona URL yoki qora skrinshot tushib qolgan bo'lsa tozalash
-        if (parsed.photoBase64 && !parsed.photoBase64.startsWith('data:image')) {
-          parsed.photoBase64 = '';
-        }
-        return parsed;
-      } catch (e) {}
+      try { return JSON.parse(saved); } catch (e) {}
     }
     return {
       name: 'Tokhirbek',
@@ -65,7 +51,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     return { listening: '7.0', reading: '7.5', writing: '6.5', speaking: '7.0' };
   });
 
-  // Kunlik dars rejasi
   const [dailyPlan, setDailyPlan] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_plan');
     if (saved) {
@@ -101,18 +86,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     }));
   };
 
-  // Navigatsiya holati: 'home' | 'tests' | 'ai' | 'writing' | 'profile'
   const [activeTab, setActiveTab] = useState('home');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
   const fileInputRef = useRef(null);
 
-  // Telefon galereyasidan o'z rasmini tanlash
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 3 * 1024 * 1024) {
-        alert("Rasm hajmi juda katta (maksimal 3MB bo‘lsin).");
+        alert("Rasm hajmi 3MB dan oshmasligi kerak.");
         return;
       }
       const reader = new FileReader();
@@ -123,7 +106,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     }
   };
 
-  // --- 3. READING TEST (10 TA SAVOL VA TAYMER) ---
   const [readingTime, setReadingTime] = useState(3600);
   const [readingTimerRunning, setReadingTimerRunning] = useState(false);
   const [highlightEvidence, setHighlightEvidence] = useState(false);
@@ -195,14 +177,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     }
   ];
 
-  // --- 4. WRITING TASK 2 STUDIYASI ---
   const [essayText, setEssayText] = useState("");
   const [writingScore, setWritingScore] = useState(null);
 
   const analyzeEssay = () => {
     const words = essayText.trim().split(/\s+/).filter(Boolean).length;
     if (words < 20) {
-      alert("Iltimos, tahlil qilish uchun kamida 20-30 so‘z yozing!");
+      alert("Iltimos, tahlil uchun kamida 20-30 so‘z yozing!");
       return;
     }
     let band = 5.5;
@@ -221,9 +202,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     });
   };
 
-  // --- 5. ZIYOAI SPEAKING COACH ---
   const [speakingActive, setSpeakingActive] = useState(false);
-  const [speakingAnalysis, setSpeakingAnalysis] = useState({
+  const [speakingAnalysis] = useState({
     original: "I am from Tashkent, capital city in Uzbekistan. I love my hometown.",
     mistakePart: "capital city in",
     betterSay: "the capital of",
@@ -251,7 +231,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     }, 1200);
   };
 
-  // Mavzu ranglari
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900',
     card: isDarkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm',
@@ -262,12 +241,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
   };
 
-  // ==========================================
-  // 1. ASOSIY SAHIFA
-  // ==========================================
   const renderHome = () => (
-    <div className="space-y-4 animate-fadeIn">
-      {/* Profil Qatori (Rasm yoki Bosh harf) */}
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {userProfile.photoBase64 ? (
@@ -300,7 +275,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         </div>
       </div>
 
-      {/* Haqiqiy Ball vs Maqsadli Ball */}
       <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-700 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
         <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
           <div>
@@ -319,7 +293,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
           </div>
         </div>
 
-        {/* 4 Ko'nikma taqsimoti */}
         <div className="grid grid-cols-4 gap-2 text-center pt-3 text-xs">
           <div>
             <div className="text-indigo-200 text-[11px]">Listening</div>
@@ -340,7 +313,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         </div>
       </div>
 
-      {/* Bugungi Reja */}
       <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm flex items-center gap-2">
@@ -377,7 +349,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         </div>
       </div>
 
-      {/* ZiyoAI Banner */}
       <div 
         onClick={() => setActiveTab('ai')}
         className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition group`}
@@ -396,7 +367,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         <ChevronRight size={20} className={`${theme.textMuted} group-hover:text-indigo-500 transition`} />
       </div>
 
-      {/* IELTS Testlariga o'tish */}
       <div className="grid grid-cols-2 gap-3">
         <button 
           onClick={() => setActiveTab('tests')}
@@ -427,11 +397,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </div>
   );
 
-  // ==========================================
-  // 2. IELTS TESTLAR (READING 10 TA SAVOL)
-  // ==========================================
   const renderTests = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
           <ArrowLeft size={16} /> Bosh sahifa
@@ -490,7 +457,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
       </div>
 
       <div className="space-y-3">
-        <h4 className="font-bold text-sm">Savollar (Javob berildi: {Object.keys(readingAnswers).length} / {fullReadingQuestions.length}):</h4>
+        <h4 className="font-bold text-sm">Savollar ({Object.keys(readingAnswers).length} / {fullReadingQuestions.length}):</h4>
 
         {fullReadingQuestions.map((q, idx) => (
           <div key={q.id} className={`${theme.card} border rounded-2xl p-4 text-xs space-y-2`}>
@@ -542,11 +509,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </div>
   );
 
-  // ==========================================
-  // 3. ZIYOAI SPEAKING COACH
-  // ==========================================
   const renderAi = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className={`${theme.card} border rounded-3xl p-5 text-center space-y-3 relative overflow-hidden shadow-md`}>
         <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg">
           <Bot size={36} />
@@ -627,13 +591,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </div>
   );
 
-  // ==========================================
-  // 4. WRITING TASK 2
-  // ==========================================
   const renderWriting = () => {
     const wordCount = essayText.trim().split(/\s+/).filter(Boolean).length;
     return (
-      <div className="space-y-4 animate-fadeIn">
+      <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
           <h3 className="font-bold text-base">Writing Task 2 Studio</h3>
           <span className="text-xs bg-amber-500/15 text-amber-500 px-2.5 py-0.5 rounded-full font-bold">250 So‘z</span>
@@ -673,7 +634,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               <span className="text-base font-black text-indigo-500">Band {writingScore.band}</span>
             </div>
             <p><strong>Task Achievement:</strong> {writingScore.taskAchievement}</p>
-            <p><strong>Coherence:</strong> {writingScore.coherence}</p>
+            <p><strong>Coherence & Cohesion:</strong> {writingScore.coherence}</p>
             <p><strong>Lexical Resource:</strong> {writingScore.lexical}</p>
           </div>
         )}
@@ -681,11 +642,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     );
   };
 
-  // ==========================================
-  // 5. FAQAT SHAXSIY PROFIL
-  // ==========================================
   const renderProfileOnly = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <h3 className="font-bold text-base">Mening Profilim</h3>
         <button 
@@ -767,10 +725,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   );
 
   return (
-    // EKRAN O'YNASHINI TO'XTATUVCHI MAXSUS ASOSIY KONTENT KONTEYNERI
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
-      
-      {/* Header */}
       <header className={`sticky top-0 z-40 ${theme.header} backdrop-blur-md border-b px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -789,7 +744,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         </div>
       </header>
 
-      {/* Asosiy Ekran (Kengligi aniq 100% va max-w-md orqali cheklangan, hech narsa chetga chiqmaydi) */}
       <main className="flex-1 w-full max-w-md mx-auto p-4 pb-32 box-border">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'tests' && renderTests()}
@@ -798,12 +752,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
         {activeTab === 'profile' && renderProfileOnly()}
       </main>
 
-      {/* AYNAN 5 TALIK SUZUVCHI PASTKI MENYU */}
       <div className="fixed bottom-3 left-0 right-0 z-50 px-3 pointer-events-none">
         <div className="max-w-md mx-auto pointer-events-auto">
           <nav className={`${theme.navBg} backdrop-blur-2xl rounded-[28px] px-2 py-1.5 flex items-center justify-between relative`}>
-            
-            {/* 1. Asosiy */}
             <button 
               onClick={() => setActiveTab('home')}
               className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
@@ -815,7 +766,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               {activeTab === 'home' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 2. Testlar */}
             <button 
               onClick={() => setActiveTab('tests')}
               className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
@@ -827,7 +777,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               {activeTab === 'tests' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 3. ZiyoAI (O'rtadagi dumaloq tugma) */}
             <button 
               onClick={() => setActiveTab('ai')}
               className="flex flex-col items-center -mt-6 px-1 active:scale-95 transition"
@@ -838,7 +787,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               <span className="text-[10px] text-indigo-400 font-bold mt-0.5">ZiyoAI</span>
             </button>
 
-            {/* 4. Writing */}
             <button 
               onClick={() => setActiveTab('writing')}
               className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
@@ -850,7 +798,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               {activeTab === 'writing' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 5. Profil */}
             <button 
               onClick={() => setActiveTab('profile')}
               className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
@@ -861,12 +808,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
               <span className="text-[10px] mt-0.5">Profil</span>
               {activeTab === 'profile' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
-
           </nav>
         </div>
       </div>
 
-      {/* Profil Tahrirlash Modali */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border rounded-3xl p-5 w-full max-w-sm space-y-3.5 shadow-2xl`}>
@@ -884,7 +829,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
                 onClick={() => fileInputRef.current.click()}
                 className="px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
               >
-                <Upload size={14} /> Galereyadan rasm tanlash
+                <Upload size={14} /> Galereyadan tanlash
               </button>
             </div>
 
@@ -904,7 +849,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
                 <select
                   value={editForm.gender}
                   onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                  className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2 text-xs outline-none focus:border-indigo-500`}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
                 >
                   <option value="Erkak">Erkak</option>
                   <option value="Ayol">Ayol</option>
@@ -928,7 +873,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
                 <select
                   value={editForm.currentBand}
                   onChange={(e) => setEditForm({ ...editForm, currentBand: e.target.value })}
-                  className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2 text-xs outline-none focus:border-indigo-500`}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
                 >
                   {['5.0', '5.5', '6.0', '6.5', '7.0'].map(b => (
                     <option key={b} value={b}>Band {b}</option>
@@ -941,7 +886,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
                 <select
                   value={editForm.targetBand}
                   onChange={(e) => setEditForm({ ...editForm, targetBand: e.target.value })}
-                  className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2 text-xs outline-none focus:border-indigo-500`}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
                 >
                   {['6.5', '7.0', '7.5', '8.0', '8.5', '9.0'].map(b => (
                     <option key={b} value={b}>Band {b}</option>
@@ -953,4 +898,23 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
             <div className="flex gap-2 pt-2">
               <button 
                 onClick={() => setIsEditingProfile(false)}
-                className
+                className={`flex-1 py-2 ${theme.subCard} rounded-xl text-xs font-bold`}
+              >
+                Bekor qilish
+              </button>
+              <button 
+                onClick={() => {
+                  setUserProfile(editForm);
+                  setIsEditingProfile(false);
+                }}
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs"
+              >
+                Saqlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
