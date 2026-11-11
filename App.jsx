@@ -6,21 +6,22 @@ import {
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Menu, Bell, ArrowUpRight
+  Menu, Bell, ArrowUpRight, GraduationCap, Lock, Unlock, Star
 } from 'lucide-react';
 
 export default function App() {
-  // --- 1. TILNI ALMASHTIRISH (INGLIZ TILI / KOREYS TILI) ---
+  // --- 1. TIL VA AKADEMIYA TANLOVI ---
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    return localStorage.getItem('ziyoprep_lang') || 'en';
+    return localStorage.getItem('ziyoprep_lang') || 'kr'; // 'en' yoki 'kr'
   });
 
   const switchLanguage = (lang) => {
     setSelectedLanguage(lang);
     localStorage.setItem('ziyoprep_lang', lang);
+    setActiveTab('home');
   };
 
-  // --- 2. MAVZU REJIMI (DARK / LIGHT) ---
+  // --- 2. MAVZU REJIMI ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_theme');
     if (saved !== null) return saved === 'dark';
@@ -36,7 +37,7 @@ export default function App() {
     });
   };
 
-  // --- 3. FOYDALANUVCHI PROFILI ---
+  // --- 3. FOYDALANUVCHI PROFILI VA PROGRESS ---
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_user');
     if (saved) {
@@ -55,44 +56,156 @@ export default function App() {
       photoBase64: '',
       currentBand: '6.5',
       targetBand: '7.5',
-      koreanCurrentLevel: '2-급 (Boshlang‘ich)',
+      koreanCurrentLevel: '2-급',
       koreanTargetLevel: '4-급 (TOPIK II)',
       streak: 5,
-      xp: 750,
-      completedTests: 20
+      xp: 840,
+      completedLessons: [1, 2] // Bajarilgan darslar ID lari
     };
   });
-
-  // Kunlik dars rejalari
-  const [dailyPlanEn, setDailyPlanEn] = useState([
-    { id: 1, title: 'Academic Reading: 10 ta savolli to‘liq test', duration: '30 daq', done: false, xp: 60, tag: 'Reading' },
-    { id: 2, title: 'ZiyoAI Speaking Coach: Talaffuz & Ravonlik', duration: '20 daq', done: false, xp: 50, tag: 'Speaking' },
-    { id: 3, title: 'Band 7.5–9.0 uchun 10 ta yangi collocation', duration: '15 daq', done: true, xp: 30, tag: 'Vocab' }
-  ]);
-
-  const [dailyPlanKr, setDailyPlanKr] = useState([
-    { id: 101, title: 'TOPIK II O‘qish (읽기): 10 ta imtihon testi', duration: '30 daq', done: false, xp: 60, tag: '읽기' },
-    { id: 102, title: 'EPS-TOPIK Tinglash (듣기): Zavod dialoglari', duration: '20 daq', done: false, xp: 50, tag: '듣기' },
-    { id: 103, title: 'Hangul harflari va talaffuz audiolari', duration: '15 daq', done: true, xp: 30, tag: '한글' }
-  ]);
 
   useEffect(() => {
     localStorage.setItem('ziyoprep_user', JSON.stringify(userProfile));
   }, [userProfile]);
 
-  const toggleTask = (id, isKr) => {
-    if (isKr) {
-      setDailyPlanKr(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-    } else {
-      setDailyPlanEn(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-    }
-  };
-
-  // Navigatsiya holati: 'home' | 'tests' | 'ai' | 'writing' | 'profile' | 'korean_hangul'
+  // Navigatsiya holati: 'home' | 'academy' | 'lesson_detail' | 'tests' | 'ai' | 'profile'
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedLevel, setSelectedLevel] = useState('beginner'); // 'beginner' | 'elementary' | 'intermediate' | 'advanced'
+  const [activeLesson, setActiveLesson] = useState(null);
+  const [lessonStep, setLessonStep] = useState('theory'); // 'theory' | 'vocab' | 'typing' | 'quiz' | 'result'
+  const [typedInput, setTypedInput] = useState('');
+  const [typingFeedback, setTypingFeedback] = useState(null);
+  const [quizAnswer, setQuizAnswer] = useState(null);
+
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
   const fileInputRef = useRef(null);
+
+  // --- 4. AKADEMIYA DARSLAR BAZASI (KOREAN & ENGLISH) ---
+  const coursesData = {
+    kr: {
+      title: "Korean Academy",
+      subtitle: "한국어 기초 과정",
+      desc: "Koreys tilini noldan mukammal o‘rganish",
+      levels: [
+        { id: 'beginner', title: 'Beginner (초급 1)', desc: 'Noldan alifbo va asosiy iboralar' },
+        { id: 'elementary', title: 'Elementary (초급 2)', desc: 'Kundalik muloqot va fe’l zamonlari' },
+        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'TOPIK II va murakkab grammatika' },
+        { id: 'advanced', title: 'Advanced (고급)', desc: 'Ish joyi va rasmiy muloqot' }
+      ],
+      lessons: [
+        {
+          id: 1,
+          level: 'beginner',
+          section: '1-bo‘lim: Hangul',
+          title: '1-dars: Koreys alifbosi',
+          desc: 'Unlilar va undoshlar',
+          isFree: true,
+          theory: 'Koreys alifbosi 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar blok (bo‘g‘in) holida birlashadi.',
+          words: [
+            { word: '가', meaning: 'Ga (Unli + Undosh)', sound: '가' },
+            { word: '나', meaning: 'Na', sound: '나' },
+            { word: '다', meaning: 'Da', sound: '다' },
+            { word: '라', meaning: 'Ra / La', sound: '라' }
+          ],
+          typingWord: { prompt: "Bo'g'inni yozing: 'Ga'", correct: '가' },
+          quiz: {
+            question: "Koreys tilida 'N' tovushini qaysi harf ifodalaydi?",
+            options: ["① ㄱ", "② ㄴ", "③ ㄷ", "④ ㄹ"],
+            correct: 1,
+            explanation: "ㄴ (Niun) harfi o'zbek tilidagi 'N' tovushini beradi."
+          }
+        },
+        {
+          id: 2,
+          level: 'beginner',
+          section: '1-bo‘lim: Hangul',
+          title: '2-dars: Bo‘g‘in tuzish',
+          desc: '가, 나, 다, 라…',
+          isFree: true,
+          theory: 'Har bir bo‘g‘in kamida bitta undosh va bitta unlidan tashkil topadi. Masalan: ㄱ + ㅏ = 가.',
+          words: [
+            { word: '나무', meaning: 'Daraxt (Namu)', sound: '나무' },
+            { word: '다리', meaning: 'Ko‘prik / Oyoq (Dari)', sound: '다리' },
+            { word: '라디오', meaning: 'Radio (Radio)', sound: '라디오' }
+          ],
+          typingWord: { prompt: "Daraxt so‘zini koreyscha yozing (Namu):", correct: '나무' },
+          quiz: {
+            question: "'Daraxt' so‘zining to‘g‘ri koreyscha shakli qaysi?",
+            options: ["① 나비", "② 나무", "③ 나라", "④ 다리"],
+            correct: 1,
+            explanation: "나무 (namu) — daraxt degan ma’noni anglatadi."
+          }
+        },
+        {
+          id: 3,
+          level: 'beginner',
+          section: '2-bo‘lim: Salomlashish',
+          title: '3-dars: Rasmiy salomlashish',
+          desc: '안녕하세요, 감사합니다',
+          isFree: true,
+          theory: 'Koreys tilida hurmat uslubi juda muhim. Yangi tanishlar va yoshi kattalarga rasmiy xushmuomala qo‘shimchalari qo‘llaniladi.',
+          words: [
+            { word: '안녕하세요', meaning: 'Assalomu alaykum (Salom)', sound: '안녕하세요' },
+            { word: '감사합니다', meaning: 'Rahmat', sound: '감사합니다' },
+            { word: '죄송합니다', meaning: 'Kechirasiz (Uzr)', sound: '죄송합니다' }
+          ],
+          typingWord: { prompt: "'Rahmat' so‘zini yozing:", correct: '감사합니다' },
+          quiz: {
+            question: "Eng keng tarqalgan xushmuomala salomlashish iborasini tanlang:",
+            options: ["① 안녕", "② 안녕하세요", "③ 잘 가", "④ 고마워"],
+            correct: 1,
+            explanation: "안녕하세요 — kattalar va jamoat joylarida rasmiy salomlashish uchun eng to‘g‘ri ibora."
+          }
+        }
+      ]
+    },
+    en: {
+      title: "English Academy",
+      subtitle: "General & Academic English",
+      desc: "Ingliz tilini noldan IELTS 7.5 gacha bosqichma-bosqich o‘rganish",
+      levels: [
+        { id: 'beginner', title: 'Beginner (A1)', desc: 'Alphabet, basic phonics and words' },
+        { id: 'elementary', title: 'Elementary (A2)', desc: 'Daily life & Present Simple' },
+        { id: 'intermediate', title: 'Intermediate (B1-B2)', desc: 'Complex grammar & Writing' },
+        { id: 'advanced', title: 'Advanced (IELTS Prep)', desc: 'Band 7.5–9.0 collocations' }
+      ],
+      lessons: [
+        {
+          id: 101,
+          level: 'beginner',
+          section: 'Unit 1: Foundations',
+          title: 'Lesson 1: Greetings & Introductions',
+          desc: 'Hello, Nice to meet you',
+          isFree: true,
+          theory: 'When meeting someone for the first time, polite introductions form the basis of communication.',
+          words: [
+            { word: 'Greeting', meaning: 'Salomlashish', sound: 'Greeting' },
+            { word: 'Pleasure', meaning: 'Mamnuniyat', sound: 'Pleasure' },
+            { word: 'Colleague', meaning: 'Hamkasb', sound: 'Colleague' }
+          ],
+          typingWord: { prompt: "Write 'Salomlashish' in English:", correct: 'Greeting' },
+          quiz: {
+            question: "Choose the correct phrase to introduce yourself:",
+            options: ["① I am pleased meeting you", "② Nice to meet you", "③ Good look", "④ Goodbye"],
+            correct: 1,
+            explanation: "'Nice to meet you' is the standard polite greeting."
+          }
+        }
+      ]
+    }
+  };
+
+  // Ovoz berish
+  const speakText = (text, lang = selectedLanguage === 'kr' ? 'ko-KR' : 'en-US') => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    const ut = new SpeechSynthesisUtterance(text);
+    ut.lang = lang;
+    ut.rate = 0.9;
+    window.speechSynthesis.speak(ut);
+  };
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -111,165 +224,10 @@ export default function App() {
     }
   };
 
-  // --- 4. OVOZ (IOS SAFARI UCHUN 100% ISHLOVCHI SPEECH ENGINE) ---
-  const speakText = (text, lang = 'ko-KR') => {
-    if (!('speechSynthesis' in window)) {
-      alert("Brauzeringiz ovoz sintezini qo'llab-quvvatlamaydi.");
-      return;
-    }
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    
-    const cleanText = text.replace(/[\(\)①②③④]/g, '');
-    const ut = new SpeechSynthesisUtterance(cleanText);
-    ut.lang = lang;
-    ut.rate = 0.9;
-    ut.pitch = 1.0;
-    
-    window.speechSynthesis.speak(ut);
-  };
+  const currentCourse = coursesData[selectedLanguage];
+  const activeLessonsList = currentCourse.lessons.filter(l => l.level === selectedLevel);
 
-  // --- 5. HANGUL ALIFBOSI ---
-  const hangulAlphabet = [
-    { char: "ㄱ", name: "Giyok (g/k)", sound: "가" },
-    { char: "ㄴ", name: "Niun (n)", sound: "나" },
-    { char: "ㄷ", name: "Digeut (d/t)", sound: "다" },
-    { char: "ㄹ", name: "Riel (r/l)", sound: "라" },
-    { char: "ㅁ", name: "Mium (m)", sound: "마" },
-    { char: "ㅂ", name: "Biup (b/p)", sound: "바" },
-    { char: "ㅅ", name: "Siut (s)", sound: "사" },
-    { char: "ㅇ", name: "Iung (ng)", sound: "아" },
-    { char: "ㅈ", name: "Jiut (j)", sound: "자" },
-    { char: "ㅊ", name: "Chiut (ch)", sound: "차" },
-    { char: "ㅋ", name: "Kiuk (k)", sound: "카" },
-    { char: "ㅌ", name: "Tiut (t)", sound: "타" },
-    { char: "ㅍ", name: "Piup (p)", sound: "파" },
-    { char: "ㅎ", name: "Hiut (h)", sound: "하" }
-  ];
-
-  // --- 6. TO‘LIQ 10 TA TOPIK & EPS-TOPIK IMTIHON SAVOLLARI ---
-  const koreanTopikQuestions = [
-    {
-      id: "kr1",
-      question: "1. 저는 아침에 일찍 ________.",
-      options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
-      correct: "① 일어납니다",
-      audio: "저는 아침에 일찍 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
-    },
-    {
-      id: "kr2",
-      question: "2. [EPS-TOPIK] 공장에서 일할 때 반드시 ________을/를 착용해야 합니다.",
-      options: ["① 안전모 (Kaska)", "② 양말 (Paypoq)", "③ 안경 (Ko'zoynak)", "④ 모자 (Oddiy qalpoq)"],
-      correct: "① 안전모 (Kaska)",
-      audio: "공장에서 일할 때 반드시 안전모를 착용해야 합니다",
-      explanation: "Zavod va qurilish maydonlarida boshni himoya qilish uchun xavfsizlik kaskasi (안전모) kiyish majburiydir."
-    },
-    {
-      id: "kr3",
-      question: "3. 식당에서 음식을 먹은 후에 돈을 ________.",
-      options: ["① 냅니다 (To'layman)", "② 먹습니다", "③ 입습니다", "④ 봅니다"],
-      correct: "① 냅니다 (To'layman)",
-      audio: "식당에서 음식을 먹은 후에 돈을 냅니다",
-      explanation: "Pul to'lamoq birikmasi koreys tilida '돈을 내다' deyiladi."
-    },
-    {
-      id: "kr4",
-      question: "4. 어제 비가 와서 날씨가 아주 ________.",
-      options: ["① 추웠습니다 (Sovuq edi)", "② 맛있었습니다", "③ 넓었습니다", "④ 조용합니다"],
-      correct: "① 추웠습니다 (Sovuq edi)",
-      audio: "어제 비가 와서 날씨가 아주 추웠습니다",
-      explanation: "Kecha (어제) yomg'ir yog'gani sababli o'tgan zamonda 'havo sovuq edi' (추웠습니다) bo'ladi."
-    },
-    {
-      id: "kr5",
-      question: "5. [EPS-TOPIK] 물건을 포장할 때 쓰는 상자를 ________(으)로 닫으세요.",
-      options: ["① 테이프 (Skotch)", "② 빗자루 (Supurgi)", "③ 장갑 (Qo'lqop)", "④ 마스크"],
-      correct: "① 테이프 (Skotch)",
-      audio: "물건을 포장할 때 쓰는 상자를 테이프로 닫으세요",
-      explanation: "Yuklarni qadoqlashda qutilar (상자) skotch (테이프) bilan yopiladi."
-    },
-    {
-      id: "kr6",
-      question: "6. 목이 아프고 열이 나요. 그래서 ________에 가서 약을 샀어요.",
-      options: ["① 약국 (Dorixona)", "② 은행 (Bank)", "③ 우체국 (Pochta)", "④ 공항 (Aeroport)"],
-      correct: "① 약국 (Dorixona)",
-      audio: "목이 아프고 열이 나요. 그래서 약국에 가서 약을 샀어요",
-      explanation: "Tomoq og'rib, isitma chiqqanda dori sotib olish uchun dorixonaga (약국) boriladi."
-    },
-    {
-      id: "kr7",
-      question: "7. 버스 정류장에서 버스를 ________.",
-      options: ["① 기다립니다 (Kutaman)", "② 가르칩니다", "③ 만듭니다", "④ 전화합니다"],
-      correct: "① 기다립니다 (Kutaman)",
-      audio: "버스 정류장에서 버스를 기다립니다",
-      explanation: "Avtobus bekatida avtobus kutiladi (기다리다)."
-    },
-    {
-      id: "kr8",
-      question: "8. [EPS-TOPIK] 작업을 끝마친 후에는 기계의 전원을 ________.",
-      options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
-      correct: "① 끕니다 (O'chiraman)",
-      audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
-      explanation: "Ishni yakunlagandan so'ng xavfsizlik maqsadida uskunaning elektr quvvati (전원) o'chiriladi (끄다)."
-    },
-    {
-      id: "kr9",
-      question: "9. 한국어 실력을 늘리기 위해서 매일 드라마를 ________.",
-      options: ["① 봅니다 (Ko'raman)", "② 씁니다", "③ 씻습니다", "④ 걷습니다"],
-      correct: "① 봅니다 (Ko'raman)",
-      audio: "한국어 실력을 늘리기 위해서 매일 드라마를 봅니다",
-      explanation: "Koreys tili mahoratini oshirish uchun har kuni serial ko'rish fe'li (보다 -> 봅니다)."
-    },
-    {
-      id: "kr10",
-      question: "10. 외국인등록증을 신청하려면 ________에 가야 합니다.",
-      options: ["① 출입국관리사무소 (Immigratsiya)", "② 영화관", "③ 세탁소", "④ 소방서"],
-      correct: "① 출입국관리사무소 (Immigratsiya)",
-      audio: "외국인등록증을 신청하려면 출입국관리사무소에 가야 합니다",
-      explanation: "Chet el fuqarosi ID kartasini (외국인등록증) olish uchun Immigratsiya idorasiga (출입국관리사무소) boriladi."
-    }
-  ];
-
-  const [koreanAnswers, setKoreanAnswers] = useState({});
-  const [koreanChecked, setKoreanChecked] = useState(false);
-
-  // --- 7. INGLIZ TILI READING TESTI (10 TA SAVOL) ---
-  const fullReadingQuestions = [
-    {
-      id: "q1",
-      type: "Matching Headings",
-      question: "1. Paragraph A uchun mos keladigan asosiy sarlavhani tanlang:",
-      options: [
-        "i. Financial consequences of bilingual education",
-        "ii. Cognitive agility and task-switching superiority",
-        "iii. Linguistic conflict observed in childhood"
-      ],
-      correct: "ii. Cognitive agility and task-switching superiority",
-      explanation: "Paragraf A da ko‘p tillilik diqqatni boshqarish va vazifalarni tez almashtirishni rivojlantirishi aytilgan."
-    },
-    {
-      id: "q2",
-      type: "Matching Headings",
-      question: "2. Paragraph B uchun mos sarlavhani tanlang:",
-      options: [
-        "i. Neuroplastic resilience persisting into old age",
-        "ii. Accelerated cognitive decline in multilinguals",
-        "iii. Evolution of dialect mapping"
-      ],
-      correct: "i. Neuroplastic resilience persisting into old age",
-      explanation: "Paragraf B da kognitiv moslashuv keksayganda ham davom etishi va kasalliklarni 4.5 yilga kechiktirishi aytilgan."
-    },
-    {
-      id: "q3",
-      type: "True / False / Not Given",
-      question: "3. Learning two languages causes lifelong intellectual confusion in adults.",
-      options: ["TRUE", "FALSE", "NOT GIVEN"],
-      correct: "FALSE",
-      explanation: "Matnda aksincha: 'Far from creating interference, it strengthens mental agility' deb ta'kidlanadi."
-    }
-  ];
-
+  // Ranglar va mavzu uslubi
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100',
     card: isDarkMode ? 'bg-[#151726] border-slate-800 shadow-xl' : 'bg-[#1a1d30] border-slate-700/60 shadow-md',
@@ -285,7 +243,6 @@ export default function App() {
   // ==========================================
   const renderHome = () => {
     const isKr = selectedLanguage === 'kr';
-    const currentDailyPlan = isKr ? dailyPlanKr : dailyPlanEn;
 
     return (
       <div className="space-y-5 animate-fadeIn pb-6">
@@ -293,17 +250,16 @@ export default function App() {
         {/* YOUR LANGUAGE JOURNEY BANNERI */}
         <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#261f5c] via-[#1a1a40] to-[#12132b] p-6 text-white border border-indigo-500/25 shadow-2xl">
           <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full border border-indigo-400/10 pointer-events-none"></div>
-          <div className="absolute -top-6 -right-6 w-52 h-52 rounded-full border border-indigo-400/15 pointer-events-none"></div>
 
           <div className="flex items-start justify-between relative z-10">
             <div className="space-y-3 max-w-[62%]">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 block">
-                YOUR LANGUAGE JOURNEY
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 block">
+                {currentCourse.title.toUpperCase()}
               </span>
               
               <div className="space-y-0.5">
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-                  Salom! Xush kelibsiz 👋
+                  Salom, {userProfile.name}! 👋
                 </h2>
                 <h3 className="text-xl font-extrabold tracking-tight text-white">
                   Bugun nimani o‘rganamiz?
@@ -311,14 +267,14 @@ export default function App() {
               </div>
 
               <p className="text-xs text-indigo-200/80 leading-relaxed font-normal">
-                Ingliz va koreys tillarini bir joyda, aqlli va samarali o‘rganing.
+                {currentCourse.desc}
               </p>
 
               <button 
-                onClick={() => setActiveTab('tests')}
+                onClick={() => setActiveTab('academy')}
                 className="mt-2 inline-flex items-center gap-2 bg-[#b8a5fe] hover:bg-[#a892fe] text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg transition transform active:scale-95"
               >
-                <span>Darsni boshlash</span>
+                <span>Akademiyaga kirish</span>
                 <ArrowUpRight size={16} strokeWidth={2.8} />
               </button>
             </div>
@@ -334,13 +290,13 @@ export default function App() {
                     stroke="#5885f8"
                     strokeWidth="9"
                     strokeDasharray="251.2"
-                    strokeDashoffset={251.2 - (251.2 * 68) / 100}
+                    strokeDashoffset={251.2 - (251.2 * 72) / 100}
                     strokeLinecap="round"
                     fill="transparent"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-2xl font-black tracking-tight text-white">68%</span>
+                  <span className="text-2xl font-black tracking-tight text-white">72%</span>
                 </div>
               </div>
               <span className="text-[11px] font-semibold text-indigo-200/70 mt-1">Umumiy progress</span>
@@ -357,7 +313,7 @@ export default function App() {
               !isKr ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <span>🇬🇧</span> IELTS Darslari
+            <span>🇬🇧</span> English Academy
           </button>
           <button 
             onClick={() => switchLanguage('kr')}
@@ -365,322 +321,381 @@ export default function App() {
               isKr ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
             }`}
           >
-            <span>🇰🇷</span> TOPIK Koreys Tili
+            <span>🇰🇷</span> Korean Academy
           </button>
         </div>
 
-        {/* DARAXA VA BALLAR */}
-        {!isKr ? (
-          <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 rounded-[28px] p-5 text-white shadow-xl relative overflow-hidden">
-            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider text-indigo-200 font-bold flex items-center gap-1.5">
-                  <BarChart3 size={14} /> Diagnostik Ball
-                </span>
-                <div className="text-3xl font-black mt-1">Band {userProfile.currentBand}</div>
-                <span className="text-[10px] text-indigo-100">Cambridge IELTS darajasi</span>
-              </div>
-              <div className="border-l border-white/20 pl-4">
-                <span className="text-[11px] uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
-                  <Target size={14} /> Maqsadli Ball
-                </span>
-                <div className="text-3xl font-black mt-1 text-amber-300">Band {userProfile.targetBand}</div>
-                <span className="text-[10px] text-indigo-100">Oraliq farq: +1.0 ball</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2 text-center pt-3 text-xs">
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[10px] font-semibold">Listening</div>
-                <div className="font-black text-sm mt-0.5">7.0</div>
-              </div>
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[10px] font-semibold">Reading</div>
-                <div className="font-black text-sm mt-0.5">7.5</div>
-              </div>
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[10px] font-semibold">Writing</div>
-                <div className="font-black text-sm mt-0.5">6.5</div>
-              </div>
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[10px] font-semibold">Speaking</div>
-                <div className="font-black text-sm mt-0.5">7.0</div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-br from-rose-700 via-rose-600 to-indigo-700 rounded-[28px] p-5 text-white shadow-xl relative overflow-hidden">
-            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider text-rose-200 font-bold flex items-center gap-1.5">
-                  <BarChart3 size={14} /> Hozirgi Daraja
-                </span>
-                <div className="text-3xl font-black mt-1">2-급 (TOPIK I)</div>
-                <span className="text-[10px] text-rose-100">Boshlang'ich daraja</span>
-              </div>
-              <div className="border-l border-white/20 pl-4">
-                <span className="text-[11px] uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
-                  <Target size={14} /> Maqsadli Daraja
-                </span>
-                <div className="text-3xl font-black mt-1 text-amber-300">4-급 (TOPIK II)</div>
-                <span className="text-[10px] text-rose-100">Universitet & Viza</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center pt-3 text-xs">
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[10px] font-semibold">Tinglash (듣기)</div>
-                <div className="font-black text-sm mt-0.5">78 ball</div>
-              </div>
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[10px] font-semibold">O‘qish (읽기)</div>
-                <div className="font-black text-sm mt-0.5">72 ball</div>
-              </div>
-              <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[10px] font-semibold">Yozish (쓰기)</div>
-                <div className="font-black text-sm mt-0.5">55 ball</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* BUGUNGI KUNLIK REJA */}
-        <div className={`${theme.card} border rounded-3xl p-5 space-y-4`}>
+        {/* DUOLINGO USLUBIDAGI BOSQICHLAR BLOKI */}
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-black text-base flex items-center gap-2">
-                <Clock size={18} className="text-indigo-400" /> {isKr ? "Koreys Tili Vazifalari" : "IELTS Dars Rejasi"}
-              </h3>
-              <p className={`text-xs ${theme.textMuted} mt-0.5`}>Bugun bajarilishi kerak bo‘lgan mashqlar</p>
-            </div>
-            <span className="text-xs font-black bg-emerald-500/15 text-emerald-400 px-3 py-1 rounded-full">
-              {currentDailyPlan.filter(t => t.done).length}/{currentDailyPlan.length} tayyor
-            </span>
+            <h3 className="font-black text-sm uppercase tracking-wider text-slate-300">
+              {currentCourse.title} Bosqichlari
+            </h3>
+            <button 
+              onClick={() => setActiveTab('academy')}
+              className="text-xs font-bold text-indigo-400 hover:underline"
+            >
+              Hammasini ko‘rish
+            </button>
           </div>
 
-          <div className="space-y-2.5">
-            {currentDailyPlan.map(task => (
+          <div className="grid grid-cols-2 gap-3.5">
+            {currentCourse.levels.map(lvl => (
               <div 
-                key={task.id}
-                onClick={() => toggleTask(task.id, isKr)}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs cursor-pointer transition active:scale-98 ${
-                  task.done 
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                    : `${theme.subCard} hover:border-indigo-500/50`
-                }`}
+                key={lvl.id}
+                onClick={() => {
+                  setSelectedLevel(lvl.id);
+                  setActiveTab('academy');
+                }}
+                className={`${theme.card} border rounded-3xl p-4 cursor-pointer active:scale-95 transition hover:border-indigo-500/50 space-y-2`}
               >
-                <div className="flex items-center gap-3">
-                  {task.done ? <CheckSquare size={20} className="text-emerald-400" /> : <Square size={20} className="text-slate-500" />}
-                  <div>
-                    <span className={`font-bold text-sm ${task.done ? 'line-through opacity-80' : ''}`}>{task.title}</span>
-                    <span className="block text-[11px] text-slate-400 mt-0.5">{task.tag}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold ${task.done ? 'bg-emerald-500/20' : 'bg-slate-800'}`}>
-                    {task.duration}
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">
+                    {lvl.id === 'beginner' ? '🌱' : lvl.id === 'elementary' ? '🌿' : lvl.id === 'intermediate' ? '🌳' : '🎓'}
                   </span>
-                  <span className="block text-[11px] text-amber-400 font-extrabold mt-1">+{task.xp} XP</span>
+                  <span className="text-[10px] bg-indigo-500/15 text-indigo-400 font-black px-2 py-0.5 rounded-full">
+                    {lvl.id === 'beginner' ? 'Ochiq' : 'Faol'}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-black text-sm">{lvl.title}</h4>
+                  <p className={`text-[11px] ${theme.textMuted} mt-0.5 leading-snug`}>{lvl.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* MODULLAR */}
-        {isKr ? (
-          <div>
-            <h3 className={`text-xs font-black uppercase tracking-wider ${theme.textMuted} mb-3.5`}>
-              Koreys Tili Bo‘limlari
-            </h3>
-            <div className="grid grid-cols-2 gap-3.5">
-              <div 
-                onClick={() => setActiveTab('korean_hangul')}
-                className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center font-black text-lg">
-                  한
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold text-rose-500 uppercase">Alifbo & O‘qish</div>
-                  <h4 className="font-black text-base mt-0.5">Hangul (한글)</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>14 ta unli va undosh harf</p>
-                </div>
+        {/* IMTIHON TAYYORGARLIK (IELTS / TOPIK) BANNERI */}
+        <div 
+          onClick={() => setActiveTab('tests')}
+          className={`${theme.card} border rounded-3xl p-5 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition shadow-sm`}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+              <Award size={26} />
+            </div>
+            <div>
+              <div className="text-[10px] text-indigo-400 font-black uppercase tracking-wider">
+                {isKr ? 'TOPIK & EPS Imtihoni' : 'Cambridge IELTS Mock'}
               </div>
-
-              <div 
-                onClick={() => setActiveTab('tests')}
-                className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-black text-lg">
-                  시험
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold text-indigo-400 uppercase">10 Ta Savolli Test</div>
-                  <h4 className="font-black text-base mt-0.5">TOPIK & EPS</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>Ovozli imtihon savollari</p>
-                </div>
-              </div>
+              <h4 className="font-black text-base mt-0.5">
+                {isKr ? 'Haqiqiy TOPIK I/II Testlari' : 'Full 10-Question Reading & Audio'}
+              </h4>
             </div>
           </div>
-        ) : (
-          <div>
-            <h3 className={`text-xs font-black uppercase tracking-wider ${theme.textMuted} mb-3.5`}>
-              IELTS Ko‘nikmalari
-            </h3>
-            <div className="grid grid-cols-2 gap-3.5">
-              <div 
-                onClick={() => setActiveTab('tests')}
-                className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
-                  <BookOpen size={24} />
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold text-blue-400 uppercase">Cambridge 18</div>
-                  <h4 className="font-black text-base mt-0.5">Reading Test</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>10 ta savol • 60 daqiqalik taymer</p>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setActiveTab('ai')}
-                className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
-                  <Mic size={24} />
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold text-rose-500 uppercase">Speaking AI</div>
-                  <h4 className="font-black text-base mt-0.5">Speaking Coach</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>Talaffuz va ravonlik tahlili</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          <ChevronRight size={22} className={theme.textMuted} />
+        </div>
 
       </div>
     );
   };
 
   // ==========================================
-  // 2. KOREYS TILI HANGUL (BIR MARTALIK TOZA HEADER)
+  // 2. AKADEMIYA DARSLAR RO'YXATI (KOREAN / ENGLISH)
   // ==========================================
-  const renderHangul = () => (
-    <div className="space-y-4 animate-fadeIn pb-8">
-      {/* TOZA YAGONA HEADER */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <button 
-          onClick={() => setActiveTab('home')} 
-          className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
-        >
-          <ArrowLeft size={16} /> Bosh sahifa
-        </button>
-        <span className="text-xs bg-rose-500/15 text-rose-500 px-3 py-1 rounded-full font-black">한글 기초</span>
-      </div>
-
-      <div className={`${theme.card} border rounded-3xl p-5 space-y-2`}>
-        <h3 className="font-black text-base text-rose-500">Hangul (한글) — Koreys alifbosi</h3>
-        <p className={`text-xs ${theme.textMuted} leading-relaxed`}>
-          Har bir harf ustiga bosib, uning talaffuzini eshiting va to'g'ri o'qilishini o'rganing.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        {hangulAlphabet.map((item, idx) => (
-          <div 
-            key={idx}
-            onClick={() => speakText(item.sound, 'ko-KR')}
-            className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-95 transition hover:border-rose-500`}
+  const renderAcademy = () => {
+    return (
+      <div className="space-y-5 animate-fadeIn pb-8">
+        {/* Yuqori Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <button 
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
           >
-            <div>
-              <div className="text-3xl font-black text-rose-500">{item.char}</div>
-              <div className="text-xs font-bold mt-1">{item.name}</div>
-              <div className={`text-[10px] ${theme.textMuted}`}>Ovoz: {item.sound}</div>
+            <ArrowLeft size={16} /> Bosh sahifa
+          </button>
+          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">
+            {currentCourse.title}
+          </span>
+        </div>
+
+        {/* Bosqichlar Tabs (Beginner / Elementary...) */}
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {currentCourse.levels.map(lvl => (
+            <button
+              key={lvl.id}
+              onClick={() => setSelectedLevel(lvl.id)}
+              className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition ${
+                selectedLevel === lvl.id 
+                  ? 'bg-indigo-600 text-white shadow-lg' 
+                  : `${theme.subCard} text-slate-400 hover:text-white`
+              }`}
+            >
+              {lvl.title}
+            </button>
+          ))}
+        </div>
+
+        {/* Darslar Ro'yxati */}
+        <div className="space-y-3">
+          <div className="px-1">
+            <h3 className="font-black text-base text-white">{currentCourse.subtitle}</h3>
+            <p className={`text-xs ${theme.textMuted} mt-0.5`}>Qadamma-qadam darslar va amaliyot</p>
+          </div>
+
+          {activeLessonsList.length > 0 ? (
+            activeLessonsList.map(lesson => {
+              const isCompleted = userProfile.completedLessons.includes(lesson.id);
+              return (
+                <div 
+                  key={lesson.id}
+                  onClick={() => {
+                    setActiveLesson(lesson);
+                    setLessonStep('theory');
+                    setActiveTab('lesson_detail');
+                  }}
+                  className={`${theme.card} border rounded-3xl p-4.5 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500/50 shadow-md`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
+                      isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
+                    }`}>
+                      {isCompleted ? <CheckCircle2 size={24} /> : <BookOpen size={24} />}
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-indigo-400 font-bold uppercase">{lesson.section}</span>
+                      <h4 className="font-black text-sm text-white mt-0.5">{lesson.title}</h4>
+                      <p className={`text-xs ${theme.textMuted} mt-0.5`}>{lesson.desc}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-black px-2.5 py-1 rounded-full">
+                      Bepul
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className={`${theme.card} border rounded-3xl p-8 text-center space-y-2`}>
+              <Lock size={32} className="mx-auto text-slate-500" />
+              <h4 className="font-bold text-sm">Bu bosqich darslari tayyorlanmoqda</h4>
+              <p className={`text-xs ${theme.textMuted}`}>Beginner bo‘limi darslarini o‘rganishni davom ettiring.</p>
             </div>
-            <button className="p-2.5 rounded-xl bg-rose-500/15 text-rose-500">
-              <Volume2 size={18} />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ==========================================
+  // 3. INTERAKTIV DARS JARAYONI (THEORY -> VOCAB -> TYPING -> QUIZ)
+  // ==========================================
+  const renderLessonDetail = () => {
+    if (!activeLesson) return null;
+
+    return (
+      <div className="space-y-5 animate-fadeIn pb-8">
+        {/* Yuqori Header va Qadamlar */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <button 
+            onClick={() => setActiveTab('academy')}
+            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+          >
+            <ArrowLeft size={16} /> Darslar
+          </button>
+          <span className="text-xs font-black text-slate-300">
+            {activeLesson.title}
+          </span>
+        </div>
+
+        {/* Dars Navigatsiyasi (Qadamlar) */}
+        <div className="grid grid-cols-4 gap-1.5 text-[11px] font-bold">
+          <button 
+            onClick={() => setLessonStep('theory')}
+            className={`py-2 rounded-xl transition ${lessonStep === 'theory' ? 'bg-indigo-600 text-white' : `${theme.subCard} text-slate-400`}`}
+          >
+            Qoida
+          </button>
+          <button 
+            onClick={() => setLessonStep('vocab')}
+            className={`py-2 rounded-xl transition ${lessonStep === 'vocab' ? 'bg-indigo-600 text-white' : `${theme.subCard} text-slate-400`}`}
+          >
+            So‘zlar
+          </button>
+          <button 
+            onClick={() => setLessonStep('typing')}
+            className={`py-2 rounded-xl transition ${lessonStep === 'typing' ? 'bg-indigo-600 text-white' : `${theme.subCard} text-slate-400`}`}
+          >
+            Yozish
+          </button>
+          <button 
+            onClick={() => setLessonStep('quiz')}
+            className={`py-2 rounded-xl transition ${lessonStep === 'quiz' ? 'bg-indigo-600 text-white' : `${theme.subCard} text-slate-400`}`}
+          >
+            Test
+          </button>
+        </div>
+
+        {/* 1-QADAM: GRAMMATIKA VA NAZARIYA */}
+        {lessonStep === 'theory' && (
+          <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
+            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+              <Sparkles size={16} /> Dars Nazariyasi
+            </div>
+            <h3 className="font-black text-lg text-white">{activeLesson.title}</h3>
+            <p className="text-sm text-slate-300 leading-relaxed font-normal bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+              {activeLesson.theory}
+            </p>
+            <button 
+              onClick={() => setLessonStep('vocab')}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition shadow-lg flex items-center justify-center gap-2"
+            >
+              Keyingi: Yangi So‘zlar <ArrowRight size={16} />
             </button>
           </div>
-        ))}
+        )}
+
+        {/* 2-QADAM: SO'ZLAR VA AUDIO TALAFFUZ */}
+        {lessonStep === 'vocab' && (
+          <div className="space-y-3">
+            <div className="px-1">
+              <h4 className="font-black text-sm text-white">Yangi so‘zlar va Audio Talaffuz:</h4>
+              <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              {activeLesson.words.map((w, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => speakText(w.sound)}
+                  className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500`}
+                >
+                  <div className="flex items-center gap-3">
+                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400">
+                      <Volume2 size={20} />
+                    </button>
+                    <div>
+                      <div className="text-lg font-black text-white">{w.word}</div>
+                      <div className={`text-xs ${theme.textMuted}`}>{w.meaning}</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-indigo-400">Eshitish 🔊</span>
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setLessonStep('typing')}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition shadow-lg flex items-center justify-center gap-2 mt-2"
+            >
+              Keyingi: Yozish Mashqi <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* 3-QADAM: YOZISH MASHQLARI (INTERACTIVE TYPING) */}
+        {lessonStep === 'typing' && (
+          <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
+            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+              <PenTool size={16} /> Yozish Mashqi
+            </div>
+            <h4 className="font-bold text-base text-white">{activeLesson.typingWord.prompt}</h4>
+            
+            <input 
+              type="text"
+              value={typedInput}
+              onChange={(e) => setTypedInput(e.target.value)}
+              placeholder="Javobni kiriting..."
+              className={`w-full ${theme.inputBg} rounded-2xl p-4 text-base font-bold outline-none focus:border-indigo-500`}
+            />
+
+            {typingFeedback && (
+              <div className={`p-3 rounded-2xl text-xs font-bold ${
+                typingFeedback.correct ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+              }`}>
+                {typingFeedback.message}
+              </div>
+            )}
+
+            <button 
+              onClick={() => {
+                if (typedInput.trim() === activeLesson.typingWord.correct) {
+                  setTypingFeedback({ correct: true, message: "A'lo darajada! To‘g‘ri yozildi ✓" });
+                  speakText(activeLesson.typingWord.correct);
+                } else {
+                  setTypingFeedback({ correct: false, message: `Xato! To‘g‘risi: '${activeLesson.typingWord.correct}'` });
+                }
+              }}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition shadow-lg"
+            >
+              Tekshirish
+            </button>
+
+            <button 
+              onClick={() => setLessonStep('quiz')}
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-xs transition"
+            >
+              Keyingi: Testga o‘tish
+            </button>
+          </div>
+        )}
+
+        {/* 4-QADAM: TEST (4 TALIK TANLOV) */}
+        {lessonStep === 'quiz' && (
+          <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
+            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+              <CheckCircle2 size={16} /> Yakuniy Test
+            </div>
+            <h4 className="font-black text-base text-white">{activeLesson.quiz.question}</h4>
+
+            <div className="space-y-2 pt-1">
+              {activeLesson.quiz.options.map((opt, i) => (
+                <button
+                  key={opt}
+                  onClick={() => setQuizAnswer(i)}
+                  className={`w-full py-3.5 px-4 rounded-2xl text-left border text-xs font-bold transition ${
+                    quizAnswer === i 
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+                      : `${theme.subCard} text-slate-300`
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            {quizAnswer !== null && (
+              <div className={`p-3.5 rounded-2xl text-xs ${
+                quizAnswer === activeLesson.quiz.correct ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+              }`}>
+                <div className="font-bold">
+                  {quizAnswer === activeLesson.quiz.correct ? "To‘g‘ri javob! 🎉" : "Noto‘g‘ri javob"}
+                </div>
+                <div className="mt-1 text-slate-300">{activeLesson.quiz.explanation}</div>
+              </div>
+            )}
+
+            <button 
+              onClick={() => {
+                if (quizAnswer === activeLesson.quiz.correct) {
+                  setUserProfile(prev => ({
+                    ...prev,
+                    xp: prev.xp + 50,
+                    completedLessons: [...new Set([...prev.completedLessons, activeLesson.id])]
+                  }));
+                  alert("Tabriklaymiz! Dars muvaffaqiyatli yakunlandi (+50 XP qo‘shildi).");
+                  setActiveTab('academy');
+                } else {
+                  alert("Iltimos, to‘g‘ri javobni tanlang!");
+                }
+              }}
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-xs transition shadow-lg"
+            >
+              Darsni Tugatish va Natijani Saqlash
+            </button>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   // ==========================================
-  // 3. 10 TA TOPIK & EPS TESTLARI (OVOZLI VA IZOHLI)
+  // 4. TESTLAR MARKAZI (TOPIK VA IELTS)
   // ==========================================
   const renderTests = () => {
-    const isKr = selectedLanguage === 'kr';
-
-    if (isKr) {
-      return (
-        <div className="space-y-4 animate-fadeIn pb-8">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <button 
-              onClick={() => setActiveTab('home')} 
-              className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
-            >
-              <ArrowLeft size={16} /> Bosh sahifa
-            </button>
-            <span className="text-xs bg-rose-500/15 text-rose-500 px-3 py-1 rounded-full font-black">
-              10 ta TOPIK & EPS savoli
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {koreanTopikQuestions.map((q) => (
-              <div key={q.id} className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-bold text-sm leading-relaxed text-white">{q.question}</p>
-                  <button 
-                    onClick={() => speakText(q.audio, 'ko-KR')}
-                    className="p-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 rounded-xl shrink-0"
-                    title="Savolni tinglash"
-                  >
-                    <Volume2 size={18} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2 pt-1">
-                  {q.options.map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => setKoreanAnswers({ ...koreanAnswers, [q.id]: opt })}
-                      className={`py-3 px-3.5 rounded-2xl text-left border text-xs font-semibold transition ${
-                        koreanAnswers[q.id] === opt 
-                          ? 'bg-rose-600 text-white font-black border-rose-600' 
-                          : `${theme.subCard}`
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-
-                {koreanChecked && (
-                  <div className={`mt-2 p-3.5 rounded-2xl ${theme.subCard} text-[11px] space-y-1`}>
-                    <span className={koreanAnswers[q.id] === q.correct ? "text-emerald-500 font-black" : "text-rose-500 font-black"}>
-                      {koreanAnswers[q.id] === q.correct ? "✓ To‘g‘ri javob" : `✗ Xato (To‘g‘risi: ${q.correct})`}
-                    </span>
-                    <p className={`${theme.textMuted}`}>{q.explanation}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <button 
-              onClick={() => setKoreanChecked(true)}
-              className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm transition active:scale-95 shadow-xl"
-            >
-              10 Ta Savolni Tekshirish va Tahlil Qilish
-            </button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="space-y-4 animate-fadeIn pb-8">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -690,149 +705,70 @@ export default function App() {
           >
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 px-3.5 py-1 rounded-xl text-xs font-mono font-black text-indigo-400">
-              <Clock size={15} /> {formatTimer(readingTime)}
-            </div>
-            <button 
-              onClick={() => setReadingTimerRunning(!readingTimerRunning)}
-              className="p-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"
-            >
-              {readingTimerRunning ? <Pause size={15} /> : <Play size={15} />}
-            </button>
-          </div>
+          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">
+            Imtihon Markazi
+          </span>
         </div>
 
         <div className="space-y-3">
-          {fullReadingQuestions.map((q, idx) => (
-            <div key={q.id} className={`${theme.card} border rounded-3xl p-4 text-xs space-y-2.5`}>
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2.5 py-0.5 rounded-full font-black">
-                  {q.type}
-                </span>
-                <span className="text-slate-500 text-[11px] font-bold">Savol {idx + 1}</span>
-              </div>
-              <p className="font-bold text-sm leading-snug">{q.question}</p>
-              
-              <div className="grid grid-cols-1 gap-2 pt-1">
-                {q.options.map(opt => (
-                  <button
-                    key={opt}
-                    onClick={() => setReadingAnswers({ ...readingAnswers, [q.id]: opt })}
-                    className={`py-3 px-3.5 rounded-2xl text-left border text-xs font-semibold transition ${
-                      readingAnswers[q.id] === opt 
-                        ? 'bg-indigo-600 text-white font-black border-indigo-600' 
-                        : `${theme.subCard}`
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-
-              {readingChecked && (
-                <div className={`mt-2 p-3.5 rounded-2xl ${theme.subCard} text-[11px] space-y-1`}>
-                  <span className={readingAnswers[q.id] === q.correct ? "text-emerald-500 font-black" : "text-rose-500 font-black"}>
-                    {readingAnswers[q.id] === q.correct ? "✓ To‘g‘ri javob" : `✗ Xato (To‘g‘risi: ${q.correct})`}
-                  </span>
-                  <p className={`${theme.textMuted}`}>{q.explanation}</p>
-                </div>
-              )}
+          {coursesData.kr.lessons[0].quiz && (
+            <div className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
+              <div className="font-black text-sm text-white">TOPIK I/II va IELTS Haqiqiy Imtihon Testlari:</div>
+              <p className={theme.textMuted}>Har bir savol imtihon standartlariga to‘liq mos keladi.</p>
+              <button 
+                onClick={() => {
+                  setSelectedLevel('beginner');
+                  setActiveTab('academy');
+                }}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition shadow-md"
+              >
+                Akademiya Darslari orqali Testlarni Boshlash
+              </button>
             </div>
-          ))}
-
-          <button 
-            onClick={() => setReadingChecked(true)}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-sm transition active:scale-95 shadow-xl"
-          >
-            IELTS Javoblarini Tekshirish
-          </button>
+          )}
         </div>
       </div>
     );
   };
 
   // ==========================================
-  // 4. ZIYOAI MURABBIY
+  // 5. ZIYOAI SHAXSIY MURABBIY
   // ==========================================
-  const renderAi = () => {
-    const isKr = selectedLanguage === 'kr';
-    return (
-      <div className="space-y-4 animate-fadeIn pb-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <button 
-            onClick={() => setActiveTab('home')} 
-            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
-          >
-            <ArrowLeft size={16} /> Bosh sahifa
-          </button>
-          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">AI Voice Coach</span>
-        </div>
-
-        <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
-          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-xl">
-            <Bot size={40} />
-          </div>
-          <div>
-            <h3 className="font-black text-lg">
-              {isKr ? "ZiyoAI Koreys Tili Murabbiyi" : "ZiyoAI IELTS Speaking Coach"}
-            </h3>
-            <p className={`text-xs ${theme.textMuted} mt-0.5`}>
-              {isKr ? "Koreyscha talaffuz va kundalik dialoglarni mashq qiling" : "Inglizcha talaffuz va ravonlik tahlili"}
-            </p>
-          </div>
-
-          <div className={`${theme.subCard} p-3.5 rounded-2xl text-left border text-xs space-y-1`}>
-            <div className="text-[10px] text-slate-400 uppercase font-black">
-              {isKr ? "Koreyscha gapiring:" : "Inglizcha gapiring:"}
-            </div>
-            <div className="font-bold text-sm">
-              {isKr ? "안녕하세요! 저는 우즈베키스탄에서 온 토히르벡입니다." : "I am from Tashkent, the capital of Uzbekistan."}
-            </div>
-          </div>
-
-          <button 
-            onClick={() => speakText(isKr ? "안녕하세요! 만나서 반갑습니다. 한국어 발음이 아주 좋습니다!" : "That is great! Your pronunciation is excellent.", isKr ? 'ko-KR' : 'en-US')}
-            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2"
-          >
-            <Volume2 size={16} /> AI Murabbiy Javobini Eshitish
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // ==========================================
-  // 5. WRITING MODULI
-  // ==========================================
-  const renderWriting = () => (
+  const renderAi = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <h3 className="font-black text-base">Writing & Lug'at Studiyasi</h3>
-        <span className="text-xs bg-amber-500/15 text-amber-500 px-3 py-1 rounded-full font-black">Academic</span>
+        <button 
+          onClick={() => setActiveTab('home')} 
+          className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+        >
+          <ArrowLeft size={16} /> Bosh sahifa
+        </button>
+        <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">AI Voice Coach</span>
       </div>
 
-      <div className={`${theme.card} border rounded-3xl p-5 space-y-2`}>
-        <span className="text-amber-500 font-black uppercase text-[10px] tracking-wider">Esse Mavzusi:</span>
-        <p className="font-bold text-sm leading-relaxed">
-          "Some people argue that technological development leads to the loss of traditional cultures. To what extent do you agree or disagree?"
-        </p>
+      <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
+        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-xl">
+          <Bot size={40} />
+        </div>
+        <div>
+          <h3 className="font-black text-lg">ZiyoAI Coach</h3>
+          <p className={`text-xs ${theme.textMuted} mt-0.5`}>
+            {selectedLanguage === 'kr' ? "Koreys tilida ovozli muloqot va talaffuz mashqlari" : "Ingliz tili Speaking va Writing AI murabbiyi"}
+          </p>
+        </div>
+
+        <button 
+          onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 한국어 공부를 시작해 볼까요?" : "Hello! Let us practice English speaking today.")}
+          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2"
+        >
+          <Volume2 size={16} /> AI Murabbiy bilan gaplashish
+        </button>
       </div>
-
-      <textarea
-        rows={8}
-        placeholder="Esse matnini yozing..."
-        className={`w-full ${theme.inputBg} rounded-3xl p-4 text-xs outline-none focus:border-indigo-500 leading-relaxed resize-none shadow-inner`}
-      />
-
-      <button className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-sm transition shadow-xl">
-        Esseni AI Bilan Baholash
-      </button>
     </div>
   );
 
   // ==========================================
-  // 6. SHAXSIY PROFIL
+  // 6. PROFIL VA NATIJALAR
   // ==========================================
   const renderProfileOnly = () => (
     <div className="space-y-5 animate-fadeIn pb-8">
@@ -866,18 +802,10 @@ export default function App() {
           <button 
             onClick={() => fileInputRef.current.click()}
             className="absolute bottom-0 right-0 p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-xl border-2 border-slate-900 active:scale-90 transition"
-            title="Rasm yuklash"
           >
             <Camera size={16} />
           </button>
-
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handlePhotoUpload} 
-            accept="image/*" 
-            className="hidden" 
-          />
+          <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden" />
         </div>
 
         <div>
@@ -887,25 +815,21 @@ export default function App() {
       </div>
 
       <div className={`${theme.card} border rounded-[28px] p-5 space-y-3.5 text-xs`}>
-        <h4 className="font-black text-sm text-slate-200">O‘rganilayotgan Tillar</h4>
+        <h4 className="font-black text-sm text-slate-200">Ta’lim Natijalari & Progress</h4>
         
         <div className="flex justify-between items-center py-2 border-b border-slate-800">
-          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-            🇬🇧 IELTS Maqsadi:
-          </span>
-          <span className="font-black text-indigo-400 text-sm">Band {userProfile.targetBand}</span>
+          <span className="text-slate-400 font-semibold">Tugallangan Darslar:</span>
+          <span className="font-black text-emerald-400 text-sm">{userProfile.completedLessons.length} ta dars</span>
         </div>
 
         <div className="flex justify-between items-center py-2 border-b border-slate-800">
-          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
-            🇰🇷 TOPIK Maqsadi:
-          </span>
-          <span className="font-black text-rose-400 text-sm">{userProfile.koreanTargetLevel}</span>
+          <span className="text-slate-400 font-semibold">To‘plangan Tajriba (XP):</span>
+          <span className="font-black text-amber-400 text-sm">{userProfile.xp} XP</span>
         </div>
 
         <div className="flex justify-between items-center py-2">
-          <span className="text-slate-400 font-semibold">Kunlik Streak:</span>
-          <span className="font-black text-amber-400 text-sm flex items-center gap-1">
+          <span className="text-slate-400 font-semibold">Kunlik Ketma-ketlik:</span>
+          <span className="font-black text-rose-400 text-sm flex items-center gap-1">
             🔥 {userProfile.streak} kun
           </span>
         </div>
@@ -916,7 +840,7 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
       
-      {/* FAQAT ASOSIY SAHIFADA CHIQADIGAN BOSH HEADER */}
+      {/* HEADER */}
       {activeTab === 'home' && (
         <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
@@ -925,7 +849,7 @@ export default function App() {
             </button>
             <div>
               <h1 className="text-base font-extrabold text-white tracking-tight leading-tight">
-                Bosh sahifa
+                Ziyo Academy
               </h1>
               <p className="text-[11px] text-slate-400 font-medium">
                 Har kuni yangi bilim, yangi imkoniyat.
@@ -962,10 +886,10 @@ export default function App() {
       {/* Asosiy Ekran Maydoni */}
       <main className="flex-1 w-full max-w-md mx-auto p-4 pb-44 box-border">
         {activeTab === 'home' && renderHome()}
+        {activeTab === 'academy' && renderAcademy()}
+        {activeTab === 'lesson_detail' && renderLessonDetail()}
         {activeTab === 'tests' && renderTests()}
-        {activeTab === 'korean_hangul' && renderHangul()}
         {activeTab === 'ai' && renderAi()}
-        {activeTab === 'writing' && renderWriting()}
         {activeTab === 'profile' && renderProfileOnly()}
       </main>
 
@@ -985,14 +909,14 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('tests')}
+            onClick={() => setActiveTab('academy')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'tests' || activeTab === 'korean_hangul' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'academy' || activeTab === 'lesson_detail' ? 'text-indigo-400 font-black' : 'text-slate-400'
             }`}
           >
-            <BookOpen size={26} strokeWidth={activeTab === 'tests' || activeTab === 'korean_hangul' ? 2.8 : 2} />
-            <span className="text-xs mt-1 font-bold">Testlar</span>
-            {(activeTab === 'tests' || activeTab === 'korean_hangul') && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+            <GraduationCap size={26} strokeWidth={2.8} />
+            <span className="text-xs mt-1 font-bold">Akademiya</span>
+            {(activeTab === 'academy' || activeTab === 'lesson_detail') && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
 
           {/* O'rtadagi Katta ZiyoAI Tugmasi */}
@@ -1011,14 +935,14 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('writing')}
+            onClick={() => setActiveTab('tests')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'writing' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'tests' ? 'text-indigo-400 font-black' : 'text-slate-400'
             }`}
           >
-            <PenTool size={26} strokeWidth={activeTab === 'writing' ? 2.8 : 2} />
-            <span className="text-xs mt-1 font-bold">Writing</span>
-            {activeTab === 'writing' && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+            <Award size={26} strokeWidth={2.8} />
+            <span className="text-xs mt-1 font-bold">Imtihon</span>
+            {activeTab === 'tests' && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
 
           <button 
@@ -1027,7 +951,7 @@ export default function App() {
               activeTab === 'profile' ? 'text-indigo-400 font-black' : 'text-slate-400'
             }`}
           >
-            <User size={26} strokeWidth={activeTab === 'profile' ? 2.8 : 2} />
+            <User size={26} strokeWidth={2.8} />
             <span className="text-xs mt-1 font-bold">Profil</span>
             {activeTab === 'profile' && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
