@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+const { useState, useEffect, useRef } = React;
 import { 
   Compass, BookOpen, Headphones, PenTool, Mic, Bot, User, 
   Play, Pause, RotateCcw, CheckCircle2, XCircle, Award, 
@@ -8,7 +8,12 @@ import {
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check
 } from 'lucide-react';
 
-export default function App() {
+function App() {
+  // ... qolgan barcha kod o'zgarishsiz qoladi
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+{
   // --- 1. MAVZU (DARK / LIGHT) ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_theme');
