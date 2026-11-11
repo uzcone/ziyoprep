@@ -7,8 +7,7 @@ import {
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
   Menu, Bell, ArrowUpRight, GraduationCap, Lock, Star, X, Crown, 
-  CreditCard, ShieldCheck, Copy, Flame, MessageCircle, BookMarked,
-  Sparkle, VolumeX, Eye
+  CreditCard, ShieldCheck, Copy, Flame, MessageCircle, BookMarked
 } from 'lucide-react';
 
 export default function App() {
@@ -51,7 +50,7 @@ export default function App() {
           photoBase64: (parsed.photoBase64 && parsed.photoBase64.startsWith('data:image')) ? parsed.photoBase64 : '',
           currentBand: parsed.currentBand || '6.5',
           targetBand: parsed.targetBand || '7.5',
-          koreanCurrentLevel: parsed.koreanCurrentLevel || '2-급 (Boshlang‘ich)',
+          koreanCurrentLevel: parsed.koreanCurrentLevel || '2-급',
           koreanTargetLevel: parsed.koreanTargetLevel || '4-급 (TOPIK II)',
           streak: parsed.streak || 5,
           xp: parsed.xp || 890,
@@ -67,7 +66,7 @@ export default function App() {
       photoBase64: '',
       currentBand: '6.5',
       targetBand: '7.5',
-      koreanCurrentLevel: '2-급 (Boshlang‘ich)',
+      koreanCurrentLevel: '2-급',
       koreanTargetLevel: '4-급 (TOPIK II)',
       streak: 5,
       xp: 890,
@@ -86,13 +85,9 @@ export default function App() {
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [paymentStep, setPaymentStep] = useState('select');
   const [selectedPlan, setSelectedPlan] = useState('monthly');
-  const [selectedLevel, setSelectedLevel] = useState('beginner');
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonStep, setLessonStep] = useState('theory');
   const [quizAnswer, setQuizAnswer] = useState(null);
-
-  // Interaktiv Flashcard holati
-  const [flashcardFlipped, setFlashcardFlipped] = useState(false);
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
@@ -109,10 +104,7 @@ export default function App() {
   }, []);
 
   const speakText = (text, lang = selectedLanguage === 'kr' ? 'ko-KR' : 'en-US') => {
-    if (!('speechSynthesis' in window)) {
-      alert("Qurilmangiz nutq sintezini qo‘llab-quvvatlamaydi.");
-      return;
-    }
+    if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       window.speechSynthesis.resume();
@@ -136,135 +128,178 @@ export default function App() {
     }
   };
 
-  // --- 4. DARSLAR VA KURS BAZASI ---
-  const coursesData = {
-    kr: {
-      title: "Korean Academy",
-      subtitle: "한국어 마스터 과정",
-      desc: "Koreys tilini noldan TOPIK II gacha to‘liq o‘rganish",
-      levels: [
-        { id: 'beginner', title: 'Beginner (초급 1)', desc: 'Hangul alifbosi va tanishuv' },
-        { id: 'elementary', title: 'Elementary (초급 2)', desc: 'Hozirgi va o‘tgan zamon fe’llari' },
-        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'EPS-TOPIK & Zavod muloqoti' },
-        { id: 'advanced', title: 'Advanced (고급)', desc: 'TOPIK II Insholar & Rasmiy nutq' }
-      ],
-      lessons: [
-        {
-          id: 1,
-          level: 'beginner',
-          isPro: false,
-          section: '1-bo‘lim: Hangul',
-          title: '1-dars: Koreys alifbosi',
-          desc: 'Unlilar va undoshlar',
-          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar doim bo‘g‘in bloklari ko‘rinishida yoziladi.',
-          words: [
-            { word: '가', meaning: 'Ga (ㄱ + ㅏ)', sound: '가' },
-            { word: '나', meaning: 'Na (ㄴ + ㅏ)', sound: '나' },
-            { word: '다', meaning: 'Da (ㄷ + ㅏ)', sound: '다' },
-            { word: '라', meaning: 'Ra / La (ㄹ + ㅏ)', sound: '라' }
-          ],
-          quiz: {
-            question: "Koreys tilida 'N' tovushini qaysi harf ifodalaydi?",
-            options: ["① ㄱ", "② ㄴ", "③ ㄷ", "④ ㄹ"],
-            correct: 1,
-            explanation: "ㄴ (Niun) harfi 'N' tovushini ifodalaydi."
-          }
-        },
-        {
-          id: 2,
-          level: 'beginner',
-          isPro: false,
-          section: '1-bo‘lim: Hangul',
-          title: '2-dars: Bo‘g‘in tuzish',
-          desc: 'Oddiy so‘zlarni o‘qish',
-          theory: 'Har bir bo‘g‘in kamida bitta undosh va bitta unlidan iborat bo‘ladi. Masalan: 나무 (namu) — daraxt.',
-          words: [
-            { word: '나무', meaning: 'Daraxt (Namu)', sound: '나무' },
-            { word: '다리', meaning: 'Ko‘prik / Oyoq (Dari)', sound: '다리' },
-            { word: '라디오', meaning: 'Radio (Radio)', sound: '라디오' }
-          ],
-          quiz: {
-            question: "'Daraxt' so‘zining koreyscha yozilishi qaysi?",
-            options: ["① 나비", "② 나무", "③ 나라", "④ 다리"],
-            correct: 1,
-            explanation: "나무 (namu) — daraxt degani."
-          }
-        },
-        {
-          id: 3,
-          level: 'elementary',
-          isPro: false,
-          section: '2-bo‘lim: Fe’llar',
-          title: '1-dars: Hozirgi zamon (-아요/어요)',
-          desc: 'Fe’llarni tuslash qoidalari',
-          theory: 'Fe’l o‘zagidagi oxirgi unli ㅏ yoki ㅗ bo‘lsa -아요, boshqa unlilar bo‘lsa -어요 qo‘shiladi.',
-          words: [
-            { word: '가요', meaning: 'Boryapman / Boraman', sound: '가요' },
-            { word: '먹어요', meaning: 'Yeyapman / Yeyman', sound: '먹어요' }
-          ],
-          quiz: {
-            question: "'Ovqat yeyman' gapi qaysi biri?",
-            options: ["① 밥을 가요", "② 밥을 먹어요", "③ 밥을 봐요", "④ 밥을 자요"],
-            correct: 1,
-            explanation: "먹다 fe'liga -어요 qo'shilib '먹어요' bo'ladi."
-          }
-        },
-        {
-          id: 4,
-          level: 'intermediate',
-          isPro: true,
-          section: '3-bo‘lim: EPS-TOPIK',
-          title: '1-dars: Zavodda xavfsizlik qoidalari',
-          desc: '안전 수칙 va asbob-uskunalar',
-          theory: 'EPS-TOPIK imtihonida eng ko‘p tushadigan savollar: xavfsizlik kaskasi (안전모) va stanoklarni xavfsiz boshqarish qoidalari.',
-          words: [
-            { word: '안전모', meaning: 'Himoya kaskasi', sound: '안전모' },
-            { word: '기계 조작', meaning: 'Stanokni boshqarish', sound: '기계 조작' }
-          ],
-          quiz: {
-            question: "Ish paytida boshni himoya qilish uchun nima kiyiladi?",
-            options: ["① 안전모", "② 마스크", "③ 장화", "④ 앞치마"],
-            correct: 0,
-            explanation: "안전모 — xavfsizlik kaskasi."
-          }
+  // --- 4. DARSLAR RO'YXATI (ROADMAP UCHUN) ---
+  const roadmapLessons = {
+    kr: [
+      {
+        id: 1,
+        title: "1-dars: Koreys alifbosi",
+        subtitle: "Unlilar va undoshlar",
+        status: "completed",
+        isPro: false,
+        icon: "👑",
+        color: "from-emerald-500 to-green-600",
+        theory: "Hangul alifbosi 14 ta asosiy undosh va 10 ta unlidan iborat. Barcha harflar kvadrat bloklar (bo‘g‘inlar) ichida birlashtirib yoziladi.",
+        words: [
+          { word: "가", meaning: "Ga (ㄱ + ㅏ)", sound: "가" },
+          { word: "나", meaning: "Na (ㄴ + ㅏ)", sound: "나" },
+          { word: "다", meaning: "Da (ㄷ + ㅏ)", sound: "다" },
+          { word: "라", meaning: "Ra / La (ㄹ + ㅏ)", sound: "라" }
+        ],
+        quiz: {
+          question: "Koreys tilida 'N' tovushini qaysi harf ifodalaydi?",
+          options: ["① ㄱ", "② ㄴ", "③ ㄷ", "④ ㄹ"],
+          correct: 1,
+          explanation: "ㄴ (Niun) harfi 'N' tovushini beradi."
         }
-      ]
-    },
-    en: {
-      title: "English Academy",
-      subtitle: "General & Academic English",
-      desc: "Ingliz tilini noldan IELTS 7.5 gacha o‘rganish",
-      levels: [
-        { id: 'beginner', title: 'Beginner (A1)', desc: 'Alphabet, basic phonics and words' },
-        { id: 'elementary', title: 'Elementary (A2)', desc: 'Daily life & Present Simple' },
-        { id: 'intermediate', title: 'Intermediate (B1-B2)', desc: 'Complex grammar & Writing' },
-        { id: 'advanced', title: 'Advanced (IELTS Prep)', desc: 'Band 7.5–9.0 collocations' }
-      ],
-      lessons: [
-        {
-          id: 101,
-          level: 'beginner',
-          isPro: false,
-          section: 'Unit 1: Foundations',
-          title: 'Lesson 1: Greetings & Introductions',
-          desc: 'Hello, Nice to meet you',
-          theory: 'When meeting someone for the first time, polite introductions form the basis of communication.',
-          words: [
-            { word: 'Greeting', meaning: 'Salomlashish', sound: 'Greeting' },
-            { word: 'Pleasure', meaning: 'Mamnuniyat', sound: 'Pleasure' }
-          ],
-          quiz: {
-            question: "Choose the correct phrase to introduce yourself:",
-            options: ["① I am pleased meeting you", "② Nice to meet you", "③ Good look", "④ Goodbye"],
-            correct: 1,
-            explanation: "'Nice to meet you' is the standard polite greeting."
-          }
+      },
+      {
+        id: 2,
+        title: "2-dars: Bo‘g‘in tuzish",
+        subtitle: "Oddiy so‘zlarni o‘qish",
+        status: "current",
+        isPro: false,
+        icon: "⭐",
+        color: "from-indigo-500 via-purple-500 to-pink-500",
+        theory: "Har bir bo‘g‘in kamida bitta undosh va bitta unlidan iborat bo‘ladi. Masalan: 나무 (namu) — daraxt, 다리 (dari) — ko‘prik.",
+        words: [
+          { word: "나무", meaning: "Daraxt (Namu)", sound: "나무" },
+          { word: "다리", meaning: "Ko‘prik / Oyoq (Dari)", sound: "다리" },
+          { word: "라디오", meaning: "Radio (Radio)", sound: "라디오" }
+        ],
+        quiz: {
+          question: "'Daraxt' so‘zining koreyscha yozilishi qaysi?",
+          options: ["① 나비", "② 나무", "③ 나라", "④ 다리"],
+          correct: 1,
+          explanation: "나무 (namu) — daraxt degani."
         }
-      ]
-    }
+      },
+      {
+        id: 3,
+        title: "3-dars: Hozirgi zamon fe’llari",
+        subtitle: "-아요/어요 qoidalari",
+        status: "locked",
+        isPro: false,
+        icon: "🔒",
+        color: "from-slate-700 to-slate-800",
+        theory: "Fe’l o‘zagidagi oxirgi unli ㅏ yoki ㅗ bo‘lsa -아요, boshqa unlilar bo‘lsa -어요 qo‘shiladi.",
+        words: [
+          { word: "가요", meaning: "Boraman / Boryapman", sound: "가요" },
+          { word: "먹어요", meaning: "Yeyman / Yeyapman", sound: "먹어요" }
+        ],
+        quiz: {
+          question: "'Ovqat yeyman' gapi qaysi biri?",
+          options: ["① 밥을 가요", "② 밥을 먹어요", "③ 밥을 봐요", "④ 밥을 자요"],
+          correct: 1,
+          explanation: "먹다 fe'liga -어요 qo'shilib '먹어요' bo'ladi."
+        }
+      },
+      {
+        id: 4,
+        title: "4-dars: EPS-TOPIK Xavfsizlik",
+        subtitle: "Zavod va asboblar",
+        status: "locked",
+        isPro: true,
+        icon: "👑",
+        color: "from-amber-500 to-orange-600",
+        theory: "EPS-TOPIK imtihonida eng ko‘p tushadigan mavzu: xavfsizlik kaskasi (안전모) va mashinalarni boshqarish.",
+        words: [
+          { word: "안전모", meaning: "Himoya kaskasi", sound: "안전모" },
+          { word: "기계 조작", meaning: "Stanok boshqarish", sound: "기계 조작" }
+        ],
+        quiz: {
+          question: "Ish paytida boshni himoya qilish uchun nima kiyiladi?",
+          options: ["① 안전모", "② 마스크", "③ 장화", "④ 앞치마"],
+          correct: 0,
+          explanation: "안전모 — xavfsizlik kaskasi."
+        }
+      },
+      {
+        id: 5,
+        title: "5-dars: TOPIK II 54-Insho",
+        subtitle: "700 so‘zlik ilmiy insho",
+        status: "locked",
+        isPro: true,
+        icon: "👑",
+        color: "from-amber-500 to-orange-600",
+        theory: "Insho strukturasi: Kirish (서론), Asosiy qism (본론) va Xulosa (결론).",
+        words: [
+          { word: "현대 사회에서", meaning: "Zamonaviy jamiyatda", sound: "현대 사회에서" },
+          { word: "바람직하다", meaning: "Maqsadga muvofiq", sound: "바람직하다" }
+        ],
+        quiz: {
+          question: "Insho xulosasida qaysi grammatik shakl ko‘proq qo‘llaniladi?",
+          options: ["① -아/어서요", "② -(으)ㄹ 필요가 있다", "③ -네요", "④ -지요"],
+          correct: 1,
+          explanation: "Rasmiy insho yakunida -(으)ㄹ 필요가 있다 shakli ishlatiladi."
+        }
+      }
+    ],
+    en: [
+      {
+        id: 101,
+        title: "Lesson 1: Greetings & Introductions",
+        subtitle: "Hello, Nice to meet you",
+        status: "completed",
+        isPro: false,
+        icon: "👑",
+        color: "from-emerald-500 to-green-600",
+        theory: "Polite introductions form the foundation of English conversation.",
+        words: [
+          { word: "Greeting", meaning: "Salomlashish", sound: "Greeting" },
+          { word: "Pleasure", meaning: "Mamnuniyat", sound: "Pleasure" }
+        ],
+        quiz: {
+          question: "Choose the correct phrase to introduce yourself:",
+          options: ["① I am pleased meeting you", "② Nice to meet you", "③ Good look", "④ Goodbye"],
+          correct: 1,
+          explanation: "'Nice to meet you' is the standard polite greeting."
+        }
+      },
+      {
+        id: 102,
+        title: "Lesson 2: Daily Routines & Present",
+        subtitle: "Present Simple vs Continuous",
+        status: "current",
+        isPro: false,
+        icon: "⭐",
+        color: "from-indigo-500 via-purple-500 to-pink-500",
+        theory: "Present Simple expresses habitual actions. Present Continuous expresses actions happening now.",
+        words: [
+          { word: "Frequently", meaning: "Tez-tez", sound: "Frequently" },
+          { word: "Currently", meaning: "Ayni paytda", sound: "Currently" }
+        ],
+        quiz: {
+          question: "I ________ my homework right now.",
+          options: ["① do", "② am doing", "③ did", "④ done"],
+          correct: 1,
+          explanation: "'Right now' indicates an action happening at the moment of speaking."
+        }
+      },
+      {
+        id: 103,
+        title: "Lesson 3: IELTS Band 7.5 Writing",
+        subtitle: "Cohesion & Task Response",
+        status: "locked",
+        isPro: true,
+        icon: "👑",
+        color: "from-amber-500 to-orange-600",
+        theory: "High-scoring essays require clear discourse markers like 'Furthermore' and 'Consequently'.",
+        words: [
+          { word: "Consequently", meaning: "Natijada", sound: "Consequently" },
+          { word: "Nevertheless", meaning: "Shunga qaramasdan", sound: "Nevertheless" }
+        ],
+        quiz: {
+          question: "Select the formal synonym for 'As a result':",
+          options: ["① So", "② Consequently", "③ But", "④ Because"],
+          correct: 1,
+          explanation: "'Consequently' is a formal transition word for cause and effect."
+        }
+      }
+    ]
   };
 
-  // --- 5. 15 TA TOPIK & EPS TEST SAVOLLARI ---
+  // 15 ta TOPIK test savollari
   const koreanTopikQuestions = [
     {
       id: "kr1",
@@ -301,240 +336,17 @@ export default function App() {
     {
       id: "kr5",
       question: "5. [EPS-TOPIK] 물건을 포장할 때 쓰는 상자를 ________(으)로 닫으세요.",
-      options: ["① 테이프 (Skotch)", "② 빗자루 (Supurgi)", "③ 장갑 (Qo'lqop)", "④ 마스크"],
+      options: ["① 테이프 (Skotch)", "② 빗자ru (Supurgi)", "③ 장갑 (Qo'lqop)", "④ 마스크"],
       correct: "① 테이프 (Skotch)",
       audio: "물건을 포장할 때 쓰는 상자를 테이프로 닫으세요",
       explanation: "Qadoqlashda quti skotch (테이프) bilan yopiladi."
-    },
-    {
-      id: "kr6",
-      question: "6. 목이 아프고 열이 나요. 그래서 ________에 가서 약을 샀어요.",
-      options: ["① 약국 (Dorixona)", "② 은행 (Bank)", "③ 우체국 (Pochta)", "④ 공항 (Aeroport)"],
-      correct: "① 약국 (Dorixona)",
-      audio: "목이 아프고 열이 나요 그래서 약국에 가서 약을 샀어요",
-      explanation: "Dori sotib olish uchun dorixonaga (약국) boriladi."
-    },
-    {
-      id: "kr7",
-      question: "7. 버스 정류장에서 버스를 ________.",
-      options: ["① 기다립니다 (Kutaman)", "② 가르칩니다", "③ 만듭니다", "④ 전화합니다"],
-      correct: "① 기다립니다 (Kutaman)",
-      audio: "버스 정류장에서 버스를 기다립니다",
-      explanation: "Bekatda avtobus kutiladi (기다리다)."
-    },
-    {
-      id: "kr8",
-      question: "8. [EPS-TOPIK] 작업을 끝마친 후에는 기계의 전원을 ________.",
-      options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
-      correct: "① 끕니다 (O'chiraman)",
-      audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
-      explanation: "Ish tugagach elektr quvvati o'chiriladi (끄다)."
-    },
-    {
-      id: "kr9",
-      question: "9. 한국어 실력을 늘리기 위해서 매일 드라마를 ________.",
-      options: ["① 봅니다 (Ko'raman)", "② 씁니다", "③ 씻습니다", "④ 걷습니다"],
-      correct: "① 봅니다 (Ko'raman)",
-      audio: "한국어 실력을 늘리기 위해서 매일 드라마를 봅니다",
-      explanation: "Kino yoki serial ko'rmoq: 보다 -> 봅니다."
-    },
-    {
-      id: "kr10",
-      question: "10. 외국인등록증을 신청하려면 ________에 가야 합니다.",
-      options: ["① 출입국관리사무소 (Immigratsiya)", "② 영화관", "③ 세탁소", "④ 소방서"],
-      correct: "① 출입국관리사무소 (Immigratsiya)",
-      audio: "외국인등록증을 신청하려면 출입국관리사무소에 가야 합니다",
-      explanation: "ID kartani rasmiylashtirish uchun Immigratsiya idorasiga boriladi."
-    },
-    {
-      id: "kr11",
-      question: "11. [EPS-TOPIK] 무거운 물건을 높은 곳으로 올릴 때 ________을/를 사용합니다.",
-      options: ["① 지게차 (Forklift)", "② 사다리", "③ 드라이버", "④ 망치"],
-      correct: "① 지게차 (Forklift)",
-      audio: "무거운 물건을 높은 곳으로 올릴 때 지게차를 사용합니다",
-      explanation: "Og'ir yuklarni ko'tarish va tashish uchun yuk ko'taruvchi mashina (지게차) ishlatiladi."
-    },
-    {
-      id: "kr12",
-      question: "12. 한국에서는 밥을 먹을 때 숟가락과 ________을/를 사용합니다.",
-      options: ["① 젓가락 (Cho‘p)", "② 가위", "③ 볼펜", "④ 칼"],
-      correct: "① 젓가락 (Cho‘p)",
-      audio: "한국에서는 밥을 먹을 때 숟가락과 젓가락을 사용합니다",
-      explanation: "Koreyada ovqatlanishda qoshiq va cho'p (젓가락) ishlatiladi."
-    },
-    {
-      id: "kr13",
-      question: "13. 월급날이 되면 은행에 가서 돈을 통장에 ________.",
-      options: ["① 입금합니다 (Kiritaman)", "② 버립니다", "③ 잃어버립니다", "④ 찢습니다"],
-      correct: "① 입금합니다 (Kiritaman)",
-      audio: "월급날이 되면 은행에 가서 돈을 통장에 입금합니다",
-      explanation: "Oylik tushganda bank hisobiga pul kiritish (입금하다) deyiladi."
-    },
-    {
-      id: "kr14",
-      question: "14. [EPS-TOPIK] 페인트칠을 할 때 유해 물질을 막기 위해 ________을/를 씁니다.",
-      options: ["① 방독마스크 (Gazniqob)", "② 귀마개", "③ 벨트", "④ 안대"],
-      correct: "① 방독마스크 (Gazniqob)",
-      audio: "페인트칠을 할 때 유해 물질을 막기 위해 방독마스크를 씁니다",
-      explanation: "Zaharli moddalardan nafas yo'lini himoyalashda maxsus niqob (방독마스크) taqiladi."
-    },
-    {
-      id: "kr15",
-      question: "15. 이번 주말에는 고향 친구를 만나서 즐거운 시간을 ________.",
-      options: ["① 보냈습니다 (O‘tkazdim)", "② 팔았습니다", "③ 빌렸습니다", "④ 던졌습니다"],
-      correct: "① 보냈습니다 (O‘tkazdim)",
-      audio: "이번 주말에는 고향 친구를 만나서 즐거운 시간을 보냈습니다",
-      explanation: "Vaqtni maroqli o'tkazmoq birikmasi '시간을 보내다' bo'ladi."
-    }
-  ];
-
-  // --- 6. 15 TA INGLIZ TILI SAVOLLARI ---
-  const englishIeltsQuestions = [
-    {
-      id: "en1",
-      question: "1. Academic Reading: Bilingualism consistently enhances mental agility and executive ________.",
-      options: ["① control", "② delay", "③ deterioration", "④ weakness"],
-      correct: "① control",
-      audio: "Bilingualism consistently enhances mental agility and executive control",
-      explanation: "Matnda aytilgan: 'navigating between languages strengthens executive control'."
-    },
-    {
-      id: "en2",
-      question: "2. The neuroprotective benefits delay neurological symptoms by an average of:",
-      options: ["① 4.5 years", "② 1.5 years", "③ 10 years", "④ 6 months"],
-      correct: "① 4.5 years",
-      audio: "The neuroprotective benefits delay neurological symptoms by an average of 4.5 years",
-      explanation: "Matnda aniq keltirilgan: postponing symptoms by 4.5 years."
-    },
-    {
-      id: "en3",
-      question: "3. Select the best transition word for expressing contrast in Task 2:",
-      options: ["① In contrast", "② Furthermore", "③ Consequently", "④ Namely"],
-      correct: "① In contrast",
-      audio: "Select the best transition word for expressing contrast in Task 2",
-      explanation: "'In contrast' qarama-qarshi fikrlarni bog'lash uchun ishlatiladi."
-    },
-    {
-      id: "en4",
-      question: "4. The word 'subsequent' is closest in meaning to:",
-      options: ["① following", "② prior", "③ accidental", "④ permanent"],
-      correct: "① following",
-      audio: "The word subsequent is closest in meaning to following",
-      explanation: "Subsequent — keyingi, undan keyin keluvchi."
-    },
-    {
-      id: "en5",
-      question: "5. In IELTS Listening Section 1, speakers typically discuss:",
-      options: ["① everyday social situations", "② university lectures", "③ scientific debates", "④ history of art"],
-      correct: "① everyday social situations",
-      audio: "In IELTS Listening Section 1 speakers typically discuss everyday social situations",
-      explanation: "Section 1 da kundalik hayotga oid dialoglar bo'ladi."
-    },
-    {
-      id: "en6",
-      question: "6. 'To shed light on' something means to:",
-      options: ["① clarify or reveal details", "② turn off lights", "③ hide evidence", "④ complain loudly"],
-      correct: "① clarify or reveal details",
-      audio: "To shed light on something means to clarify or reveal details",
-      explanation: "Shed light on — biror masalani oydinlashtirish."
-    },
-    {
-      id: "en7",
-      question: "7. Writing Task 2 essays must be at least ________ words long.",
-      options: ["① 250", "② 150", "③ 350", "④ 100"],
-      correct: "① 250",
-      audio: "Writing Task 2 essays must be at least 250 words long",
-      explanation: "Task 2 uchun minimal so'z talabi — 250 ta so'z."
-    },
-    {
-      id: "en8",
-      question: "8. Select the formal synonym for 'a lot of people':",
-      options: ["① numerous individuals", "② heaps of folk", "③ bunch of guys", "④ tons of persons"],
-      correct: "① numerous individuals",
-      audio: "Select the formal synonym for a lot of people",
-      explanation: "'Numerous individuals' akademik yozuvda eng to'g'ri ifodadir."
-    },
-    {
-      id: "en9",
-      question: "9. Identify the grammatical error: 'He has lived in London since five years.'",
-      options: ["① 'since' should be 'for'", "② 'has lived' is wrong", "③ 'in' should be 'at'", "④ No error"],
-      correct: "① 'since' should be 'for'",
-      audio: "He has lived in London for five years",
-      explanation: "Vaqt davomiyligi (5 years) uchun 'for' ishlatiladi."
-    },
-    {
-      id: "en10",
-      question: "10. In Speaking Part 2, how much preparation time is given?",
-      options: ["① 1 minute", "② 3 minutes", "③ 30 seconds", "④ No preparation"],
-      correct: "① 1 minute",
-      audio: "In Speaking Part 2 how much preparation time is given",
-      explanation: "Cue card bo'yicha tayyorlanish uchun 1 daqiqa beriladi."
-    },
-    {
-      id: "en11",
-      question: "11. 'Unprecedented' means:",
-      options: ["① never having happened before", "② predictable", "③ very slow", "④ extremely expensive"],
-      correct: "① never having happened before",
-      audio: "Unprecedented means never having happened before",
-      explanation: "Unprecedented — misli ko'rilmagan hodisa."
-    },
-    {
-      id: "en12",
-      question: "12. What does 'alleviate' mean?",
-      options: ["① make less severe or reduce", "② destroy completely", "③ increase greatly", "④ build quickly"],
-      correct: "① make less severe or reduce",
-      audio: "What does alleviate mean",
-      explanation: "Alleviate — og'riq yoki muammoni yengillashtirish."
-    },
-    {
-      id: "en13",
-      question: "13. In academic reading, True / False / Not Given tests your ability to:",
-      options: ["① identify factual information accurately", "② memorize the text", "③ translate word by word", "④ guess grammar"],
-      correct: "① identify factual information accurately",
-      audio: "Identify factual information accurately",
-      explanation: "Bu savol turi matndagi faktlarni aniq tekshiradi."
-    },
-    {
-      id: "en14",
-      question: "14. A person who speaks many languages fluently is a:",
-      options: ["① polyglot", "② monolingual", "③ botanist", "④ linguist only"],
-      correct: "① polyglot",
-      audio: "A person who speaks many languages fluently is a polyglot",
-      explanation: "Polyglot — ko'p tillarni biluvchi shaxs."
-    },
-    {
-      id: "en15",
-      question: "15. 'To take something for granted' means:",
-      options: ["① fail to appreciate its true value", "② buy something on credit", "③ take it strictly on contract", "④ give a promise"],
-      correct: "① fail to appreciate its true value",
-      audio: "Fail to appreciate its true value",
-      explanation: "Biror ne'matning qadriga yetmaslik."
     }
   ];
 
   const [testAnswers, setTestAnswers] = useState({});
   const [testChecked, setTestChecked] = useState(false);
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        alert("Rasm hajmi 3MB dan oshmasligi kerak.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Data = reader.result;
-        setEditForm(prev => ({ ...prev, photoBase64: base64Data }));
-        setUserProfile(prev => ({ ...prev, photoBase64: base64Data }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const currentCourse = coursesData[selectedLanguage] || coursesData.kr;
-  const activeLessonsList = currentCourse.lessons.filter(l => l.level === selectedLevel);
-  const activeQuestionsList = selectedLanguage === 'kr' ? koreanTopikQuestions : englishIeltsQuestions;
+  const currentRoadmap = roadmapLessons[selectedLanguage] || roadmapLessons.kr;
 
   const handleOpenLesson = (lesson) => {
     if (lesson.isPro && !userProfile.isPro) {
@@ -554,35 +366,52 @@ export default function App() {
     return '499.000 so‘m';
   };
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert("Rasm hajmi 3MB dan oshmasligi kerak.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Data = reader.result;
+        setEditForm(prev => ({ ...prev, photoBase64: base64Data }));
+        setUserProfile(prev => ({ ...prev, photoBase64: base64Data }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const theme = {
-    bg: isDarkMode ? 'bg-[#0b0c16] text-slate-100' : 'bg-slate-100 text-slate-900',
-    card: isDarkMode ? 'bg-[#151728] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-md',
-    subCard: isDarkMode ? 'bg-[#1b1e34] border-slate-700/60' : 'bg-slate-50 border-slate-200',
-    header: isDarkMode ? 'bg-[#0e101f]/95 border-b border-slate-800/80 backdrop-blur-xl' : 'bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm',
+    bg: isDarkMode ? 'bg-[#080912] text-slate-100' : 'bg-slate-100 text-slate-900',
+    card: isDarkMode ? 'bg-[#121424] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-md',
+    subCard: isDarkMode ? 'bg-[#181b30] border-slate-700/60' : 'bg-slate-50 border-slate-200',
+    header: isDarkMode ? 'bg-[#0b0d1a]/95 border-b border-slate-800/80 backdrop-blur-xl' : 'bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm',
     textMain: isDarkMode ? 'text-white' : 'text-slate-900',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
-    navBg: isDarkMode ? 'bg-[#121424]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200 shadow-xl',
+    navBg: isDarkMode ? 'bg-[#0e101f]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200 shadow-xl',
     inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
   };
 
   // ==========================================
-  // 1. ZAMONAVIY BOYITILGAN BOSH SAHIFA
+  // 1. ASOSIY BOSH SAHIFA (ROADMAP & KUNNING SO‘ZI)
   // ==========================================
   const renderHome = () => {
     const isKr = selectedLanguage === 'kr';
 
     return (
-      <div className="space-y-6 animate-fadeIn pb-6">
+      <div className="space-y-6 animate-fadeIn pb-12">
 
-        {/* YANGILANGAN ULTRA-ZAMONAVIY BANNER (ESKI 72% LI DOIRA OLIB TASHLANDI) */}
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#2b1f66] via-[#1c1b48] to-[#11122a] p-6 text-white border border-indigo-500/30 shadow-2xl">
-          <div className="relative z-10 space-y-4">
+        {/* TOZALANGAN VA ANIQ HERO BANNER (DOIRA OLIB TASHLANDI) */}
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#281d60] via-[#1b1a46] to-[#0f1026] p-6 text-white border border-indigo-500/30 shadow-2xl">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] bg-indigo-500/25 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
-                FARIZA ACADEMY • {currentCourse.title.toUpperCase()}
+              <span className="text-[11px] font-black uppercase tracking-wider bg-indigo-500/25 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
+                {isKr ? 'KOREYS TILI DASTURI' : 'ENGLISH IELTS PROGRAM'}
               </span>
               <div className="flex items-center gap-1.5 text-xs font-black text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-                <Flame size={15} className="fill-amber-400" /> {userProfile.streak} KUNLIK STREAK
+                <Flame size={14} className="fill-amber-400" /> {userProfile.streak} KUNLIK STREAK
               </div>
             </div>
 
@@ -591,20 +420,20 @@ export default function App() {
                 Salom, {userProfile.name}! 👋
               </h2>
               <p className="text-xs text-indigo-200/80 leading-relaxed mt-1 font-medium">
-                {currentCourse.desc}. Bugungi 15 daqiqalik darsingiz sizni kutmoqda.
+                {isKr ? "Koreys tilini noldan TOPIK II gacha o‘rganish." : "Ingliz tilini noldan IELTS 7.5 gacha o‘rganish."} Bugungi darsingiz tayyor.
               </p>
             </div>
 
-            {/* Kunlik Vazifalar Barometri */}
-            <div className="bg-black/30 rounded-2xl p-3.5 border border-white/10 flex items-center justify-between">
+            {/* Kunlik Vazifa Barometri */}
+            <div className="bg-black/35 rounded-2xl p-4 border border-white/10 flex items-center justify-between">
               <div className="space-y-1">
                 <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider">Bugungi Maqsad:</span>
                 <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-emerald-400" /> 1 ta dars + 10 ta yangi so‘z
+                  <CheckCircle2 size={16} className="text-emerald-400" /> 1 ta dars + 10 ta audio so‘z
                 </div>
               </div>
               <button 
-                onClick={() => setActiveTab('academy')}
+                onClick={() => handleOpenLesson(currentRoadmap[1] || currentRoadmap[0])}
                 className="inline-flex items-center gap-1.5 bg-[#b8a5fe] hover:bg-[#a892fe] text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition transform active:scale-95"
               >
                 <span>Darsni boshlash</span>
@@ -618,18 +447,18 @@ export default function App() {
         {!userProfile.isPro && (
           <div 
             onClick={() => { setPaymentStep('select'); setIsPaywallOpen(true); }}
-            className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-4.5 text-slate-950 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition"
+            className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-4 text-slate-950 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition"
           >
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/30 backdrop-blur-md flex items-center justify-center font-black">
-                <Crown size={26} className="text-white" />
+              <div className="w-11 h-11 rounded-2xl bg-white/30 backdrop-blur-md flex items-center justify-center font-black">
+                <Crown size={24} className="text-white" />
               </div>
               <div>
                 <h4 className="font-black text-sm text-white">Fariza Academy PRO</h4>
-                <p className="text-[11px] text-white/90 font-medium">EPS-TOPIK & IELTS 7.5 darslarini oching</p>
+                <p className="text-[11px] text-white/90 font-medium">Barcha EPS-TOPIK & IELTS darslarini oching</p>
               </div>
             </div>
-            <span className="bg-white text-slate-950 text-xs font-black px-3.5 py-2 rounded-xl shadow">
+            <span className="bg-white text-slate-950 text-xs font-black px-3 py-1.5 rounded-xl shadow">
               Ulanish
             </span>
           </div>
@@ -655,106 +484,92 @@ export default function App() {
           </button>
         </div>
 
-        {/* 1. KUNNING SO‘ZI VA AUDIOSI (INTERAKTIV FLASHCARD) */}
+        {/* BOYITILGAN KUNNING SO‘ZI (NAMUNAVIY GAP VA OVOZ BILAN) */}
         <div className={`${theme.card} border rounded-3xl p-5 space-y-3 relative overflow-hidden`}>
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-              <Sparkles size={14} /> Kunning Oltin So‘zi
+              <Sparkles size={14} /> Kunning Oltin Iborasi
             </span>
             <button 
-              onClick={() => speakText(isKr ? "열심히 공부하다" : "Consistent effort leads to success", isKr ? 'ko-KR' : 'en-US')}
+              onClick={() => speakText(isKr ? "열심히 공부하면 성공합니다" : "Consistent effort always leads to victory", isKr ? 'ko-KR' : 'en-US')}
               className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500 hover:text-white transition active:scale-95"
             >
               <Volume2 size={18} />
             </button>
           </div>
 
-          <div 
-            onClick={() => setFlashcardFlipped(!flashcardFlipped)}
-            className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center cursor-pointer active:scale-98 transition space-y-1"
-          >
-            <div className="text-2xl font-black text-white">
-              {isKr ? "열심히 공부하다" : "Consistent effort"}
-            </div>
-            <div className="text-xs text-slate-400">
-              {flashcardFlipped ? (
-                <span className="text-emerald-400 font-bold">
-                  {isKr ? "Ma’nosi: Tirishqoqlik bilan o‘rganmoq (Yashirish uchun bosing)" : "Ma’nosi: Doimiy tinimsiz harakat (Yashirish uchun bosing)"}
-                </span>
-              ) : (
-                <span className="text-indigo-400 font-semibold">Tarjimasini ko‘rish uchun bosing 👆</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 2. DUOLINGO USLUBIDAGI BOSQICHLAR XARITASI (PATH ROADMAP) */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h3 className={`font-black text-sm uppercase tracking-wider ${theme.textMain}`}>
-              Ta’lim Bosqichlari (Roadmap)
-            </h3>
-            <button 
-              onClick={() => setActiveTab('academy')}
-              className="text-xs font-bold text-indigo-500 hover:underline"
-            >
-              Barcha darslar
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3.5">
-            {currentCourse.levels.map(lvl => (
-              <div 
-                key={lvl.id}
-                onClick={() => {
-                  setSelectedLevel(lvl.id);
-                  setActiveTab('academy');
-                }}
-                className={`${theme.card} border rounded-3xl p-4.5 cursor-pointer active:scale-95 transition hover:border-indigo-500/50 space-y-2.5 shadow-md`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-black text-xl">
-                    {lvl.id === 'beginner' ? '🌱' : lvl.id === 'elementary' ? '🌿' : lvl.id === 'intermediate' ? '🌳' : '🎓'}
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-black px-2 py-0.5 rounded-full">
-                    Faol
-                  </span>
-                </div>
-                <div>
-                  <h4 className={`font-black text-sm ${theme.textMain}`}>{lvl.title}</h4>
-                  <p className={`text-[11px] ${theme.textMuted} mt-0.5 leading-snug`}>{lvl.desc}</p>
-                </div>
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+            <div>
+              <div className="text-xl font-black text-white">
+                {isKr ? "열심히 공부하다" : "Consistent effort"}
               </div>
-            ))}
+              <div className="text-[11px] text-indigo-400 font-semibold mt-0.5">
+                {isKr ? "[Yol-shim-hi gong-bu-ha-da]" : "[kənˈsɪstənt ˈefət]"}
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 border-t border-slate-800/80 pt-2 leading-relaxed">
+              <strong>Namunaviy gap:</strong> {isKr ? "우리는 한국어를 열심히 공부해요 (Biz koreys tilini astoydil o‘rganamiz)." : "Consistent effort will guarantee your high score."}
+            </p>
           </div>
         </div>
 
-        {/* 3. JONLI MULOQOT VA IMTIHON BLOKLARI */}
-        <div className="grid grid-cols-2 gap-3.5">
-          <div 
-            onClick={() => setActiveTab('tests')}
-            className={`${theme.card} border rounded-3xl p-4 cursor-pointer active:scale-95 transition hover:border-indigo-500/50 space-y-2`}
-          >
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center">
-              <Award size={22} />
-            </div>
-            <div>
-              <h4 className={`font-black text-sm ${theme.textMain}`}>15 Ta Imtihon Testi</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>Haqiqiy TOPIK & IELTS</p>
-            </div>
+        {/* HAQIQIY DUOLINGO USLUBIDAGI BOSQICHLAR XARITASI (VERTICAL ROADMAP PATH) */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className={`font-black text-base ${theme.textMain}`}>
+              Darslar Yo‘lagi (Learning Path)
+            </h3>
+            <span className="text-xs font-bold text-indigo-400">
+              {currentRoadmap.filter(l => l.status === 'completed').length} / {currentRoadmap.length} o‘tildi
+            </span>
           </div>
 
-          <div 
-            onClick={() => setActiveTab('ai')}
-            className={`${theme.card} border rounded-3xl p-4 cursor-pointer active:scale-95 transition hover:border-indigo-500/50 space-y-2`}
-          >
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
-              <Bot size={22} />
-            </div>
-            <div>
-              <h4 className={`font-black text-sm ${theme.textMain}`}>FarizaAI Murabbiy</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>Jonli ovozli suhbat</p>
-            </div>
+          {/* Duolingo Vertikal Bekatlari */}
+          <div className="relative py-4 flex flex-col items-center space-y-6">
+            {/* Orqa ulovchi chiziq */}
+            <div className="absolute top-8 bottom-8 w-1.5 bg-slate-800 rounded-full z-0"></div>
+
+            {currentRoadmap.map((lesson, idx) => {
+              const isLeft = idx % 2 === 0;
+              const isLocked = lesson.status === 'locked' && (!userProfile.isPro && lesson.isPro);
+
+              return (
+                <div 
+                  key={lesson.id} 
+                  className={`relative z-10 flex items-center w-full max-w-xs ${isLeft ? 'justify-start pl-4' : 'justify-end pr-4'}`}
+                >
+                  <div 
+                    onClick={() => handleOpenLesson(lesson)}
+                    className="flex items-center gap-3 cursor-pointer group active:scale-95 transition"
+                  >
+                    {/* Dumaloq Bekat Tugmasi */}
+                    <div className={`w-18 h-18 rounded-3xl p-1 bg-gradient-to-tr ${lesson.color} shadow-xl flex items-center justify-center relative transition transform group-hover:scale-105 ring-4 ${
+                      lesson.status === 'current' ? 'ring-indigo-500/60 animate-bounce' : 'ring-slate-900'
+                    }`}>
+                      <div className="w-full h-full rounded-[22px] bg-slate-900/40 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+                        <span className="text-2xl">{lesson.icon}</span>
+                        {lesson.isPro && !userProfile.isPro && (
+                          <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-full shadow">
+                            PRO
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Dars nomi va ma'lumoti */}
+                    <div className="text-left max-w-[130px]">
+                      <div className="text-xs font-black text-white group-hover:text-indigo-400 transition leading-tight">
+                        {lesson.title}
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                        {lesson.subtitle}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -776,85 +591,40 @@ export default function App() {
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
           <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">
-            {currentCourse.title}
+            Barcha Darslar
           </span>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {currentCourse.levels.map(lvl => (
-            <button
-              key={lvl.id}
-              onClick={() => setSelectedLevel(lvl.id)}
-              className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition ${
-                selectedLevel === lvl.id 
-                  ? 'bg-indigo-600 text-white shadow-lg' 
-                  : `${theme.subCard} text-slate-400 hover:text-white`
-              }`}
-            >
-              {lvl.title}
-            </button>
-          ))}
-        </div>
-
         <div className="space-y-3">
-          <div className="px-1 flex items-center justify-between">
-            <div>
-              <h3 className={`font-black text-base ${theme.textMain}`}>{currentCourse.subtitle}</h3>
-              <p className={`text-xs ${theme.textMuted} mt-0.5`}>Qadamma-qadam amaliy darslar</p>
-            </div>
-            {userProfile.isPro && (
-              <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1">
-                <Crown size={12} /> PRO AKTIV
-              </span>
-            )}
-          </div>
-
-          {activeLessonsList.length > 0 ? (
-            activeLessonsList.map(lesson => {
-              const completedList = userProfile.completedLessons || [];
-              const isCompleted = completedList.includes(lesson.id);
-              const isLocked = lesson.isPro && !userProfile.isPro;
-
-              return (
-                <div 
-                  key={lesson.id}
-                  onClick={() => handleOpenLesson(lesson)}
-                  className={`${theme.card} border rounded-3xl p-4.5 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500/50 shadow-md ${
-                    isLocked ? 'opacity-90 border-amber-500/30' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
-                      isLocked ? 'bg-amber-500/20 text-amber-400' : isCompleted ? 'bg-emerald-500/20 text-emerald-500' : 'bg-indigo-500/20 text-indigo-500'
-                    }`}>
-                      {isLocked ? <Lock size={22} /> : isCompleted ? <CheckCircle2 size={24} /> : <BookOpen size={24} />}
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-indigo-500 font-bold uppercase">{lesson.section}</span>
-                      <h4 className={`font-black text-sm mt-0.5 ${theme.textMain}`}>{lesson.title}</h4>
-                      <p className={`text-xs ${theme.textMuted} mt-0.5`}>{lesson.desc}</p>
-                    </div>
-                  </div>
-                  
-                  {isLocked ? (
-                    <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
-                      <Crown size={11} /> PRO
-                    </span>
-                  ) : (
-                    <span className="text-[10px] bg-emerald-500/15 text-emerald-500 font-black px-2.5 py-1 rounded-full">
-                      Bepul
-                    </span>
-                  )}
+          {currentRoadmap.map(lesson => (
+            <div 
+              key={lesson.id}
+              onClick={() => handleOpenLesson(lesson)}
+              className={`${theme.card} border rounded-3xl p-4.5 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500/50 shadow-md`}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
+                  lesson.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
+                }`}>
+                  {lesson.status === 'completed' ? <CheckCircle2 size={24} /> : <BookOpen size={24} />}
                 </div>
-              );
-            })
-          ) : (
-            <div className={`${theme.card} border rounded-3xl p-8 text-center space-y-2`}>
-              <Award size={32} className="mx-auto text-indigo-500" />
-              <h4 className={`font-bold text-sm ${theme.textMain}`}>Darslar yuklanmoqda</h4>
-              <p className={`text-xs ${theme.textMuted}`}>Boshqa bosqich darslarini ko‘rib turing.</p>
+                <div>
+                  <h4 className={`font-black text-sm ${theme.textMain}`}>{lesson.title}</h4>
+                  <p className={`text-xs ${theme.textMuted} mt-0.5`}>{lesson.subtitle}</p>
+                </div>
+              </div>
+
+              {lesson.isPro && !userProfile.isPro ? (
+                <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
+                  <Crown size={11} /> PRO
+                </span>
+              ) : (
+                <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-black px-2.5 py-1 rounded-full">
+                  Ochiq
+                </span>
+              )}
             </div>
-          )}
+          ))}
         </div>
       </div>
     );
@@ -870,10 +640,10 @@ export default function App() {
       <div className="space-y-5 animate-fadeIn pb-8">
         <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <button 
-            onClick={() => setActiveTab('academy')}
+            onClick={() => setActiveTab('home')}
             className={`flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold ${theme.subCard} border px-3 py-1.5 rounded-xl active:scale-95`}
           >
-            <ArrowLeft size={16} /> Darslar
+            <ArrowLeft size={16} /> Bosh sahifa
           </button>
           <span className={`text-xs font-black ${theme.textMain}`}>
             {activeLesson.title}
@@ -903,8 +673,8 @@ export default function App() {
 
         {lessonStep === 'theory' && (
           <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
-            <div className="flex items-center gap-2 text-indigo-500 font-black text-xs uppercase tracking-wider">
-              <Sparkles size={16} /> Dars Nazariyasi
+            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+              <Sparkles size={16} /> Dars Qoidasi
             </div>
             <h3 className={`font-black text-lg ${theme.textMain}`}>{activeLesson.title}</h3>
             <p className={`text-sm leading-relaxed font-normal ${theme.subCard} p-4 rounded-2xl border`}>
@@ -923,7 +693,7 @@ export default function App() {
           <div className="space-y-3">
             <div className="px-1">
               <h4 className={`font-black text-sm ${theme.textMain}`}>Yangi so‘zlar va Audio Talaffuz:</h4>
-              <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing (Qurilmangiz ovozi yoqilganiga ishonch hosil qiling)</p>
+              <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing</p>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
@@ -934,7 +704,7 @@ export default function App() {
                   className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500 group`}
                 >
                   <div className="flex items-center gap-3">
-                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500 group-hover:bg-indigo-600 group-hover:text-white transition">
+                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition">
                       <Volume2 size={20} />
                     </button>
                     <div>
@@ -942,7 +712,7 @@ export default function App() {
                       <div className={`text-xs ${theme.textMuted}`}>{w.meaning}</div>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-indigo-500 flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-indigo-400 flex items-center gap-1">
                     Eshitish 🔊
                   </span>
                 </div>
@@ -960,7 +730,7 @@ export default function App() {
 
         {lessonStep === 'quiz' && (
           <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
-            <div className="flex items-center gap-2 text-indigo-500 font-black text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
               <CheckCircle2 size={16} /> Yakuniy Test
             </div>
             <h4 className={`font-black text-base ${theme.textMain}`}>{activeLesson.quiz.question}</h4>
@@ -983,7 +753,7 @@ export default function App() {
 
             {quizAnswer !== null && (
               <div className={`p-3.5 rounded-2xl text-xs ${
-                quizAnswer === activeLesson.quiz.correct ? 'bg-emerald-500/20 text-emerald-500' : 'bg-rose-500/20 text-rose-500'
+                quizAnswer === activeLesson.quiz.correct ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
               }`}>
                 <div className="font-bold">
                   {quizAnswer === activeLesson.quiz.correct ? "To‘g‘ri javob! 🎉" : "Noto‘g‘ri javob"}
@@ -1004,14 +774,14 @@ export default function App() {
                     };
                   });
                   alert("Tabriklaymiz! Dars yakunlandi (+50 XP qo‘shildi).");
-                  setActiveTab('academy');
+                  setActiveTab('home');
                 } else {
                   alert("Iltimos, to‘g‘ri javobni tanlang!");
                 }
               }}
               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-xs transition shadow-lg"
             >
-              Darsni Tugatish va Natijani Saqlash
+              Darsni Tugatish va Saqlash
             </button>
           </div>
         )}
@@ -1032,19 +802,19 @@ export default function App() {
           >
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
-          <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">
-            {selectedLanguage === 'kr' ? 'TOPIK & EPS (15 ta Savol)' : 'IELTS Test (15 ta Savol)'}
+          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">
+            Imtihon Testlari
           </span>
         </div>
 
         <div className="space-y-3">
-          {activeQuestionsList.map((q) => (
+          {koreanTopikQuestions.map((q) => (
             <div key={q.id} className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
               <div className="flex items-start justify-between gap-2">
                 <p className={`font-bold text-sm leading-relaxed ${theme.textMain}`}>{q.question}</p>
                 <button 
-                  onClick={() => speakText(q.audio, selectedLanguage === 'kr' ? 'ko-KR' : 'en-US')}
-                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-500 rounded-xl shrink-0 active:scale-90 transition"
+                  onClick={() => speakText(q.audio, 'ko-KR')}
+                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-400 rounded-xl shrink-0 active:scale-90 transition"
                   title="Savolni tinglash"
                 >
                   <Volume2 size={18} />
@@ -1069,7 +839,7 @@ export default function App() {
 
               {testChecked && (
                 <div className={`mt-2 p-3.5 rounded-2xl ${theme.subCard} text-[11px] space-y-1`}>
-                  <span className={testAnswers[q.id] === q.correct ? "text-emerald-500 font-black" : "text-rose-500 font-black"}>
+                  <span className={testAnswers[q.id] === q.correct ? "text-emerald-400 font-black" : "text-rose-400 font-black"}>
                     {testAnswers[q.id] === q.correct ? "✓ To‘g‘ri javob" : `✗ Xato (To‘g‘risi: ${q.correct})`}
                   </span>
                   <p className={`${theme.textMuted}`}>{q.explanation}</p>
@@ -1082,7 +852,7 @@ export default function App() {
             onClick={() => setTestChecked(true)}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-sm transition active:scale-95 shadow-xl"
           >
-            Barcha 15 Ta Savolni Tekshirish va Tahlil Qilish
+            Javoblarni Tekshirish va Tahlil Qilish
           </button>
         </div>
       </div>
@@ -1101,7 +871,7 @@ export default function App() {
         >
           <ArrowLeft size={16} /> Bosh sahifa
         </button>
-        <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">FarizaAI Voice Coach</span>
+        <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">FarizaAI Voice Coach</span>
       </div>
 
       <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
@@ -1171,7 +941,7 @@ export default function App() {
             <h3 className={`text-xl font-black tracking-tight ${theme.textMain}`}>{userProfile.name}</h3>
             {userProfile.isPro && <Crown size={18} className="text-amber-400 fill-amber-400" />}
           </div>
-          <p className="text-xs text-indigo-500 font-bold mt-0.5">• {userProfile.currentLevel || 'B2 Upper-Intermediate'}</p>
+          <p className="text-xs text-indigo-400 font-bold mt-0.5">• {userProfile.currentLevel || 'B2 Upper-Intermediate'}</p>
         </div>
       </div>
 
@@ -1187,12 +957,12 @@ export default function App() {
 
         <div className="flex justify-between items-center py-2 border-b border-slate-700/30">
           <span className={theme.textMuted}>Tugallangan Darslar:</span>
-          <span className="font-black text-emerald-500 text-sm">{(userProfile.completedLessons || []).length} ta dars</span>
+          <span className="font-black text-emerald-400 text-sm">{(userProfile.completedLessons || []).length} ta dars</span>
         </div>
 
         <div className="flex justify-between items-center py-2">
           <span className={theme.textMuted}>To‘plangan Tajriba (XP):</span>
-          <span className="font-black text-amber-500 text-sm">{userProfile.xp} XP</span>
+          <span className="font-black text-amber-400 text-sm">{userProfile.xp} XP</span>
         </div>
       </div>
     </div>
@@ -1230,6 +1000,7 @@ export default function App() {
               {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-600" />}
             </button>
 
+            {/* HEADERDA HAQIQIY RASM AKSI */}
             <button 
               onClick={() => setActiveTab('profile')}
               className="w-9 h-9 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md active:scale-95 transition flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-black text-sm"
@@ -1244,7 +1015,7 @@ export default function App() {
         </header>
       )}
 
-      {/* 2. REAL TO‘LOV TIZIMI (CLICK / PAYME) */}
+      {/* 2. REAL TO‘LOV TIZIMI */}
       {isPaywallOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
@@ -1273,7 +1044,6 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* 3 ta Tarif tanlovi */}
                 <div className="space-y-2 text-left text-xs font-bold pt-1">
                   <div 
                     onClick={() => setSelectedPlan('monthly')}
@@ -1349,7 +1119,7 @@ export default function App() {
                 </div>
 
                 <p className="text-[11px] text-slate-400 leading-snug">
-                  Iltimos, Click yoki Payme orqali yuqoridagi kartaga to‘lov qiling va chekni saqlang. To‘lov qilingach, administrator tasdiqlab hisobingizni PRO qiladi:
+                  Iltimos, Click yoki Payme orqali yuqoridagi kartaga to‘lov qiling va chekni saqlang. To‘lov qilingach, hisobingiz PRO ga o‘tadi:
                 </p>
 
                 <div className="space-y-2 pt-1">
@@ -1368,7 +1138,7 @@ export default function App() {
                     onClick={() => setPaymentStep('select')}
                     className="w-full py-2.5 bg-slate-800 text-slate-400 font-bold rounded-2xl text-xs text-center"
                   >
-                    Orqaga (Tarifni o‘zgartirish)
+                    Orqaga
                   </button>
                 </div>
               </div>
@@ -1428,7 +1198,7 @@ export default function App() {
                   onClick={() => { setActiveTab('academy'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <GraduationCap size={18} className="text-indigo-500" /> Akademiya Darslari
+                  <GraduationCap size={18} className="text-indigo-400" /> Barcha Darslar
                 </button>
                 <button 
                   onClick={() => { setPaymentStep('select'); setIsPaywallOpen(true); setIsSidebarOpen(false); }}
@@ -1440,32 +1210,32 @@ export default function App() {
                   onClick={() => { setActiveTab('tests'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Award size={18} className="text-emerald-500" /> Imtihon Testlari (15 ta)
+                  <Award size={18} className="text-emerald-400" /> Imtihon Testlari
                 </button>
                 <button 
                   onClick={() => { setActiveTab('ai'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Bot size={18} className="text-purple-500" /> FarizaAI Murabbiy
+                  <Bot size={18} className="text-purple-400" /> FarizaAI Murabbiy
                 </button>
                 <button 
                   onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }}
                   className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard}`}
                 >
-                  <User size={18} className="text-amber-500" /> Shaxsiy Profil
+                  <User size={18} className="text-amber-400" /> Shaxsiy Profil
                 </button>
               </div>
             </div>
 
             <div className="pt-4 border-t border-slate-700/40 text-xs text-slate-400">
-              Fariza Academy Platformasi v4.0
+              Fariza Academy v4.2
             </div>
           </div>
         </div>
       )}
 
       {/* 4. ASOSIY MAYDON */}
-      <main className="flex-1 w-full max-w-md mx-auto p-4 pb-44 box-border">
+      <main className="flex-1 w-full max-w-md mx-auto p-4 pb-48 box-border">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'academy' && renderAcademy()}
         {activeTab === 'lesson_detail' && renderLessonDetail()}
@@ -1481,7 +1251,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('home')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'home' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
+              activeTab === 'home' ? 'text-indigo-400 font-black' : `${theme.textMuted}`
             }`}
           >
             <Compass size={26} strokeWidth={activeTab === 'home' ? 2.8 : 2} />
@@ -1492,7 +1262,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('academy')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'academy' || activeTab === 'lesson_detail' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
+              activeTab === 'academy' || activeTab === 'lesson_detail' ? 'text-indigo-400 font-black' : `${theme.textMuted}`
             }`}
           >
             <GraduationCap size={26} strokeWidth={2.8} />
@@ -1512,13 +1282,13 @@ export default function App() {
             }`}>
               <Bot size={32} />
             </div>
-            <span className="text-xs text-indigo-500 font-black mt-1">FarizaAI</span>
+            <span className="text-xs text-indigo-400 font-black mt-1">FarizaAI</span>
           </button>
 
           <button 
             onClick={() => setActiveTab('tests')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'tests' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
+              activeTab === 'tests' ? 'text-indigo-400 font-black' : `${theme.textMuted}`
             }`}
           >
             <Award size={26} strokeWidth={2.8} />
@@ -1529,7 +1299,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('profile')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'profile' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
+              activeTab === 'profile' ? 'text-indigo-400 font-black' : `${theme.textMuted}`
             }`}
           >
             <User size={26} strokeWidth={2.8} />
@@ -1550,7 +1320,7 @@ export default function App() {
               {editForm.photoBase64 ? (
                 <img src={editForm.photoBase64} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-md" />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-500 text-lg">
+                <div className="w-16 h-16 rounded-full bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 text-lg">
                   Rasm
                 </div>
               )}
