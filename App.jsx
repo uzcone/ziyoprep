@@ -3,19 +3,17 @@ import {
   BookOpen, Headphones, PenTool, Mic, Bot, User, 
   Play, Pause, RotateCcw, CheckCircle2, XCircle, Award, 
   Sparkles, Send, Volume2, ChevronRight, Edit3, ArrowLeft, 
-  Layers, Sun, Moon
+  Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
+  CheckSquare, Square, FileText, Compass, BarChart3, BookmarkCheck
 } from 'lucide-react';
 
 export default function App() {
-  // --- 1. KUNDUZGI / KECHKI REJIM (AUTO DARK / LIGHT) ---
+  // --- 1. REJIM (DARK / LIGHT THEME) ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('ziyoprep_theme');
-    if (savedTheme !== null) {
-      return savedTheme === 'dark';
-    }
-    // Avtomatik soat tekshiruvi: 07:00 dan 19:00 gacha oq, kechqurun qora
-    const currentHour = new Date().getHours();
-    return currentHour < 7 || currentHour >= 19;
+    const saved = localStorage.getItem('ziyoprep_theme');
+    if (saved !== null) return saved === 'dark';
+    const hour = new Date().getHours();
+    return hour < 7 || hour >= 19;
   });
 
   const toggleTheme = () => {
@@ -26,29 +24,44 @@ export default function App() {
     });
   };
 
-  // --- 2. LOCALSTORAGE BILAN SAQLANUVCHI PROFIL ---
+  // --- 2. FOYDALANUVCHI PROFILI VA BALLAR (SAQLANUVCHI) ---
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_user');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+      try { return JSON.parse(saved); } catch (e) {}
     }
     return {
       name: 'Tokhirbek',
       avatar: '🥷',
-      targetBand: '7.5',
+      currentBand: '6.0',     // Hozirgi haqiqiy diagnostika natijasi
+      targetBand: '7.5',      // Maqsad qilingan ball
       currentLevel: 'B2 Upper-Intermediate',
-      daysLeft: 24,
+      daysLeft: 45,
       streak: 5,
-      completedTests: 12
+      completedTests: 14,
+      weakSkill: 'Reading: Matching Headings (42% aniqlik)'
     };
   });
 
   const [scores, setScores] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_scores');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+      try { return JSON.parse(saved); } catch (e) {}
     }
-    return { listening: '7.0', reading: '7.5', writing: '6.5', speaking: '7.0' };
+    return { listening: '6.5', reading: '6.0', writing: '5.5', speaking: '6.0' };
+  });
+
+  // Kunlik reja holatlari
+  const [dailyTasks, setDailyTasks] = useState(() => {
+    const saved = localStorage.getItem('ziyoprep_tasks');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 1, title: 'Academic Reading: Matching Headings', duration: '20 daq', done: false, type: 'reading' },
+      { id: 2, title: 'Listening Section 2: Form & Note completion', duration: '15 daq', done: false, type: 'listening' },
+      { id: 3, title: 'Band 7.5+ Lug\'at: 5 ta Collocation yodlash', duration: '10 daq', done: true, type: 'vocab' }
+    ];
   });
 
   useEffect(() => {
@@ -56,177 +69,112 @@ export default function App() {
   }, [userProfile]);
 
   useEffect(() => {
-    localStorage.setItem('ziyoprep_scores', JSON.stringify(scores));
-  }, [scores]);
+    localStorage.setItem('ziyoprep_tasks', JSON.stringify(dailyTasks));
+  }, [dailyTasks]);
 
-  // Tablar: 'home' | 'listening' | 'reading' | 'writing' | 'speaking' | 'vocab' | 'ai' | 'profile'
+  const toggleTask = (id) => {
+    setDailyTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  // Asosiy sahifalar: 'home' | 'tests' | 'ai' | 'mistakes' | 'reading_test' | 'listening_test' | 'vocab'
   const [activeTab, setActiveTab] = useState('home');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [tempName, setTempName] = useState(userProfile.name);
-  const [tempBand, setTempBand] = useState(userProfile.targetBand);
+  const [tempCurrentBand, setTempCurrentBand] = useState(userProfile.currentBand);
+  const [tempTargetBand, setTempTargetBand] = useState(userProfile.targetBand);
 
-  // --- 3. LISTENING AUDIO ---
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioSpeed, setAudioSpeed] = useState(1.0);
-  const [showTranscript, setShowTranscript] = useState(false);
-  const [listeningAnswers, setListeningAnswers] = useState({});
-  const [listeningChecked, setListeningChecked] = useState(false);
-
-  const listeningScript = [
-    { speaker: "Adviser", text: "Good morning! City Housing Agency. How can I assist your student accommodation search today?" },
-    { speaker: "Student", text: "Hello! I am enrolling at Central University next month and desperately need a quiet studio flat near campus." },
-    { speaker: "Adviser", text: "Sure thing. We currently have a furnished studio on Oakwood Avenue. The weekly rent is 185 pounds." },
-    { speaker: "Student", text: "Does that cover broadband internet and utility bills?" },
-    { speaker: "Adviser", text: "Water and broadband are included, but electricity is metered separately. A security deposit of 400 pounds is required upfront." },
-    { speaker: "Student", text: "That sounds reasonable. When is it officially available for move-in?" },
-    { speaker: "Adviser", text: "The current lease concludes on the 14th of September, so you can collect keys on September 15th." }
-  ];
-
-  const playListeningAudio = () => {
-    if (!('speechSynthesis' in window)) {
-      alert("Kechirasiz, brauzeringiz ovoz sintezini qo'llab-quvvatlamaydi.");
-      return;
-    }
-    if (audioPlaying) {
-      window.speechSynthesis.cancel();
-      setAudioPlaying(false);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    setAudioPlaying(true);
-
-    const fullDialogue = listeningScript.map(s => `${s.speaker}: ${s.text}`).join('. ');
-    const utterance = new SpeechSynthesisUtterance(fullDialogue);
-    utterance.lang = 'en-GB';
-    utterance.rate = audioSpeed;
-
-    utterance.onend = () => setAudioPlaying(false);
-    utterance.onerror = () => setAudioPlaying(false);
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const resetListeningAudio = () => {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    setAudioPlaying(false);
-  };
-
-  // --- 4. READING ---
+  // --- 3. TO'LIQ ACADEMIC READING TESTI (60 DAQ TAYMER VA 2 TA SAVOL TURI) ---
+  const [readingTime, setReadingTime] = useState(60 * 60); // 60 daqiqa (soniyalarda)
+  const [readingTimerRunning, setReadingTimerRunning] = useState(false);
+  const [highlightEvidence, setHighlightEvidence] = useState(false);
   const [readingAnswers, setReadingAnswers] = useState({});
   const [readingChecked, setReadingChecked] = useState(false);
 
+  useEffect(() => {
+    let interval = null;
+    if (readingTimerRunning && readingTime > 0) {
+      interval = setInterval(() => setReadingTime(t => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [readingTimerRunning, readingTime]);
+
+  const formatTimer = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const readingHeadings = [
+    "i. The financial burden of urbanization",
+    "ii. Neurological benefits extending to older age",
+    "iii. Linguistic conflict in young infants",
+    "iv. Enhanced executive control and mental flexibility"
+  ];
+
   const readingQuestions = [
     {
-      id: "q1",
-      question: "1. Multilingual individuals exhibit enhanced cognitive flexibility compared to monolinguals.",
-      options: ["TRUE", "FALSE", "NOT GIVEN"],
-      correct: "TRUE",
-      explanation: "Matnda: 'bilingual minds demonstrate superior cognitive reserve and task-switching capability' deb tasdiqlangan."
+      id: "h1",
+      type: "heading",
+      question: "Paragraph A uchun mos sarlavhani tanlang:",
+      paragraphRef: "A",
+      options: readingHeadings,
+      correct: "iv. Enhanced executive control and mental flexibility",
+      explanation: "Paragraf A da ko'p tilli insonlarning vazifalarni almashtirish (task-switching) va miya moslashuvchanligi bayon qilingan."
     },
     {
-      id: "q2",
-      question: "2. The neuroplastic advantages of learning a second language only occur during childhood.",
+      id: "h2",
+      type: "heading",
+      question: "Paragraph B uchun mos sarlavhani tanlang:",
+      paragraphRef: "B",
+      options: readingHeadings,
+      correct: "ii. Neurological benefits extending to older age",
+      explanation: "Paragraf B da kognitiv moslashuv keksayganda ham davom etishi va asabiy buzilishlarni kechiktirishi keltirilgan."
+    },
+    {
+      id: "tf1",
+      type: "tfng",
+      question: "1. Learning multiple languages leads to long-term cognitive interference in adults.",
       options: ["TRUE", "FALSE", "NOT GIVEN"],
       correct: "FALSE",
-      explanation: "Matnda: 'neuroplastic adaptations persist well into older adulthood' deb keltirilgan."
+      explanation: "Matnda aniq keltirilgan: 'Far from creating linguistic interference, navigating between discrete semantic frameworks strengthens executive control'."
     },
     {
-      id: "q3",
-      question: "3. Which brain region experiences increased grey matter density through language acquisition?",
-      options: ["A) Occipital lobe", "B) Left inferior parietal cortex", "C) Cerebellum"],
-      correct: "B) Left inferior parietal cortex",
-      explanation: "Matnda aniq keltirilgan: 'structural MRI scans reveal denser grey matter in the left inferior parietal cortex'."
+      id: "tf2",
+      type: "tfng",
+      question: "2. MRI scans confirmed changes in the right hemisphere of multilingual patients.",
+      options: ["TRUE", "FALSE", "NOT GIVEN"],
+      correct: "NOT GIVEN",
+      explanation: "Matnda faqat 'left inferior parietal cortex' qayd etilgan, o'ng yarimshar (right hemisphere) haqida ma'lumot berilmagan."
     }
   ];
 
-  // --- 5. WRITING TASK 2 ---
-  const [essayText, setEssayText] = useState("");
-  const [writingScore, setWritingScore] = useState(null);
-
-  const analyzeEssay = () => {
-    const words = essayText.trim().split(/\s+/).filter(Boolean).length;
-    if (words < 30) {
-      alert("Iltimos, baholash uchun kamida 30-40 so'z yozing!");
-      return;
-    }
-    let band = 5.5;
-    if (words >= 150) band = 6.0;
-    if (words >= 220) band = 6.5;
-    if (words >= 250) band = 7.0;
-
-    const hasConnectors = /furthermore|moreover|consequently|in contrast|nevertheless|therefore/i.test(essayText);
-    if (hasConnectors && words >= 250) band += 0.5;
-
-    setWritingScore({
-      band: band.toFixed(1),
-      wordCount: words,
-      taskAchievement: words >= 250 ? "A'lo (250+ so'z normasi bajarildi)" : "Yetarli emas (kamida 250 so'z yozing)",
-      coherence: hasConnectors ? "Bog'lovchilar o'rinli qo'llangan" : "Furthermore, However kabi akademik so'zlarni ko'paytiring",
-      lexical: "Lug'at boyligi yaxshi shakllangan"
-    });
-  };
-
-  // --- 6. SPEAKING ---
-  const [speakingStep, setSpeakingStep] = useState('prep');
-  const [prepTime, setPrepTime] = useState(60);
-  const [speakTime, setSpeakTime] = useState(120);
-  const [speakingActive, setSpeakingActive] = useState(false);
-
-  useEffect(() => {
-    let timer = null;
-    if (speakingActive) {
-      timer = setInterval(() => {
-        if (speakingStep === 'prep') {
-          setPrepTime(prev => {
-            if (prev <= 1) {
-              setSpeakingStep('speak');
-              return 60;
-            }
-            return prev - 1;
-          });
-        } else if (speakingStep === 'speak') {
-          setSpeakTime(prev => {
-            if (prev <= 1) {
-              setSpeakingActive(false);
-              setSpeakingStep('done');
-              return 120;
-            }
-            return prev - 1;
-          });
-        }
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [speakingActive, speakingStep]);
-
-  // --- 7. ZIYOAI ROBOT ---
+  // --- 4. ZIYOAI EXAMINER VA SHAXSIY MASLAHAT ---
   const [chatMessages, setChatMessages] = useState([
-    { role: 'ai', text: `Assalomu alaykum ${userProfile.name}! ZiyoAI bilan IELTS mashg'ulotini boshlaymizmi? Listening, Speaking yoki Writing bo'yicha savollaringizni bering.` }
+    { 
+      role: 'ai', 
+      text: `Salom ${userProfile.name}! Hozirgi ballingiz Band ${userProfile.currentBand}, maqsadimiz esa Band ${userProfile.targetBand}. Sizda Reading bo'limida 'Matching Headings' bo'yicha ko'p xatolar bor. Bugun aynan shu ko'nikmani 7.5 ga ko'tarish ustida ishlaymizmi?` 
+    }
   ]);
   const [inputMsg, setInputMsg] = useState("");
-  const [isAiListening, setIsAiListening] = useState(false);
 
-  const sendAiMessage = (overrideText = null) => {
-    const textToSend = overrideText || inputMsg;
-    if (!textToSend.trim()) return;
-
-    const newMsgs = [...chatMessages, { role: 'user', text: textToSend }];
+  const sendAiMessage = () => {
+    if (!inputMsg.trim()) return;
+    const newMsgs = [...chatMessages, { role: 'user', text: inputMsg }];
     setChatMessages(newMsgs);
     setInputMsg("");
 
     setTimeout(() => {
       let reply = "";
-      const lower = textToSend.toLowerCase();
-      if (lower.includes('speaking') || lower.includes('part 2')) {
-        reply = "Speaking bo'yicha muhim qoida: Pauza qilib qolmaslik uchun 'Well, to be perfectly honest...' yoki 'As far as I recall...' kabi 'filler' birikmalarni ishlating.";
-      } else if (lower.includes('writing') || lower.includes('task 2')) {
-        reply = "Writing Task 2 da har bir paragrafni aniq Topic Sentence (Mavzu gapi) bilan boshlang va unga bitta aniq faktik misol keltiring.";
+      const text = inputMsg.toLowerCase();
+      if (text.includes('reja') || text.includes('plan')) {
+        reply = `Band ${userProfile.targetBand} ga yetish uchun kunlik rejangiz: 1) 20 daqiqa Reading skimmig, 2) Kamida 10 ta yangi akademik kollokatsiya, 3) Haftada 2 ta to'liq Writing Task 2 essesi yozish.`;
+      } else if (text.includes('heading') || text.includes('reading')) {
+        reply = "Matching Headings sirli qoidasi: Sarlavhalarni o'qishdan oldin paragrafning birinchi va oxirgi 2 ta gapini diqqat bilan o'qing. Paragrafdagi umumiy g'oyani (Main idea) bitta so'zga emas, umumiy ma'noga qarab moslang.";
       } else {
-        reply = `Savolingiz qabul qilindi. Maqsadingiz Band ${userProfile.targetBand} bo'lgani uchun akademik sinonimlar va murakkab sintaksisdan ko'proq foydalaning.`;
+        reply = `Savolingiz qabul qilindi. Hozirgi darajangiz (${userProfile.currentBand}) dan ${userProfile.targetBand} ga chiqishda eng muhim narsa xatolar daftarini muntazam tahlil qilib borishdir.`;
       }
 
       setChatMessages(prev => [...prev, { role: 'ai', text: reply }]);
-
       if ('speechSynthesis' in window) {
         const ut = new SpeechSynthesisUtterance(reply);
         ut.lang = 'uz-UZ';
@@ -235,188 +183,193 @@ export default function App() {
     }, 600);
   };
 
-  const toggleSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Brauzeringiz ovozli yozishni qo'llab-quvvatlamaydi.");
-      return;
-    }
-    if (isAiListening) {
-      setIsAiListening(false);
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.onstart = () => setIsAiListening(true);
-    recognition.onresult = (e) => {
-      setInputMsg(e.results[0][0].transcript);
-      setIsAiListening(false);
-    };
-    recognition.onerror = () => setIsAiListening(false);
-    recognition.onend = () => setIsAiListening(false);
-    recognition.start();
-  };
-
-  // --- 8. VOCABULARY ---
-  const [vocabIndex, setVocabIndex] = useState(0);
-  const [showVocabMeaning, setShowVocabMeaning] = useState(false);
-  const vocabList = [
-    { word: "Mitigate", type: "verb", band: "8.0", defUz: "Yumshatmoq, ta'sirini kamaytirmoq", example: "Effective policies can mitigate the environmental crisis." },
-    { word: "Ubiquitous", type: "adjective", band: "8.5", defUz: "Hamma joyda uchraydigan", example: "Smartphones have become ubiquitous in modern society." },
-    { word: "Detrimental", type: "adjective", band: "7.5", defUz: "Zararli, ziyon keltiruvchi", example: "Lack of sleep has a detrimental effect on cognitive focus." },
-    { word: "Plausible", type: "adjective", band: "8.0", defUz: "Haqiqatga yaqin, asosli", example: "The researchers proposed a plausible explanation for the anomaly." }
-  ];
-
-  const speakVocab = (word) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const ut = new SpeechSynthesisUtterance(word);
-    ut.lang = 'en-US';
-    window.speechSynthesis.speak(ut);
-  };
-
-  // Dinamik rang uslublari (Theme styling)
+  // Dinamik Mavzu (Themes)
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900',
     card: isDarkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm',
     subCard: isDarkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200',
-    header: isDarkMode ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200',
+    header: isDarkMode ? 'bg-slate-950/95 border-slate-800' : 'bg-white/95 border-slate-200',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
     navBg: isDarkMode ? 'bg-slate-950/95 border-slate-800/90' : 'bg-white/95 border-slate-200/90',
-    inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+    inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
   };
 
   // ==========================================
-  // SAHIFALARNI CHIQARISH
+  // 1. YANGILANGAN BOSH SAHIFA
   // ==========================================
-
   const renderHome = () => (
-    <div className="space-y-5 animate-fadeIn">
-      {/* Profil Karta */}
-      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shadow-inner">
-              {userProfile.avatar}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">{userProfile.name}</h2>
-              <span className="text-xs bg-white/25 px-2.5 py-0.5 rounded-full font-medium text-blue-100">
-                {userProfile.currentLevel}
-              </span>
-            </div>
+    <div className="space-y-4 animate-fadeIn">
+      {/* Profil va Streak */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-13 h-13 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-3xl shadow-sm">
+            {userProfile.avatar}
           </div>
-          <button 
-            onClick={() => {
-              setTempName(userProfile.name);
-              setTempBand(userProfile.targetBand);
-              setIsEditingProfile(true);
-            }}
-            className="p-2.5 rounded-xl bg-white/15 hover:bg-white/25 transition active:scale-95"
-          >
-            <Edit3 size={18} />
-          </button>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-lg font-bold">{userProfile.name}</h2>
+              <button 
+                onClick={() => {
+                  setTempName(userProfile.name);
+                  setTempCurrentBand(userProfile.currentBand);
+                  setTempTargetBand(userProfile.targetBand);
+                  setIsEditingProfile(true);
+                }}
+                className="text-slate-400 hover:text-indigo-500"
+              >
+                <Edit3 size={15} />
+              </button>
+            </div>
+            <span className="text-xs text-indigo-500 font-semibold">{userProfile.currentLevel}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/25 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-amber-500">🔥 {userProfile.streak} kun</span>
+        </div>
+      </div>
+
+      {/* HAQIQIY BALL vs MAQSADLI BALL (AJRATILGAN KARTA) */}
+      <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-700 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute -right-4 -bottom-4 opacity-15 pointer-events-none">
+          <Target size={160} />
         </div>
 
-        {/* Target Band & Progress */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/15">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs uppercase tracking-wider font-semibold text-blue-100">Maqsadli IELTS Ball</span>
-            <span className="text-2xl font-black tracking-tight">Band {userProfile.targetBand}</span>
+        <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
+          <div>
+            <span className="text-[11px] uppercase tracking-wider text-indigo-200 font-semibold flex items-center gap-1">
+              <BarChart3 size={13} /> Hozirgi Natija
+            </span>
+            <div className="text-3xl font-black mt-1">Band {userProfile.currentBand}</div>
+            <span className="text-[10px] text-indigo-100">Oxirgi mock test tahlili</span>
           </div>
-          <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-white/15 text-xs">
-            <div>
-              <div className="text-blue-200">Listening</div>
-              <div className="font-bold text-sm">{scores.listening}</div>
-            </div>
-            <div>
-              <div className="text-blue-200">Reading</div>
-              <div className="font-bold text-sm">{scores.reading}</div>
-            </div>
-            <div>
-              <div className="text-blue-200">Writing</div>
-              <div className="font-bold text-sm">{scores.writing}</div>
-            </div>
-            <div>
-              <div className="text-blue-200">Speaking</div>
-              <div className="font-bold text-sm">{scores.speaking}</div>
-            </div>
+          <div className="border-l border-white/20 pl-4">
+            <span className="text-[11px] uppercase tracking-wider text-amber-200 font-semibold flex items-center gap-1">
+              <Target size={13} /> Maqsadli Ball
+            </span>
+            <div className="text-3xl font-black mt-1 text-amber-300">Band {userProfile.targetBand}</div>
+            <span className="text-[10px] text-indigo-100">Oraliq farq: +{(parseFloat(userProfile.targetBand) - parseFloat(userProfile.currentBand)).toFixed(1)} ball</span>
+          </div>
+        </div>
+
+        {/* Ko'nikmalar kesimi */}
+        <div className="grid grid-cols-4 gap-2 text-center pt-3 text-xs">
+          <div>
+            <div className="text-indigo-200 text-[11px]">Listening</div>
+            <div className="font-bold text-sm">{scores.listening}</div>
+          </div>
+          <div>
+            <div className="text-indigo-200 text-[11px]">Reading</div>
+            <div className="font-bold text-sm">{scores.reading}</div>
+          </div>
+          <div>
+            <div className="text-indigo-200 text-[11px]">Writing</div>
+            <div className="font-bold text-sm">{scores.writing}</div>
+          </div>
+          <div>
+            <div className="text-indigo-200 text-[11px]">Speaking</div>
+            <div className="font-bold text-sm">{scores.speaking}</div>
           </div>
         </div>
       </div>
 
-      {/* AI Quick Banner */}
+      {/* ZAIF TOMONLARIM OGOHLANTIRISH BLOKI */}
+      <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex items-start gap-3">
+        <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+        <div className="flex-1 text-xs">
+          <div className="font-bold text-rose-500 text-sm">Zaif tomoningiz aniqlandi:</div>
+          <p className={`${theme.textMuted} mt-0.5 font-medium`}>{userProfile.weakSkill}</p>
+          <button 
+            onClick={() => setActiveTab('reading_test')}
+            className="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400 underline flex items-center gap-1"
+          >
+            Hozir ushbu bo'lim bo'yicha mashq qilish <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* BUGUNGI KUNLIK REJA (CHECKLIST) */}
+      <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            <Clock size={16} className="text-indigo-500" /> Bugungi Kunlik Reja
+          </h3>
+          <span className="text-[11px] font-semibold text-emerald-500">
+            {dailyTasks.filter(t => t.done).length} / {dailyTasks.length} bajarildi
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          {dailyTasks.map(task => (
+            <div 
+              key={task.id}
+              onClick={() => toggleTask(task.id)}
+              className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition ${
+                task.done 
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
+                  : `${theme.subCard} hover:border-indigo-500/50`
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                {task.done ? <CheckSquare size={18} className="text-emerald-500" /> : <Square size={18} className="text-slate-400" />}
+                <span className={task.done ? 'line-through opacity-80' : 'font-medium'}>{task.title}</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${task.done ? 'bg-emerald-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                {task.duration}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ZIYOAI MURABBIY BANNERI */}
       <div 
         onClick={() => setActiveTab('ai')}
-        className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer transition shadow-md group`}
+        className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition group shadow-sm`}
       >
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md">
             <Bot size={24} />
           </div>
           <div>
-            <h4 className="font-bold text-base group-hover:text-indigo-500 transition flex items-center gap-1.5">
-              ZiyoAI Imtihonchi <Sparkles size={16} className="text-amber-400" />
+            <h4 className="font-bold text-sm group-hover:text-indigo-500 transition flex items-center gap-1.5">
+              ZiyoAI Shaxsiy Murabbiy <Sparkles size={15} className="text-amber-400" />
             </h4>
-            <p className={`text-xs ${theme.textMuted}`}>Ovozli suhbat, esse tahlili va yo'l-yo'riq</p>
+            <p className={`text-xs ${theme.textMuted}`}>Xatolar tahlili, individual dars jadvali va yo'l-yo'riq</p>
           </div>
         </div>
-        <ChevronRight size={22} className={`${theme.textMuted} group-hover:text-indigo-500 transition`} />
+        <ChevronRight size={20} className={`${theme.textMuted} group-hover:text-indigo-500 transition`} />
       </div>
 
-      {/* Bo'limlar */}
+      {/* TEZKOR TEST BO'LIMLARI */}
       <div>
-        <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textMuted} mb-3`}>IELTS Mashg'ulotlari</h3>
-        <div className="grid grid-cols-2 gap-3.5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textMuted}`}>IELTS Ko'nikmalari</h3>
+          <button onClick={() => setActiveTab('tests')} className="text-xs font-bold text-indigo-500">Barchasi</button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           <button 
-            onClick={() => setActiveTab('listening')} 
-            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 flex flex-col justify-between h-36`}
+            onClick={() => setActiveTab('reading_test')}
+            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 space-y-2`}
           >
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
-              <Headphones size={24} />
+            <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+              <BookOpen size={20} />
             </div>
             <div>
-              <div className="font-bold text-base">Listening</div>
-              <div className={`text-xs ${theme.textMuted}`}>Audio & form test</div>
+              <div className="font-bold text-sm">Academic Reading</div>
+              <div className={`text-[11px] ${theme.textMuted}`}>60 daq, Headings & TFNG</div>
             </div>
           </button>
 
           <button 
-            onClick={() => setActiveTab('reading')} 
-            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 flex flex-col justify-between h-36`}
+            onClick={() => setActiveTab('tests')}
+            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 space-y-2`}
           >
-            <div className="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
-              <BookOpen size={24} />
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+              <Headphones size={20} />
             </div>
             <div>
-              <div className="font-bold text-base">Reading</div>
-              <div className={`text-xs ${theme.textMuted}`}>Akademik matn & TFNG</div>
-            </div>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('writing')} 
-            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 flex flex-col justify-between h-36`}
-          >
-            <div className="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
-              <PenTool size={24} />
-            </div>
-            <div>
-              <div className="font-bold text-base">Writing</div>
-              <div className={`text-xs ${theme.textMuted}`}>Task 2 esse baholash</div>
-            </div>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('speaking')} 
-            className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 flex flex-col justify-between h-36`}
-          >
-            <div className="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
-              <Mic size={24} />
-            </div>
-            <div>
-              <div className="font-bold text-base">Speaking</div>
-              <div className={`text-xs ${theme.textMuted}`}>Cue Card & taymer</div>
+              <div className="font-bold text-sm">Listening Audio</div>
+              <div className={`text-[11px] ${theme.textMuted}`}>Aksentlar & bo'limlar</div>
             </div>
           </button>
         </div>
@@ -424,160 +377,85 @@ export default function App() {
     </div>
   );
 
-  // --- LISTENING ---
-  const renderListening = () => (
+  // ==========================================
+  // 2. TO'LIQ ACADEMIC READING TESTI (MATCHING HEADINGS + TFNG)
+  // ==========================================
+  const renderReadingTest = () => (
     <div className="space-y-4 animate-fadeIn">
+      {/* Test Header va Taymer */}
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-          <ArrowLeft size={16} /> Ortga
+          <ArrowLeft size={16} /> Testdan Chiqish
         </button>
-        <h3 className="font-bold text-base">Listening Section 1</h3>
-        <span className="text-xs bg-emerald-500/15 text-emerald-500 px-2.5 py-0.5 rounded-full font-bold">Test #1</span>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
-        <div className="flex items-center justify-between">
-          <div className={`text-xs font-bold uppercase tracking-wider ${theme.textMuted}`}>Audio Dialogue</div>
-          <div className="flex gap-1.5">
-            {[0.8, 1.0, 1.2].map(speed => (
-              <button 
-                key={speed}
-                onClick={() => setAudioSpeed(speed)}
-                className={`text-xs px-2.5 py-1 rounded-md font-bold transition ${audioSpeed === speed ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-              >
-                {speed}x
-              </button>
-            ))}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 px-3 py-1 rounded-xl text-xs font-mono font-bold text-indigo-500">
+            <Clock size={14} /> {formatTimer(readingTime)}
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
           <button 
-            onClick={playListeningAudio}
-            className="w-13 h-13 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg transition active:scale-95"
+            onClick={() => setReadingTimerRunning(!readingTimerRunning)}
+            className="p-1.5 bg-indigo-600 text-white rounded-lg text-xs"
           >
-            {audioPlaying ? <Pause size={24} /> : <Play size={24} className="ml-0.5" />}
+            {readingTimerRunning ? <Pause size={14} /> : <Play size={14} />}
           </button>
-          <div className="flex-1">
-            <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-indigo-600 transition-all duration-300"
-                style={{ width: audioPlaying ? '80%' : '15%' }}
-              ></div>
-            </div>
-            <div className={`flex justify-between text-xs ${theme.textMuted} mt-1.5`}>
-              <span>{audioPlaying ? "Audio yangramoqda..." : "Eshitish uchun bosing"}</span>
-              <span>City Housing</span>
-            </div>
-          </div>
-          <button onClick={resetListeningAudio} className={`p-2.5 rounded-xl ${theme.subCard}`}>
-            <RotateCcw size={18} />
+        </div>
+      </div>
+
+      {/* Matn va Asoslarni Belgilash (Highlight Evidence) */}
+      <div className={`${theme.card} border rounded-2xl p-4 text-xs space-y-3 leading-relaxed max-h-72 overflow-y-auto`}>
+        <div className="flex justify-between items-center pb-2 border-b border-slate-700/20">
+          <span className="font-black text-sm text-indigo-500">Reading Passage 2</span>
+          <button 
+            onClick={() => setHighlightEvidence(!highlightEvidence)}
+            className={`text-[11px] px-2.5 py-1 rounded-lg border font-bold transition ${
+              highlightEvidence ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' : 'bg-slate-200 dark:bg-slate-800'
+            }`}
+          >
+            {highlightEvidence ? "Asosiy dalillar belgilandi ✓" : "Matndan dalillarni ajratish"}
           </button>
         </div>
 
-        <button 
-          onClick={() => setShowTranscript(!showTranscript)}
-          className="text-xs text-indigo-500 font-bold underline block"
-        >
-          {showTranscript ? "Transkriptni yashirish" : "Audio matnini ko'rish"}
-        </button>
-
-        {showTranscript && (
-          <div className={`${theme.subCard} rounded-xl p-3 text-xs space-y-2 border max-h-48 overflow-y-auto`}>
-            {listeningScript.map((line, idx) => (
-              <p key={idx}><strong className="text-indigo-500">{line.speaker}:</strong> {line.text}</p>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 space-y-4`}>
-        <h4 className="font-bold text-sm">Savollarga javob yozing:</h4>
-        <div className="space-y-3 text-xs">
-          <div>
-            <label className={`block mb-1 font-medium ${theme.textMuted}`}>1. Haftalik ijara to'lovi (£):</label>
-            <input 
-              type="text" 
-              placeholder="Masalan: 185"
-              value={listeningAnswers.a1 || ''}
-              onChange={(e) => setListeningAnswers({ ...listeningAnswers, a1: e.target.value })}
-              className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2.5 outline-none focus:border-indigo-500`}
-            />
-          </div>
-          <div>
-            <label className={`block mb-1 font-medium ${theme.textMuted}`}>2. Ko'chib o'tish sanasi (September ____):</label>
-            <input 
-              type="text" 
-              placeholder="Masalan: 15"
-              value={listeningAnswers.a2 || ''}
-              onChange={(e) => setListeningAnswers({ ...listeningAnswers, a2: e.target.value })}
-              className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2.5 outline-none focus:border-indigo-500`}
-            />
-          </div>
-          <div>
-            <label className={`block mb-1 font-medium ${theme.textMuted}`}>3. Qaysi xizmat hisoblagich bilan alohida to'lanadi?</label>
-            <input 
-              type="text" 
-              placeholder="Masalan: electricity"
-              value={listeningAnswers.a3 || ''}
-              onChange={(e) => setListeningAnswers({ ...listeningAnswers, a3: e.target.value })}
-              className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2.5 outline-none focus:border-indigo-500`}
-            />
-          </div>
+        <div>
+          <h5 className="font-bold text-sm mb-1 text-slate-300">Paragraph A</h5>
+          <p>
+            {highlightEvidence ? (
+              <span>
+                Recent neuroimaging trials demonstrate that bilingual individuals consistently display elevated cognitive agility. <mark className="bg-amber-300/40 text-inherit p-0.5 rounded">Far from creating linguistic interference, navigating between discrete semantic frameworks strengthens executive control and mental flexibility</mark>, enabling participants to switch tasks with minimal latency.
+              </span>
+            ) : (
+              "Recent neuroimaging trials demonstrate that bilingual individuals consistently display elevated cognitive agility. Far from creating linguistic interference, navigating between discrete semantic frameworks strengthens executive control and mental flexibility, enabling participants to switch tasks with minimal latency."
+            )}
+          </p>
         </div>
 
-        <button 
-          onClick={() => setListeningChecked(true)}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md"
-        >
-          Javoblarni Tekshirish
-        </button>
-
-        {listeningChecked && (
-          <div className={`${theme.subCard} p-3 rounded-xl border text-xs space-y-1.5`}>
-            <div className="font-bold text-emerald-500 flex items-center gap-1.5">
-              <CheckCircle2 size={16} /> To'g'ri Javoblar:
-            </div>
-            <p>1-savol: <strong>185</strong> (Siz: {listeningAnswers.a1 || "bo'sh"})</p>
-            <p>2-savol: <strong>15th / 15</strong> (Siz: {listeningAnswers.a2 || "bo'sh"})</p>
-            <p>3-savol: <strong>electricity</strong> (Siz: {listeningAnswers.a3 || "bo'sh"})</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // --- READING ---
-  const renderReading = () => (
-    <div className="space-y-4 animate-fadeIn">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-        <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-          <ArrowLeft size={16} /> Ortga
-        </button>
-        <h3 className="font-bold text-base">Reading Passage 2</h3>
-        <span className="text-xs bg-blue-500/15 text-blue-500 px-2.5 py-0.5 rounded-full font-bold">Academic</span>
+        <div>
+          <h5 className="font-bold text-sm mb-1 text-slate-300">Paragraph B</h5>
+          <p>
+            {highlightEvidence ? (
+              <span>
+                Structural MRI scans reveal enhanced volume in the left inferior parietal cortex among multilingual adults. <mark className="bg-amber-300/40 text-inherit p-0.5 rounded">Crucially, longitudinal monitoring indicates these neuroprotective adaptations persist well into older age</mark>, effectively postponing the symptoms of neurodegenerative deterioration by an average of 4.5 years.
+              </span>
+            ) : (
+              "Structural MRI scans reveal enhanced volume in the left inferior parietal cortex among multilingual adults. Crucially, longitudinal monitoring indicates these neuroprotective adaptations persist well into older age, effectively postponing the symptoms of neurodegenerative deterioration by an average of 4.5 years."
+            )}
+          </p>
+        </div>
       </div>
 
-      <div className={`${theme.card} border rounded-2xl p-4 text-xs space-y-3 leading-relaxed max-h-60 overflow-y-auto`}>
-        <h4 className="font-bold text-sm">The Cognitive Architecture of Multilingualism</h4>
-        <p>
-          Recent neuroimaging studies suggest that bilingual minds demonstrate superior cognitive reserve and task-switching capability compared to their monolingual counterparts.
-        </p>
-        <p>
-          Furthermore, structural MRI scans reveal denser grey matter in the <strong>left inferior parietal cortex</strong> of individuals who actively utilize more than one dialect. Crucially, these adaptations persist well into older adulthood.
-        </p>
-      </div>
-
+      {/* Savollar to'plami */}
       <div className="space-y-3">
-        {readingQuestions.map((q) => (
-          <div key={q.id} className={`${theme.card} border rounded-2xl p-4 text-xs space-y-2.5`}>
+        <h4 className="font-bold text-sm flex items-center gap-2">
+          <FileText size={16} className="text-indigo-500" /> Savollar: Matching Headings & TFNG
+        </h4>
+
+        {readingQuestions.map(q => (
+          <div key={q.id} className={`${theme.card} border rounded-2xl p-4 text-xs space-y-2`}>
             <p className="font-bold">{q.question}</p>
             <div className="grid grid-cols-1 gap-2 pt-1">
               {q.options.map(opt => (
                 <button
                   key={opt}
                   onClick={() => setReadingAnswers({ ...readingAnswers, [q.id]: opt })}
-                  className={`py-2.5 px-3.5 rounded-xl text-left border text-xs transition ${
+                  className={`py-2 px-3 rounded-xl text-left border text-xs transition ${
                     readingAnswers[q.id] === opt 
                       ? 'bg-indigo-600 text-white font-bold border-indigo-600' 
                       : `${theme.subCard}`
@@ -589,159 +467,83 @@ export default function App() {
             </div>
 
             {readingChecked && (
-              <div className={`mt-2 p-2.5 rounded-xl ${theme.subCard} text-[11px]`}>
+              <div className={`mt-2 p-3 rounded-xl ${theme.subCard} text-[11px] space-y-1`}>
                 <span className={readingAnswers[q.id] === q.correct ? "text-emerald-500 font-bold" : "text-rose-500 font-bold"}>
-                  {readingAnswers[q.id] === q.correct ? "✓ To'g'ri" : `✗ Noto'g'ri (To'g'risi: ${q.correct})`}
+                  {readingAnswers[q.id] === q.correct ? "✓ To'g'ri javob" : `✗ Xato (To'g'risi: ${q.correct})`}
                 </span>
-                <p className={`${theme.textMuted} mt-1`}>{q.explanation}</p>
+                <p className={`${theme.textMuted}`}>{q.explanation}</p>
               </div>
             )}
           </div>
         ))}
 
         <button 
-          onClick={() => setReadingChecked(true)}
+          onClick={() => {
+            setReadingChecked(true);
+            setHighlightEvidence(true);
+          }}
           className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md"
         >
-          Natijani Ko'rish
+          Testni Yakunlash va Xatolarni Tahlil Qilish
         </button>
       </div>
     </div>
   );
 
-  // --- WRITING ---
-  const renderWriting = () => {
-    const wordCount = essayText.trim().split(/\s+/).filter(Boolean).length;
-    return (
-      <div className="space-y-4 animate-fadeIn">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-          <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-            <ArrowLeft size={16} /> Ortga
-          </button>
-          <h3 className="font-bold text-base">Writing Task 2 Studio</h3>
-          <span className="text-xs bg-amber-500/15 text-amber-500 px-2.5 py-0.5 rounded-full font-bold">250 So'z</span>
-        </div>
-
-        <div className={`${theme.card} border rounded-2xl p-4 text-xs space-y-1.5`}>
-          <span className="text-amber-500 font-black uppercase text-[10px] tracking-wider">Mavzu:</span>
-          <p className="font-medium leading-relaxed">
-            "Some people argue that technological development leads to the loss of traditional cultures. To what extent do you agree or disagree?"
-          </p>
-        </div>
-
-        <div className="relative">
-          <textarea
-            rows={8}
-            value={essayText}
-            onChange={(e) => setEssayText(e.target.value)}
-            placeholder="In modern discourse, the rapid progression of innovation is frequently argued..."
-            className={`w-full ${theme.inputBg} rounded-2xl p-4 text-xs outline-none focus:border-indigo-500 leading-relaxed resize-none`}
-          />
-          <div className={`absolute bottom-3 right-3 text-xs ${theme.subCard} px-2.5 py-1 rounded-lg border`}>
-            So'zlar: <span className={wordCount >= 250 ? "text-emerald-500 font-bold" : "text-amber-500 font-bold"}>{wordCount}</span> / 250
-          </div>
-        </div>
-
-        <button 
-          onClick={analyzeEssay}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md flex items-center justify-center gap-2"
-        >
-          <Sparkles size={18} /> Esseni Baholash
-        </button>
-
-        {writingScore && (
-          <div className={`${theme.card} border border-indigo-500/40 rounded-2xl p-4 space-y-2 text-xs`}>
-            <div className="flex justify-between items-center pb-2 border-b border-slate-700/30">
-              <span className="font-bold">IELTS Bahosi:</span>
-              <span className="text-base font-black text-indigo-500">Band {writingScore.band}</span>
-            </div>
-            <p><strong>Task Achievement:</strong> {writingScore.taskAchievement}</p>
-            <p><strong>Coherence & Cohesion:</strong> {writingScore.coherence}</p>
-            <p><strong>Lexical Resource:</strong> {writingScore.lexical}</p>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // --- SPEAKING ---
-  const renderSpeaking = () => (
+  // ==========================================
+  // 3. IELTS TESTLAR HUBI
+  // ==========================================
+  const renderTestsHub = () => (
     <div className="space-y-4 animate-fadeIn">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-        <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-          <ArrowLeft size={16} /> Ortga
-        </button>
-        <h3 className="font-bold text-base">Speaking Part 2</h3>
-        <span className="text-xs bg-rose-500/15 text-rose-500 px-2.5 py-0.5 rounded-full font-bold">Cue Card</span>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 text-xs space-y-2`}>
-        <h4 className="font-bold text-sm">Describe an accomplishment that made you proud</h4>
-        <ul className={`list-disc list-inside ${theme.textMuted} space-y-1 pt-1`}>
-          <li>What the achievement was</li>
-          <li>When and where it occurred</li>
-          <li>What obstacles you overcame</li>
-          <li>Explain why this was meaningful to you</li>
-        </ul>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-6 text-center space-y-3`}>
-        <div className={`text-xs ${theme.textMuted} uppercase tracking-wider font-bold`}>
-          {speakingStep === 'prep' ? '1 Daqiqa Tayyorgarlik' : speakingStep === 'speak' ? '2 Daqiqa Nutq' : 'Vaqt Tugadi!'}
-        </div>
-        
-        <div className="text-4xl font-black text-indigo-500 font-mono">
-          {speakingStep === 'prep' ? `00:${prepTime < 10 ? '0' : ''}${prepTime}` : `0${Math.floor(speakTime/60)}:${speakTime%60 < 10 ? '0' : ''}${speakTime%60}`}
+      <h3 className="font-bold text-base">IELTS Mock & Bo'lim Testlari</h3>
+      <div className="grid grid-cols-1 gap-3">
+        <div 
+          onClick={() => setActiveTab('reading_test')}
+          className={`${theme.card} border p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:border-indigo-500 transition`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+              <BookOpen size={24} />
+            </div>
+            <div>
+              <div className="font-bold text-sm">Academic Reading — Cambridge #18</div>
+              <div className={`text-xs ${theme.textMuted}`}>60 daqiqa • Matching Headings, TFNG, Summary</div>
+            </div>
+          </div>
+          <ChevronRight size={20} className={theme.textMuted} />
         </div>
 
-        <div className="flex justify-center gap-2 pt-2">
-          {!speakingActive ? (
-            <button 
-              onClick={() => setSpeakingActive(true)}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition"
-            >
-              <Play size={16} /> Boshlash
-            </button>
-          ) : (
-            <button 
-              onClick={() => setSpeakingActive(false)}
-              className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 transition"
-            >
-              <Pause size={16} /> To'xtatish
-            </button>
-          )}
-          <button 
-            onClick={() => {
-              setSpeakingActive(false);
-              setSpeakingStep('prep');
-              setPrepTime(60);
-              setSpeakTime(120);
-            }}
-            className={`p-2.5 rounded-xl ${theme.subCard}`}
-          >
-            <RotateCcw size={16} />
-          </button>
+        <div className={`${theme.card} border p-4 rounded-2xl flex items-center justify-between opacity-80`}>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+              <Headphones size={24} />
+            </div>
+            <div>
+              <div className="font-bold text-sm">Listening Section 1-4</div>
+              <div className={`text-xs ${theme.textMuted}`}>30 daqiqa • Britaniya va Avstraliya aksentlari</div>
+            </div>
+          </div>
+          <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded-md font-bold">Tez kunda</span>
         </div>
       </div>
     </div>
   );
 
-  // --- ZIYOAI ROBOT ---
+  // ==========================================
+  // 4. ZIYOAI SHAXSIY MURABBIY
+  // ==========================================
   const renderAiChat = () => (
     <div className="h-full flex flex-col space-y-3 animate-fadeIn">
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-            <Bot size={20} />
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+            <Bot size={22} />
           </div>
           <div>
-            <h3 className="font-bold text-sm">ZiyoAI Examiner</h3>
-            <span className="text-[11px] text-emerald-500 font-semibold">● Onlayn (Ovozli & Matnli)</span>
+            <h3 className="font-bold text-sm">ZiyoAI Murabbiy</h3>
+            <span className="text-[11px] text-emerald-500 font-semibold">● IELTS Band {userProfile.targetBand} strategiyasi faol</span>
           </div>
         </div>
-        <button onClick={() => setChatMessages([])} className={`text-xs ${theme.textMuted}`}>
-          Tozalash
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs max-h-[60vh]">
@@ -759,22 +561,16 @@ export default function App() {
       </div>
 
       <div className="pt-2 border-t border-slate-700/30 flex items-center gap-2">
-        <button 
-          onClick={toggleSpeechRecognition}
-          className={`p-3 rounded-xl transition ${isAiListening ? 'bg-rose-600 text-white animate-pulse' : `${theme.subCard}`}`}
-        >
-          <Mic size={20} />
-        </button>
         <input 
           type="text"
           value={inputMsg}
           onChange={(e) => setInputMsg(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendAiMessage()}
-          placeholder="IELTS bo'yicha savol bering..."
+          placeholder="Xatolar yoki tayyorgarlik bo'yicha savol bering..."
           className={`flex-1 ${theme.inputBg} rounded-xl px-3.5 py-3 text-xs outline-none focus:border-indigo-500`}
         />
         <button 
-          onClick={() => sendAiMessage()}
+          onClick={sendAiMessage}
           className="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition active:scale-95"
         >
           <Send size={18} />
@@ -783,110 +579,42 @@ export default function App() {
     </div>
   );
 
-  // --- LUG'AT ---
-  const renderVocab = () => {
-    const item = vocabList[vocabIndex];
-    return (
-      <div className="space-y-4 animate-fadeIn">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-          <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-            <ArrowLeft size={16} /> Ortga
-          </button>
-          <h3 className="font-bold text-base">Band 7.5 - 9.0 Vocabulary</h3>
-          <span className="text-xs bg-purple-500/15 text-purple-500 px-2.5 py-0.5 rounded-full font-bold">{vocabIndex + 1}/{vocabList.length}</span>
-        </div>
-
-        <div 
-          onClick={() => setShowVocabMeaning(!showVocabMeaning)}
-          className={`${theme.card} border rounded-3xl p-6 text-center cursor-pointer shadow-lg min-h-[220px] flex flex-col justify-center items-center space-y-3 active:scale-98 transition`}
-        >
-          <span className="text-[11px] bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-bold uppercase">
-            IELTS Band {item.band}
-          </span>
-          <div className="text-3xl font-black tracking-tight flex items-center gap-2">
-            {item.word}
-            <button 
-              onClick={(e) => { e.stopPropagation(); speakVocab(item.word); }}
-              className="p-2 text-indigo-500 rounded-lg hover:bg-indigo-500/10"
-            >
-              <Volume2 size={20} />
-            </button>
-          </div>
-          <span className={`text-xs italic ${theme.textMuted}`}>({item.type})</span>
-
-          <div className="pt-2 border-t border-slate-700/20 w-full">
-            {showVocabMeaning ? (
-              <div className="space-y-1.5">
-                <div className="text-sm font-bold text-emerald-500">{item.defUz}</div>
-                <div className={`text-xs ${theme.textMuted} italic`}>"{item.example}"</div>
-              </div>
-            ) : (
-              <div className={`text-xs ${theme.textMuted}`}>Tarjimasini ko'rish uchun bosing</div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button 
-            disabled={vocabIndex === 0}
-            onClick={() => { setVocabIndex(v => v - 1); setShowVocabMeaning(false); }}
-            className={`flex-1 py-3 ${theme.subCard} disabled:opacity-40 rounded-xl text-xs font-bold`}
-          >
-            Oldingisi
-          </button>
-          <button 
-            disabled={vocabIndex === vocabList.length - 1}
-            onClick={() => { setVocabIndex(v => v + 1); setShowVocabMeaning(false); }}
-            className="flex-1 py-3 bg-indigo-600 disabled:opacity-40 text-white rounded-xl text-xs font-bold"
-          >
-            Keyingisi
-          </button>
-        </div>
-      </div>
-    );
-  };
-
-  // --- PROFIL ---
-  const renderProfile = () => (
+  // ==========================================
+  // 5. XATOLAR DAFTARI VA PROFIL
+  // ==========================================
+  const renderMistakesAndProfile = () => (
     <div className="space-y-4 animate-fadeIn">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-        <h3 className="font-bold text-base">Shaxsiy Profil</h3>
-        <span className="text-xs text-emerald-500 font-bold">● Ma'lumotlar saqlangan</span>
+      <h3 className="font-bold text-base">Xatolar Daftari & Profil</h3>
+
+      <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
+        <div className="flex items-center gap-2 font-bold text-sm text-rose-500">
+          <AlertTriangle size={18} /> Avvalgi Testlardagi Asosiy Xatolar:
+        </div>
+        <div className="space-y-2 text-xs">
+          <div className={`p-3 rounded-xl ${theme.subCard} border border-rose-500/20`}>
+            <div className="font-bold text-slate-200">Reading: TFNG va Not Given chalkashligi</div>
+            <p className={`${theme.textMuted} mt-1`}>Fakt matnda umuman berilmagan bo'lsa, uni FALSE emas, NOT GIVEN deb belgilang.</p>
+          </div>
+          <div className={`p-3 rounded-xl ${theme.subCard} border border-rose-500/20`}>
+            <div className="font-bold text-slate-200">Writing Task 2: So'z soni yetishmasligi</div>
+            <p className={`${theme.textMuted} mt-1`}>Esse kamida 250 so'z bo'lishi shart, aks holda Task Achievement'dan ball tushadi.</p>
+          </div>
+        </div>
       </div>
 
-      <div className={`${theme.card} border rounded-2xl p-5 text-center space-y-3`}>
-        <div className="w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 mx-auto flex items-center justify-center text-3xl shadow-inner">
-          {userProfile.avatar}
+      <div className={`${theme.card} border rounded-2xl p-4 space-y-2 text-xs`}>
+        <h4 className="font-bold text-sm">Shaxsiy Ma'lumotlar</h4>
+        <div className="flex justify-between py-1.5 border-b border-slate-700/20">
+          <span className={theme.textMuted}>Ism:</span>
+          <span className="font-bold">{userProfile.name}</span>
         </div>
-        <div>
-          <h3 className="text-xl font-bold">{userProfile.name}</h3>
-          <p className={`text-xs ${theme.textMuted}`}>{userProfile.currentLevel}</p>
+        <div className="flex justify-between py-1.5 border-b border-slate-700/20">
+          <span className={theme.textMuted}>Hozirgi diagnostika:</span>
+          <span className="font-bold text-indigo-500">Band {userProfile.currentBand}</span>
         </div>
-        <button 
-          onClick={() => {
-            setTempName(userProfile.name);
-            setTempBand(userProfile.targetBand);
-            setIsEditingProfile(true);
-          }}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition"
-        >
-          Profilni Tahrirlash
-        </button>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 space-y-3 text-xs`}>
-        <h4 className="font-bold">Statistika & Ko'rsatkichlar:</h4>
-        <div className="flex justify-between py-2 border-b border-slate-700/20">
-          <span className={theme.textMuted}>Maqsadli Band Ball:</span>
-          <span className="font-bold text-indigo-500">{userProfile.targetBand}</span>
-        </div>
-        <div className="flex justify-between py-2 border-b border-slate-700/20">
-          <span className={theme.textMuted}>Kunlik Ketma-ketlik:</span>
-          <span className="font-bold text-amber-500">🔥 {userProfile.streak} kun</span>
-        </div>
-        <div className="flex justify-between py-2">
-          <span className={theme.textMuted}>Tugallangan testlar:</span>
-          <span className="font-bold text-emerald-500">{userProfile.completedTests} ta</span>
+        <div className="flex justify-between py-1.5">
+          <span className={theme.textMuted}>Maqsadli ball:</span>
+          <span className="font-bold text-amber-500">Band {userProfile.targetBand}</span>
         </div>
       </div>
     </div>
@@ -895,7 +623,7 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} flex flex-col font-sans select-none antialiased transition-colors duration-300`}>
       
-      {/* Yuqori Header va Rejimni almashtirish tugmasi */}
+      {/* Yuqori Header */}
       <header className={`sticky top-0 z-40 ${theme.header} backdrop-blur-md border-b px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -905,7 +633,6 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Rejimni almashtirish (Kunduzgi / Kechki) */}
           <button 
             onClick={toggleTheme}
             className={`p-2 rounded-xl ${theme.subCard} border transition active:scale-95`}
@@ -913,25 +640,19 @@ export default function App() {
           >
             {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-indigo-600" />}
           </button>
-          <span className="text-xs font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
-            🔥 {userProfile.streak} kun
-          </span>
         </div>
       </header>
 
-      {/* Asosiy sahifa */}
+      {/* Asosiy Ekran Maydoni */}
       <main className="flex-1 w-full max-w-lg mx-auto p-4 pb-28">
         {activeTab === 'home' && renderHome()}
-        {activeTab === 'listening' && renderListening()}
-        {activeTab === 'reading' && renderReading()}
-        {activeTab === 'writing' && renderWriting()}
-        {activeTab === 'speaking' && renderSpeaking()}
-        {activeTab === 'vocab' && renderVocab()}
+        {activeTab === 'tests' && renderTestsHub()}
+        {activeTab === 'reading_test' && renderReadingTest()}
         {activeTab === 'ai' && renderAiChat()}
-        {activeTab === 'profile' && renderProfile()}
+        {activeTab === 'mistakes' && renderMistakesAndProfile()}
       </main>
 
-      {/* KATTALASHTIRILGAN VA QULAY PASTKI MENYU (BOTTOM TAB BAR) */}
+      {/* 4 TA TOZA VA ANIQ BO'LINGAN NAVIGATSIYA USTUNI */}
       <nav className={`fixed bottom-0 left-0 right-0 ${theme.navBg} backdrop-blur-xl border-t z-50 pb-6 pt-2`}>
         <div className="max-w-lg mx-auto flex justify-around items-center px-3">
           
@@ -941,21 +662,21 @@ export default function App() {
               activeTab === 'home' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
             }`}
           >
-            <BookOpen size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
-            <span className="text-xs font-medium">Asosiy</span>
+            <Compass size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+            <span className="text-xs font-medium">Bosh Sahifa</span>
           </button>
 
           <button 
-            onClick={() => setActiveTab('vocab')}
+            onClick={() => setActiveTab('tests')}
             className={`flex flex-col items-center gap-1.5 py-1 px-3 rounded-2xl transition active:scale-95 ${
-              activeTab === 'vocab' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
+              activeTab === 'tests' || activeTab === 'reading_test' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
             }`}
           >
-            <Layers size={24} strokeWidth={activeTab === 'vocab' ? 2.5 : 2} />
-            <span className="text-xs font-medium">Lug'at</span>
+            <BookOpen size={24} strokeWidth={activeTab === 'tests' ? 2.5 : 2} />
+            <span className="text-xs font-medium">IELTS Testlar</span>
           </button>
 
-          {/* O'rtadagi Katta ZiyoAI Tugmasi */}
+          {/* ZiyoAI Murabbiy */}
           <button 
             onClick={() => setActiveTab('ai')}
             className="flex flex-col items-center -mt-6 group"
@@ -971,33 +692,23 @@ export default function App() {
           </button>
 
           <button 
-            onClick={() => setActiveTab('writing')}
+            onClick={() => setActiveTab('mistakes')}
             className={`flex flex-col items-center gap-1.5 py-1 px-3 rounded-2xl transition active:scale-95 ${
-              activeTab === 'writing' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
+              activeTab === 'mistakes' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
             }`}
           >
-            <PenTool size={24} strokeWidth={activeTab === 'writing' ? 2.5 : 2} />
-            <span className="text-xs font-medium">Writing</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center gap-1.5 py-1 px-3 rounded-2xl transition active:scale-95 ${
-              activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : `${theme.textMuted}`
-            }`}
-          >
-            <User size={24} strokeWidth={activeTab === 'profile' ? 2.5 : 2} />
-            <span className="text-xs font-medium">Profil</span>
+            <BookmarkCheck size={24} strokeWidth={activeTab === 'mistakes' ? 2.5 : 2} />
+            <span className="text-xs font-medium">Xatolarim</span>
           </button>
 
         </div>
       </nav>
 
-      {/* Profil Tahrirlash Modali */}
+      {/* Profilni Tahrirlash Modali */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl`}>
-            <h3 className="font-bold text-base">Profilni Tahrirlash</h3>
+            <h3 className="font-bold text-base">Ball va Profil Sozlamalari</h3>
             
             <div>
               <label className={`text-xs ${theme.textMuted} block mb-1 font-medium`}>Ismingiz:</label>
@@ -1009,17 +720,32 @@ export default function App() {
               />
             </div>
 
-            <div>
-              <label className={`text-xs ${theme.textMuted} block mb-1 font-medium`}>Maqsadli IELTS Ball:</label>
-              <select
-                value={tempBand}
-                onChange={(e) => setTempBand(e.target.value)}
-                className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2.5 text-xs outline-none focus:border-indigo-500`}
-              >
-                {['6.0', '6.5', '7.0', '7.5', '8.0', '8.5', '9.0'].map(b => (
-                  <option key={b} value={b}>Band {b}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className={`text-xs ${theme.textMuted} block mb-1 font-medium`}>Hozirgi Ball:</label>
+                <select
+                  value={tempCurrentBand}
+                  onChange={(e) => setTempCurrentBand(e.target.value)}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
+                >
+                  {['5.0', '5.5', '6.0', '6.5', '7.0'].map(b => (
+                    <option key={b} value={b}>Band {b}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={`text-xs ${theme.textMuted} block mb-1 font-medium`}>Maqsadli Ball:</label>
+                <select
+                  value={tempTargetBand}
+                  onChange={(e) => setTempTargetBand(e.target.value)}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
+                >
+                  {['6.5', '7.0', '7.5', '8.0', '8.5', '9.0'].map(b => (
+                    <option key={b} value={b}>Band {b}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -1034,7 +760,8 @@ export default function App() {
                   setUserProfile(prev => ({
                     ...prev,
                     name: tempName.trim() || 'Tokhirbek',
-                    targetBand: tempBand
+                    currentBand: tempCurrentBand,
+                    targetBand: tempTargetBand
                   }));
                   setIsEditingProfile(false);
                 }}
