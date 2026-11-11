@@ -5,12 +5,10 @@ import {
   Sparkles, Send, Volume2, ChevronRight, Edit3, ArrowLeft, 
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
-  Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Flame, Bookmark, VolumeX, Eye
+  Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check
 } from 'lucide-react';
 
 export default function App() {
-  // --- 1. MAVZU (DARK / LIGHT REJIM) ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_theme');
     if (saved !== null) return saved === 'dark';
@@ -26,7 +24,6 @@ export default function App() {
     });
   };
 
-  // --- 2. O'QUVCHI PROFILI (LOCALSTORAGE) ---
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_user');
     if (saved) {
@@ -41,10 +38,8 @@ export default function App() {
       targetBand: '7.5',
       currentLevel: 'B2 Upper-Intermediate',
       streak: 5,
-      xp: 680,
-      completedTests: 18,
-      weakSkill: 'Reading: Matching Headings (42% aniqlik)',
-      lastActivity: 'Academic Reading: Cambridge 18 Test 2'
+      xp: 540,
+      completedTests: 12
     };
   });
 
@@ -56,16 +51,15 @@ export default function App() {
     return { listening: '7.0', reading: '7.5', writing: '6.5', speaking: '7.0' };
   });
 
-  // Kunlik reja (Daily Study Plan)
   const [dailyPlan, setDailyPlan] = useState(() => {
     const saved = localStorage.getItem('ziyoprep_plan');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
     return [
-      { id: 1, title: 'Academic Reading: 10 ta savolli to‘liq test', duration: '30 daq', done: false, xp: 60, icon: '📖' },
-      { id: 2, title: 'ZiyoAI Speaking Coach: Talaffuz & Ravonlik', duration: '20 daq', done: false, xp: 50, icon: '🎙️' },
-      { id: 3, title: 'Band 7.5–9.0 uchun 10 ta yangi collocation', duration: '15 daq', done: true, xp: 30, icon: '🧠' }
+      { id: 1, title: 'Academic Reading: 10 ta savolli to‘liq test', duration: '30 daq', done: false, xp: 60 },
+      { id: 2, title: 'ZiyoAI Speaking Coach: Talaffuz & Ravonlik', duration: '20 daq', done: false, xp: 50 },
+      { id: 3, title: 'Band 7.5–9.0 uchun 10 ta yangi collocation', duration: '15 daq', done: true, xp: 30 }
     ];
   });
 
@@ -92,7 +86,6 @@ export default function App() {
     }));
   };
 
-  // Navigatsiya holati: 'home' | 'tests' | 'ai' | 'writing' | 'profile' | 'listening'
   const [activeTab, setActiveTab] = useState('home');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
@@ -102,7 +95,7 @@ export default function App() {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 3 * 1024 * 1024) {
-        alert("Rasm hajmi juda katta (maksimal 3MB bo‘lsin).");
+        alert("Rasm hajmi 3MB dan oshmasligi kerak.");
         return;
       }
       const reader = new FileReader();
@@ -113,7 +106,6 @@ export default function App() {
     }
   };
 
-  // --- 3. READING TEST (10 TA SAVOL VA TAYMER) ---
   const [readingTime, setReadingTime] = useState(3600);
   const [readingTimerRunning, setReadingTimerRunning] = useState(false);
   const [highlightEvidence, setHighlightEvidence] = useState(false);
@@ -138,26 +130,26 @@ export default function App() {
     {
       id: "q1",
       type: "Matching Headings",
-      question: "1. Paragraph A uchun mos sarlavhani tanlang:",
+      question: "1. Paragraph A uchun eng mos sarlavhani tanlang:",
       options: [
-        "i. Negative effects of language shifts",
-        "ii. Superior mental flexibility and executive agility",
-        "iii. Early childhood linguistic conflict"
+        "i. Financial consequences of bilingual education",
+        "ii. Cognitive agility and task-switching superiority",
+        "iii. Linguistic conflict observed in childhood"
       ],
-      correct: "ii. Superior mental flexibility and executive agility",
-      explanation: "Paragraf A da: 'navigating between discrete semantic frameworks strengthens executive control' deb keltirilgan."
+      correct: "ii. Cognitive agility and task-switching superiority",
+      explanation: "Paragraf A da ko‘p tillilik diqqatni boshqarish va vazifalarni tez almashtirishni rivojlantirishi aytilgan."
     },
     {
       id: "q2",
       type: "Matching Headings",
-      question: "2. Paragraph B uchun mos sarlavhani tanlang:",
+      question: "2. Paragraph B uchun eng mos sarlavhani tanlang:",
       options: [
         "i. Neuroplastic resilience persisting into old age",
-        "ii. Accelerated cognitive decline in multilinguals",
-        "iii. Evolution of dialect mapping"
+        "ii. Decline of memory in multilingual adults",
+        "iii. Historical evolution of dialect processing"
       ],
       correct: "i. Neuroplastic resilience persisting into old age",
-      explanation: "Paragraf B da kognitiv moslashuv keksayganda ham davom etishi va kasalliklarni 4.5 yilga kechiktirishi aytilgan."
+      explanation: "Paragraf B da kognitiv moslashuvchanlik keksayganda ham saqlanishi va kasalliklarni 4.5 yilga kechiktirishi keltirilgan."
     },
     {
       id: "q3",
@@ -165,7 +157,7 @@ export default function App() {
       question: "3. Learning two languages causes lifelong intellectual confusion in adults.",
       options: ["TRUE", "FALSE", "NOT GIVEN"],
       correct: "FALSE",
-      explanation: "Matnda aksincha: 'Far from creating interference, it strengthens mental agility' deb ta'kidlanadi."
+      explanation: "Matnda aniq keltirilgan: chalkashlik tug‘dirmaydi, aksincha kognitiv boshqaruvni kuchaytiradi."
     },
     {
       id: "q4",
@@ -173,54 +165,25 @@ export default function App() {
       question: "4. MRI scans specifically highlighted changes in the left inferior parietal cortex.",
       options: ["TRUE", "FALSE", "NOT GIVEN"],
       correct: "TRUE",
-      explanation: "Matnda to‘g‘ridan-to‘g‘ri keltirilgan: 'scans reveal enhanced density in the left inferior parietal cortex'."
+      explanation: "Matnda aytilgan: 'scans reveal enhanced density in the left inferior parietal cortex'."
     },
     {
       id: "q5",
       type: "Multiple Choice",
-      question: "5. Multilingualism postpones neurodegenerative decline by an average of:",
+      question: "5. According to Paragraph B, bilingualism delays symptoms of dementia by approximately:",
       options: ["A) 1.5 years", "B) 4.5 years", "C) Over 10 years"],
       correct: "B) 4.5 years",
-      explanation: "Matnda: 'postponing neurological deterioration by an average of 4.5 years'."
+      explanation: "Matnda: 'delaying neurological deterioration by an average of 4.5 years'."
     }
   ];
 
-  // --- 4. LISTENING MODULI ---
-  const [listeningPlaying, setListeningPlaying] = useState(false);
-  const [listeningSpeed, setListeningSpeed] = useState(1.0);
-  const [listeningAnswers, setListeningAnswers] = useState({});
-  const [listeningChecked, setListeningChecked] = useState(false);
-
-  const listeningDialogue = "Good morning, Central City Accommodation Agency. We have an executive studio flat on Oakwood Avenue available from September 15th for 185 pounds per week, excluding metered electricity.";
-
-  const toggleListeningAudio = () => {
-    if (!('speechSynthesis' in window)) {
-      alert("Brauzeringiz nutq sintezini qo'llab-quvvatlamaydi.");
-      return;
-    }
-    if (listeningPlaying) {
-      window.speechSynthesis.cancel();
-      setListeningPlaying(false);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    setListeningPlaying(true);
-    const ut = new SpeechSynthesisUtterance(listeningDialogue);
-    ut.lang = 'en-GB';
-    ut.rate = listeningSpeed;
-    ut.onend = () => setListeningPlaying(false);
-    ut.onerror = () => setListeningPlaying(false);
-    window.speechSynthesis.speak(ut);
-  };
-
-  // --- 5. WRITING TASK 2 STUDIYASI ---
   const [essayText, setEssayText] = useState("");
   const [writingScore, setWritingScore] = useState(null);
 
   const analyzeEssay = () => {
     const words = essayText.trim().split(/\s+/).filter(Boolean).length;
     if (words < 20) {
-      alert("Iltimos, baholash uchun kamida 20-30 so‘z yozing!");
+      alert("Iltimos, tahlil uchun kamida 20-30 so‘z yozing!");
       return;
     }
     let band = 5.5;
@@ -233,13 +196,12 @@ export default function App() {
     setWritingScore({
       band: band.toFixed(1),
       wordCount: words,
-      taskAchievement: words >= 250 ? "Mavzu to‘liq yoritildi (250+ so‘z bajarildi)" : "So‘z soni kam (kamida 250 so‘z kerak)",
-      coherence: hasConnectors ? "Bog‘lovchilar to‘g‘ri qo‘llangan" : "Furthermore, However kabi akademik bog‘lovchilarni ko‘paytiring",
-      lexical: "Akademik so‘z boyligi yaxshi shakllangan"
+      taskAchievement: words >= 250 ? "Mavzu to‘liq yoritildi (250+ so‘z)" : "So‘z soni kam (kamida 250 so‘z kerak)",
+      coherence: hasConnectors ? "Bog‘lovchilar juda to‘g‘ri qo‘llangan" : "Furthermore, However kabi bog‘lovchilarni ko‘paytiring",
+      lexical: "Akademik so‘z boyligi yaxshi darajada"
     });
   };
 
-  // --- 6. ZIYOAI SPEAKING COACH ---
   const [speakingActive, setSpeakingActive] = useState(false);
   const [speakingAnalysis] = useState({
     original: "I am from Tashkent, capital city in Uzbekistan. I love my hometown.",
@@ -269,33 +231,28 @@ export default function App() {
     }, 1200);
   };
 
-  // Dinamik rang uslublari
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900',
     card: isDarkMode ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm',
     subCard: isDarkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-50 border-slate-200',
     header: isDarkMode ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
-    navBg: isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200 shadow-2xl',
+    navBg: isDarkMode ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-200 shadow-lg',
     inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
   };
 
-  // ==========================================
-  // 1. ASOSIY BOSH MENYU (BOYITILGAN VA RASMLI)
-  // ==========================================
   const renderHome = () => (
-    <div className="space-y-5 animate-fadeIn">
-      {/* 1. Profil & Streak */}
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {userProfile.photoBase64 ? (
             <img 
               src={userProfile.photoBase64} 
               alt={userProfile.name}
-              className="w-13 h-13 rounded-2xl object-cover border-2 border-indigo-500 shadow-md"
+              className="w-12 h-12 rounded-2xl object-cover border-2 border-indigo-500 shadow-md"
             />
           ) : (
-            <div className="w-13 h-13 rounded-2xl bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center text-xl font-black text-indigo-400">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center text-lg font-black text-indigo-400">
               {userProfile.name.charAt(0)}
             </div>
           )}
@@ -313,12 +270,11 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 px-3 py-1.5 rounded-full">
-          <span className="text-xs font-bold text-amber-500">🔥 {userProfile.streak} kun streak</span>
+        <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/25 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-amber-500">🔥 {userProfile.streak} kun</span>
         </div>
       </div>
 
-      {/* 2. Haqiqiy Diagnostik Ball vs Maqsadli Ball */}
       <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-700 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
         <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
           <div>
@@ -337,7 +293,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 4 Skill ballari */}
         <div className="grid grid-cols-4 gap-2 text-center pt-3 text-xs">
           <div>
             <div className="text-indigo-200 text-[11px]">Listening</div>
@@ -358,7 +313,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3. Bugungi Kunlik Reja */}
       <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm flex items-center gap-2">
@@ -382,10 +336,7 @@ export default function App() {
             >
               <div className="flex items-center gap-2.5">
                 {task.done ? <CheckSquare size={18} className="text-emerald-500" /> : <Square size={18} className="text-slate-400" />}
-                <div>
-                  <span className={`font-semibold ${task.done ? 'line-through opacity-80' : ''}`}>{task.title}</span>
-                  <span className="block text-[10px] text-slate-400">{task.icon} Tavsiya etilgan</span>
-                </div>
+                <span className={`font-semibold ${task.done ? 'line-through opacity-80' : ''}`}>{task.title}</span>
               </div>
               <div className="text-right">
                 <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${task.done ? 'bg-emerald-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
@@ -398,154 +349,56 @@ export default function App() {
         </div>
       </div>
 
-      {/* 4. Davom ettirish (Oxirgi to‘xtagan joydan boshlash) */}
-      <div 
-        onClick={() => setActiveTab('tests')}
-        className={`${theme.subCard} border border-indigo-500/30 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-500 flex items-center justify-center">
-            <RefreshCw size={20} />
-          </div>
-          <div>
-            <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Mashqni davom ettirish</div>
-            <div className="font-bold text-xs">{userProfile.lastActivity}</div>
-          </div>
-        </div>
-        <ArrowRight size={18} className="text-indigo-500" />
-      </div>
-
-      {/* 5. ZiyoAI Shaxsiy Murabbiy Banneri */}
       <div 
         onClick={() => setActiveTab('ai')}
-        className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition group shadow-sm`}
+        className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition group`}
       >
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
-            <Bot size={24} />
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
+            <Bot size={22} />
           </div>
           <div>
             <h4 className="font-bold text-sm group-hover:text-indigo-500 transition flex items-center gap-1.5">
               ZiyoAI Speaking Coach <Sparkles size={15} className="text-amber-400" />
             </h4>
-            <p className={`text-xs ${theme.textMuted}`}>Ovoz tahlili, talaffuz xatolari va ravonlik balli</p>
+            <p className={`text-xs ${theme.textMuted}`}>Ovoz tahlili, talaffuz xatolari va ravonlik</p>
           </div>
         </div>
         <ChevronRight size={20} className={`${theme.textMuted} group-hover:text-indigo-500 transition`} />
       </div>
 
-      {/* 6. ZAIF TOMONLAR TAHLILI (WEAKNESS TRACKER) */}
-      <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl p-4 flex items-start gap-3">
-        <AlertTriangle size={20} className="text-rose-500 shrink-0 mt-0.5" />
-        <div className="flex-1 text-xs">
-          <div className="font-bold text-rose-500 text-sm">Zaif tomoningiz tahlili:</div>
-          <p className={`${theme.textMuted} mt-0.5 font-medium`}>{userProfile.weakSkill}</p>
-          <button 
-            onClick={() => setActiveTab('tests')}
-            className="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400 underline flex items-center gap-1"
-          >
-            Hozir aynan shu savol turini ishlash <ChevronRight size={14} />
-          </button>
-        </div>
-      </div>
-
-      {/* 7. RASMLI ZAMONAVIY IELTS BO'LIMLARI (4 TA TO'LIQ KARTA) */}
-      <div>
-        <h3 className={`text-xs font-bold uppercase tracking-wider ${theme.textMuted} mb-3`}>IELTS Ko‘nikmalari</h3>
-        <div className="grid grid-cols-2 gap-3.5">
-          {/* Reading */}
-          <div 
-            onClick={() => setActiveTab('tests')}
-            className={`${theme.card} border rounded-2xl overflow-hidden cursor-pointer group active:scale-95 transition shadow-sm`}
-          >
-            <div className="h-28 w-full relative overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80" 
-                alt="Reading"
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
-                60 daq
-              </span>
-            </div>
-            <div className="p-3">
-              <h4 className="font-bold text-sm">Academic Reading</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>10 ta savol • Cambridge 18</p>
-            </div>
+      <div className="grid grid-cols-2 gap-3">
+        <button 
+          onClick={() => setActiveTab('tests')}
+          className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 space-y-2`}
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+            <BookOpen size={20} />
           </div>
-
-          {/* Listening */}
-          <div 
-            onClick={() => setActiveTab('listening')}
-            className={`${theme.card} border rounded-2xl overflow-hidden cursor-pointer group active:scale-95 transition shadow-sm`}
-          >
-            <div className="h-28 w-full relative overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=600&q=80" 
-                alt="Listening"
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
-                Section 1–4
-              </span>
-            </div>
-            <div className="p-3">
-              <h4 className="font-bold text-sm">Listening Audio</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>Britaniya & Avstraliya aksenti</p>
-            </div>
+          <div>
+            <div className="font-bold text-sm">Academic Reading</div>
+            <div className={`text-[11px] ${theme.textMuted}`}>10 ta savol • 60 daqiqalik test</div>
           </div>
+        </button>
 
-          {/* Writing */}
-          <div 
-            onClick={() => setActiveTab('writing')}
-            className={`${theme.card} border rounded-2xl overflow-hidden cursor-pointer group active:scale-95 transition shadow-sm`}
-          >
-            <div className="h-28 w-full relative overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80" 
-                alt="Writing"
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <span className="absolute top-2 left-2 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
-                Task 1 & 2
-              </span>
-            </div>
-            <div className="p-3">
-              <h4 className="font-bold text-sm">Writing Studio</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>250 so‘zlik esse baholash</p>
-            </div>
+        <button 
+          onClick={() => setActiveTab('writing')}
+          className={`${theme.card} border p-4 rounded-2xl text-left transition active:scale-95 space-y-2`}
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
+            <PenTool size={20} />
           </div>
-
-          {/* Speaking */}
-          <div 
-            onClick={() => setActiveTab('ai')}
-            className={`${theme.card} border rounded-2xl overflow-hidden cursor-pointer group active:scale-95 transition shadow-sm`}
-          >
-            <div className="h-28 w-full relative overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80" 
-                alt="Speaking"
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              />
-              <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
-                Part 1–3
-              </span>
-            </div>
-            <div className="p-3">
-              <h4 className="font-bold text-sm">Speaking Coach</h4>
-              <p className={`text-[11px] ${theme.textMuted} mt-0.5`}>Jonli AI nutq bahosi</p>
-            </div>
+          <div>
+            <div className="font-bold text-sm">Writing Task 2</div>
+            <div className={`text-[11px] ${theme.textMuted}`}>250 so‘zlik esse baholash</div>
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );
 
-  // ==========================================
-  // 2. READING TEST MODULI
-  // ==========================================
   const renderTests = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
           <ArrowLeft size={16} /> Bosh sahifa
@@ -648,7 +501,7 @@ export default function App() {
             setReadingChecked(true);
             setHighlightEvidence(true);
           }}
-          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl text-xs transition active:scale-95 shadow-md"
+          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md"
         >
           Javoblarni Tekshirish va Xatolarni Tahlil Qilish
         </button>
@@ -656,82 +509,8 @@ export default function App() {
     </div>
   );
 
-  // ==========================================
-  // 3. LISTENING MODULI
-  // ==========================================
-  const renderListening = () => (
-    <div className="space-y-4 animate-fadeIn">
-      <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
-        <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-bold">
-          <ArrowLeft size={16} /> Bosh sahifa
-        </button>
-        <span className="text-xs bg-emerald-500/15 text-emerald-500 px-2.5 py-0.5 rounded-full font-bold">Section 1</span>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 space-y-3`}>
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-bold uppercase tracking-wider ${theme.textMuted}`}>Audio (Britaniya Aksenti)</span>
-          <div className="flex gap-1">
-            {[0.8, 1.0, 1.2].map(speed => (
-              <button 
-                key={speed}
-                onClick={() => setListeningSpeed(speed)}
-                className={`text-xs px-2 py-0.5 rounded-md font-bold transition ${listeningSpeed === speed ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-              >
-                {speed}x
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={toggleListeningAudio}
-            className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md active:scale-95 transition"
-          >
-            {listeningPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
-          </button>
-          <div className="flex-1 text-xs">
-            <div className="font-bold">Student Accommodation Inquiry</div>
-            <div className={`${theme.textMuted}`}>{listeningPlaying ? "Audio yangramoqda..." : "Tinglash uchun bosing"}</div>
-          </div>
-        </div>
-      </div>
-
-      <div className={`${theme.card} border rounded-2xl p-4 space-y-3 text-xs`}>
-        <h4 className="font-bold text-sm">Savollarga javob yozing:</h4>
-        <div>
-          <label className={`block mb-1 font-medium ${theme.textMuted}`}>1. Haftalik ijara narxi qancha? (£):</label>
-          <input 
-            type="text" 
-            placeholder="Masalan: 185"
-            value={listeningAnswers.a1 || ''}
-            onChange={(e) => setListeningAnswers({ ...listeningAnswers, a1: e.target.value })}
-            className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2.5 outline-none focus:border-indigo-500`}
-          />
-        </div>
-        <button 
-          onClick={() => setListeningChecked(true)}
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition"
-        >
-          Tekshirish
-        </button>
-
-        {listeningChecked && (
-          <div className={`${theme.subCard} p-3 rounded-xl border text-xs`}>
-            <span className="text-emerald-500 font-bold">To‘g‘ri javob: 185</span>
-            <p className={`${theme.textMuted} mt-1`}>Matnda: "The weekly rent is 185 pounds" deb aniq aytildi.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // ==========================================
-  // 4. ZIYOAI SPEAKING COACH
-  // ==========================================
   const renderAi = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className={`${theme.card} border rounded-3xl p-5 text-center space-y-3 relative overflow-hidden shadow-md`}>
         <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg">
           <Bot size={36} />
@@ -812,13 +591,10 @@ export default function App() {
     </div>
   );
 
-  // ==========================================
-  // 5. WRITING TASK 2
-  // ==========================================
   const renderWriting = () => {
     const wordCount = essayText.trim().split(/\s+/).filter(Boolean).length;
     return (
-      <div className="space-y-4 animate-fadeIn">
+      <div className="space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
           <h3 className="font-bold text-base">Writing Task 2 Studio</h3>
           <span className="text-xs bg-amber-500/15 text-amber-500 px-2.5 py-0.5 rounded-full font-bold">250 So‘z</span>
@@ -866,11 +642,8 @@ export default function App() {
     );
   };
 
-  // ==========================================
-  // 6. FAQAT SHAXSIY PROFIL
-  // ==========================================
   const renderProfileOnly = () => (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-4">
       <div className="flex items-center justify-between pb-2 border-b border-slate-700/40">
         <h3 className="font-bold text-base">Mening Profilim</h3>
         <button 
@@ -953,7 +726,6 @@ export default function App() {
 
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
-      {/* Header */}
       <header className={`sticky top-0 z-40 ${theme.header} backdrop-blur-md border-b px-4 py-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -972,89 +744,74 @@ export default function App() {
         </div>
       </header>
 
-      {/* Asosiy Ekran Maydoni */}
-      <main className="flex-1 w-full max-w-md mx-auto p-4 pb-36 box-border">
+      <main className="flex-1 w-full max-w-md mx-auto p-4 pb-32 box-border">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'tests' && renderTests()}
-        {activeTab === 'listening' && renderListening()}
         {activeTab === 'ai' && renderAi()}
         {activeTab === 'writing' && renderWriting()}
         {activeTab === 'profile' && renderProfileOnly()}
       </main>
 
-      {/* KATTALASHTIRILGAN, QULAY VA CHROYLI 5 TALIK PASTKI MENYU */}
       <div className="fixed bottom-3 left-0 right-0 z-50 px-3 pointer-events-none">
         <div className="max-w-md mx-auto pointer-events-auto">
-          <nav className={`${theme.navBg} backdrop-blur-2xl rounded-[32px] px-2 py-2 flex items-center justify-between relative shadow-2xl border`}>
-            
-            {/* 1. Asosiy */}
+          <nav className={`${theme.navBg} backdrop-blur-2xl rounded-[28px] px-2 py-1.5 flex items-center justify-between relative`}>
             <button 
               onClick={() => setActiveTab('home')}
-              className={`flex-1 flex flex-col items-center py-1.5 rounded-2xl transition active:scale-90 ${
-                activeTab === 'home' ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : `${theme.textMuted}`
+              className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
+                activeTab === 'home' ? 'text-indigo-500 font-bold' : `${theme.textMuted}`
               }`}
             >
-              <Compass size={25} strokeWidth={activeTab === 'home' ? 2.6 : 2} />
-              <span className="text-[11px] font-bold mt-1">Asosiy</span>
-              {activeTab === 'home' && <span className="w-5 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+              <Compass size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+              <span className="text-[10px] mt-0.5">Asosiy</span>
+              {activeTab === 'home' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 2. Testlar */}
             <button 
               onClick={() => setActiveTab('tests')}
-              className={`flex-1 flex flex-col items-center py-1.5 rounded-2xl transition active:scale-90 ${
-                activeTab === 'tests' || activeTab === 'listening' ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : `${theme.textMuted}`
+              className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
+                activeTab === 'tests' ? 'text-indigo-500 font-bold' : `${theme.textMuted}`
               }`}
             >
-              <BookOpen size={25} strokeWidth={activeTab === 'tests' || activeTab === 'listening' ? 2.6 : 2} />
-              <span className="text-[11px] font-bold mt-1">Testlar</span>
-              {(activeTab === 'tests' || activeTab === 'listening') && <span className="w-5 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+              <BookOpen size={20} strokeWidth={activeTab === 'tests' ? 2.5 : 2} />
+              <span className="text-[10px] mt-0.5">Testlar</span>
+              {activeTab === 'tests' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 3. ZiyoAI (O'rtadagi Katta va Oson Bosiladigan Dumaloq Tugma) */}
             <button 
               onClick={() => setActiveTab('ai')}
-              className="flex flex-col items-center -mt-8 px-1.5 active:scale-90 transition group"
+              className="flex flex-col items-center -mt-6 px-1 active:scale-95 transition"
             >
-              <div className={`w-15 h-15 rounded-full flex items-center justify-center text-white shadow-2xl transition ring-4 ${
-                activeTab === 'ai' 
-                  ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 ring-indigo-500/50 scale-105' 
-                  : 'bg-gradient-to-tr from-indigo-600 to-blue-600 ring-slate-900'
-              }`}>
-                <Bot size={30} />
+              <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xl ring-4 ring-slate-900">
+                <Bot size={26} />
               </div>
-              <span className="text-[11px] text-indigo-400 font-extrabold mt-1">ZiyoAI</span>
+              <span className="text-[10px] text-indigo-400 font-bold mt-0.5">ZiyoAI</span>
             </button>
 
-            {/* 4. Writing */}
             <button 
               onClick={() => setActiveTab('writing')}
-              className={`flex-1 flex flex-col items-center py-1.5 rounded-2xl transition active:scale-90 ${
-                activeTab === 'writing' ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : `${theme.textMuted}`
+              className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
+                activeTab === 'writing' ? 'text-indigo-500 font-bold' : `${theme.textMuted}`
               }`}
             >
-              <PenTool size={25} strokeWidth={activeTab === 'writing' ? 2.6 : 2} />
-              <span className="text-[11px] font-bold mt-1">Writing</span>
-              {activeTab === 'writing' && <span className="w-5 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+              <PenTool size={20} strokeWidth={activeTab === 'writing' ? 2.5 : 2} />
+              <span className="text-[10px] mt-0.5">Writing</span>
+              {activeTab === 'writing' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
 
-            {/* 5. Profil */}
             <button 
               onClick={() => setActiveTab('profile')}
-              className={`flex-1 flex flex-col items-center py-1.5 rounded-2xl transition active:scale-90 ${
-                activeTab === 'profile' ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : `${theme.textMuted}`
+              className={`flex-1 flex flex-col items-center py-1 rounded-xl transition active:scale-95 ${
+                activeTab === 'profile' ? 'text-indigo-500 font-bold' : `${theme.textMuted}`
               }`}
             >
-              <User size={25} strokeWidth={activeTab === 'profile' ? 2.6 : 2} />
-              <span className="text-[11px] font-bold mt-1">Profil</span>
-              {activeTab === 'profile' && <span className="w-5 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+              <User size={20} strokeWidth={activeTab === 'profile' ? 2.5 : 2} />
+              <span className="text-[10px] mt-0.5">Profil</span>
+              {activeTab === 'profile' && <span className="w-4 h-0.5 bg-emerald-500 rounded-full mt-0.5"></span>}
             </button>
-
           </nav>
         </div>
       </div>
 
-      {/* Profilni Tahrirlash Modali */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border rounded-3xl p-5 w-full max-w-sm space-y-3.5 shadow-2xl`}>
@@ -1105,7 +862,7 @@ export default function App() {
                   type="date"
                   value={editForm.birthDate}
                   onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-                  className={`w-full ${theme.inputBg} rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500`}
+                  className={`w-full ${theme.inputBg} rounded-xl px-3.5 py-2 text-xs outline-none focus:border-indigo-500`}
                 />
               </div>
             </div>
