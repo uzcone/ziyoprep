@@ -1,4 +1,4 @@
-Import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Compass, BookOpen, Headphones, PenTool, Mic, Bot, User, 
   Play, Pause, RotateCcw, CheckCircle2, XCircle, Award, 
@@ -6,7 +6,7 @@ import {
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Globe, Languages
+  Globe, Languages, Menu, Bell, ArrowUpRight
 } from 'lucide-react';
 
 export default function App() {
@@ -63,7 +63,7 @@ export default function App() {
     };
   });
 
-  // Kunlik dars rejalari (Ingliz tili va Koreys tili uchun alohida)
+  // Kunlik dars rejalari
   const [dailyPlanEn, setDailyPlanEn] = useState([
     { id: 1, title: 'Academic Reading: 10 ta savolli to‘liq test', duration: '30 daq', done: false, xp: 60, tag: 'Reading' },
     { id: 2, title: 'ZiyoAI Speaking Coach: Talaffuz & Ravonlik', duration: '20 daq', done: false, xp: 50, tag: 'Speaking' },
@@ -88,7 +88,7 @@ export default function App() {
     }
   };
 
-  // Navigatsiya holati: 'home' | 'tests' | 'ai' | 'writing' | 'profile' | 'korean_hangul' | 'korean_listening'
+  // Navigatsiya holati: 'home' | 'tests' | 'ai' | 'writing' | 'profile' | 'korean_hangul'
   const [activeTab, setActiveTab] = useState('home');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
@@ -165,7 +165,7 @@ export default function App() {
     }
   ];
 
-  // --- 5. KOREYS TILI DARS MATERIALLARI (HANGUL VA TOPIK SAVOLLARI) ---
+  // --- 5. KOREYS TILI DARS MATERIALLARI ---
   const hangulAlphabet = [
     { char: "ㄱ", name: "Giyok (g/k)", sound: "가 (ga)" },
     { char: "ㄴ", name: "Niun (n)", sound: "나 (na)" },
@@ -183,7 +183,7 @@ export default function App() {
       question: "1. 다음 빈칸에 들어갈 가장 알맞은 것을 고르십시오: 저는 아침에 일찍 ________.",
       options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
       correct: "① 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan harakat uchun '일어나다' (uyg'onmoq) fe'li to'g'ri keladi."
+      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan harakat uchun '일어나다' fe'li to'g'ri keladi."
     },
     {
       id: "kr2",
@@ -208,146 +208,203 @@ export default function App() {
 
   // Dinamik ranglar
   const theme = {
-    bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900',
-    card: isDarkMode ? 'bg-slate-900/90 border-slate-800 shadow-xl' : 'bg-white border-slate-200/80 shadow-md',
-    subCard: isDarkMode ? 'bg-slate-800/60 border-slate-700/60' : 'bg-slate-100 border-slate-200',
-    header: isDarkMode ? 'bg-slate-950/95 border-slate-800' : 'bg-white/95 border-slate-200',
-    textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
-    navBg: isDarkMode ? 'bg-slate-900/98 border-slate-800 shadow-2xl' : 'bg-white/98 border-slate-200 shadow-2xl',
-    inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+    bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100',
+    card: isDarkMode ? 'bg-[#151726] border-slate-800 shadow-xl' : 'bg-[#1a1d30] border-slate-700/60 shadow-md',
+    subCard: isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-800/80 border-slate-700',
+    header: 'bg-slate-950/95 border-b border-slate-800/80',
+    textMuted: 'text-slate-400',
+    navBg: 'bg-[#121421]/95 border-t border-slate-800 backdrop-blur-2xl shadow-2xl',
+    inputBg: 'bg-slate-900 border-slate-700 text-white'
   };
 
   // ==========================================
-  // 1. ASOSIY BOSH SAHIFA (INGLIZ TILI / KOREYS TILI)
+  // 1. RASMDAGIDEK ZAMONAVIY BOSH SAHIFA
   // ==========================================
   const renderHome = () => {
     const isKr = selectedLanguage === 'kr';
     const currentDailyPlan = isKr ? dailyPlanKr : dailyPlanEn;
 
     return (
-      <div className="space-y-6 animate-fadeIn pb-6">
-        
-        {/* Profil Qatori */}
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-3.5">
-            {userProfile.photoBase64 ? (
-              <img 
-                src={userProfile.photoBase64} 
-                alt={userProfile.name}
-                className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500 shadow-md"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-500 border-2 border-indigo-400/40 flex items-center justify-center text-xl font-black text-white shadow-md">
-                {userProfile.name.charAt(0)}
+      <div className="space-y-5 animate-fadeIn pb-6">
+
+        {/* RASMDAGI ASOSIY BANNER (YOUR LANGUAGE JOURNEY) */}
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#261f5c] via-[#1a1a40] to-[#12132b] p-6 text-white border border-indigo-500/25 shadow-2xl">
+          {/* Orqa fondagi nafis konsentrik doira chiziqlari */}
+          <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full border border-indigo-400/10 pointer-events-none"></div>
+          <div className="absolute -top-6 -right-6 w-52 h-52 rounded-full border border-indigo-400/15 pointer-events-none"></div>
+          <div className="absolute top-0 right-0 w-40 h-40 rounded-full border border-indigo-400/20 pointer-events-none"></div>
+
+          <div className="flex items-start justify-between relative z-10">
+            {/* Chap tomon matnlar va tugma */}
+            <div className="space-y-3.5 max-w-[62%]">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 block">
+                YOUR LANGUAGE JOURNEY
+              </span>
+              
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+                  Salom! Xush kelibsiz 👋
+                </h2>
+                <h3 className="text-xl font-extrabold tracking-tight text-white">
+                  Bugun nimani o‘rganamiz?
+                </h3>
               </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black tracking-tight">{userProfile.name}</h2>
-                <span className="text-[11px] bg-indigo-500/15 text-indigo-500 font-extrabold px-2.5 py-0.5 rounded-full">
-                  {isKr ? userProfile.koreanCurrentLevel : userProfile.currentLevel}
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs text-slate-400 mt-1">
-                <span className="flex items-center gap-1 font-semibold text-amber-500">
-                  <Zap size={14} className="fill-amber-500" /> {userProfile.xp} XP
-                </span>
-                <span>•</span>
-                <span className="font-semibold text-indigo-400">{userProfile.completedTests} ta test bajarildi</span>
-              </div>
+
+              <p className="text-xs text-indigo-200/80 leading-relaxed font-normal">
+                Ingliz va koreys tillarini bir joyda, aqlli va samarali o‘rganing.
+              </p>
+
+              <button 
+                onClick={() => setActiveTab('tests')}
+                className="mt-2 inline-flex items-center gap-2 bg-[#b8a5fe] hover:bg-[#a892fe] text-slate-950 font-black text-xs px-4 py-2.5 rounded-2xl shadow-lg transition transform active:scale-95"
+              >
+                <span>Darsni boshlash</span>
+                <ArrowUpRight size={16} strokeWidth={2.8} />
+              </button>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 px-3.5 py-1.5 rounded-2xl shadow-sm">
-            <span className="text-xs font-black text-amber-500">🔥 {userProfile.streak} kun</span>
+
+            {/* O'ng tomon dumaloq 68% progress indikatori */}
+            <div className="flex flex-col items-center justify-center pt-2">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                {/* SVG Progress Circle */}
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="#2e335a"
+                    strokeWidth="9"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="#5885f8"
+                    strokeWidth="9"
+                    strokeDasharray="251.2"
+                    strokeDashoffset={251.2 - (251.2 * 68) / 100}
+                    strokeLinecap="round"
+                    fill="transparent"
+                  />
+                </svg>
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-2xl font-black tracking-tight text-white">68%</span>
+                </div>
+              </div>
+              <span className="text-[11px] font-semibold text-indigo-200/70 mt-1">Umumiy progress</span>
+              <span className="text-xs font-bold text-indigo-100 mt-2">Haftalik</span>
+              <span className="text-xs font-bold text-indigo-100">maqsad</span>
+            </div>
           </div>
         </div>
 
-        {/* BALLAR KARTASI: INGLIZ TILI (BAND) YOKI KOREYS TILI (GEUP) */}
+        {/* TIL TANLASH (IELTS / TOPIK) REJIMI */}
+        <div className="flex items-center justify-between p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800">
+          <button 
+            onClick={() => switchLanguage('en')}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 ${
+              !isKr ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>🇬🇧</span> IELTS Darslari
+          </button>
+          <button 
+            onClick={() => switchLanguage('kr')}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 ${
+              isKr ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span>🇰🇷</span> TOPIK Koreys Tili
+          </button>
+        </div>
+
+        {/* DARAXA VA BALLAR TAHLILI */}
         {!isKr ? (
-          <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 rounded-[28px] p-6 text-white shadow-2xl relative overflow-hidden">
-            <div className="grid grid-cols-2 gap-4 pb-5 border-b border-white/20 relative z-10">
+          <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 rounded-[28px] p-5 text-white shadow-xl relative overflow-hidden">
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
               <div>
-                <span className="text-xs uppercase tracking-wider text-indigo-200 font-bold flex items-center gap-1.5">
-                  <BarChart3 size={15} /> Diagnostik Ball
+                <span className="text-[11px] uppercase tracking-wider text-indigo-200 font-bold flex items-center gap-1.5">
+                  <BarChart3 size={14} /> Diagnostik Ball
                 </span>
-                <div className="text-4xl font-black mt-1.5 tracking-tight">Band {userProfile.currentBand}</div>
-                <span className="text-[11px] text-indigo-100 font-medium">Cambridge IELTS darajasi</span>
+                <div className="text-3xl font-black mt-1">Band {userProfile.currentBand}</div>
+                <span className="text-[10px] text-indigo-100">Cambridge IELTS darajasi</span>
               </div>
-              <div className="border-l border-white/20 pl-5">
-                <span className="text-xs uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
-                  <Target size={15} /> Maqsadli Ball
+              <div className="border-l border-white/20 pl-4">
+                <span className="text-[11px] uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
+                  <Target size={14} /> Maqsadli Ball
                 </span>
-                <div className="text-4xl font-black mt-1.5 tracking-tight text-amber-300">Band {userProfile.targetBand}</div>
-                <span className="text-[11px] text-indigo-100 font-medium">Oraliq farq: +1.0 ball qoldi</span>
+                <div className="text-3xl font-black mt-1 text-amber-300">Band {userProfile.targetBand}</div>
+                <span className="text-[10px] text-indigo-100">Oraliq farq: +1.0 ball</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center pt-4 text-xs relative z-10">
+            <div className="grid grid-cols-4 gap-2 text-center pt-3 text-xs">
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[11px] font-semibold">Listening</div>
+                <div className="text-indigo-200 text-[10px] font-semibold">Listening</div>
                 <div className="font-black text-sm mt-0.5">7.0</div>
               </div>
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[11px] font-semibold">Reading</div>
+                <div className="text-indigo-200 text-[10px] font-semibold">Reading</div>
                 <div className="font-black text-sm mt-0.5">7.5</div>
               </div>
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[11px] font-semibold">Writing</div>
+                <div className="text-indigo-200 text-[10px] font-semibold">Writing</div>
                 <div className="font-black text-sm mt-0.5">6.5</div>
               </div>
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-indigo-200 text-[11px] font-semibold">Speaking</div>
+                <div className="text-indigo-200 text-[10px] font-semibold">Speaking</div>
                 <div className="font-black text-sm mt-0.5">7.0</div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-rose-700 via-rose-600 to-indigo-700 rounded-[28px] p-6 text-white shadow-2xl relative overflow-hidden">
-            <div className="grid grid-cols-2 gap-4 pb-5 border-b border-white/20 relative z-10">
+          <div className="bg-gradient-to-br from-rose-700 via-rose-600 to-indigo-700 rounded-[28px] p-5 text-white shadow-xl relative overflow-hidden">
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
               <div>
-                <span className="text-xs uppercase tracking-wider text-rose-200 font-bold flex items-center gap-1.5">
-                  <BarChart3 size={15} /> Hozirgi Daraja
+                <span className="text-[11px] uppercase tracking-wider text-rose-200 font-bold flex items-center gap-1.5">
+                  <BarChart3 size={14} /> Hozirgi Daraja
                 </span>
-                <div className="text-3xl font-black mt-1.5 tracking-tight">2-급 (TOPIK I)</div>
-                <span className="text-[11px] text-rose-100 font-medium">Boshlang'ich muloqot darajasi</span>
+                <div className="text-3xl font-black mt-1">2-급 (TOPIK I)</div>
+                <span className="text-[10px] text-rose-100">Boshlang'ich daraja</span>
               </div>
-              <div className="border-l border-white/20 pl-5">
-                <span className="text-xs uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
-                  <Target size={15} /> Maqsadli Daraja
+              <div className="border-l border-white/20 pl-4">
+                <span className="text-[11px] uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
+                  <Target size={14} /> Maqsadli Daraja
                 </span>
-                <div className="text-3xl font-black mt-1.5 tracking-tight text-amber-300">4-급 (TOPIK II)</div>
-                <span className="text-[11px] text-rose-100 font-medium">Koreya Universitetlari va Viza</span>
+                <div className="text-3xl font-black mt-1 text-amber-300">4-급 (TOPIK II)</div>
+                <span className="text-[10px] text-rose-100">Universitet & Viza</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 text-center pt-4 text-xs relative z-10">
+            <div className="grid grid-cols-3 gap-2 text-center pt-3 text-xs">
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[11px] font-semibold">Tinglab tushunish (듣기)</div>
-                <div className="font-black text-sm mt-0.5">78 / 100 ball</div>
+                <div className="text-rose-200 text-[10px] font-semibold">Tinglash (듣기)</div>
+                <div className="font-black text-sm mt-0.5">78 ball</div>
               </div>
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[11px] font-semibold">O‘qish (읽기)</div>
-                <div className="font-black text-sm mt-0.5">72 / 100 ball</div>
+                <div className="text-rose-200 text-[10px] font-semibold">O‘qish (읽기)</div>
+                <div className="font-black text-sm mt-0.5">72 ball</div>
               </div>
               <div className="bg-white/10 rounded-xl py-2">
-                <div className="text-rose-200 text-[11px] font-semibold">Yozish (쓰기)</div>
-                <div className="font-black text-sm mt-0.5">55 / 100 ball</div>
+                <div className="text-rose-200 text-[10px] font-semibold">Yozish (쓰기)</div>
+                <div className="font-black text-sm mt-0.5">55 ball</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Bugungi Kunlik Reja */}
+        {/* BUGUNGI KUNLIK REJA */}
         <div className={`${theme.card} border rounded-3xl p-5 space-y-4`}>
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-black text-base flex items-center gap-2">
-                <Clock size={18} className="text-indigo-500" /> {isKr ? "Bugungi Koreys Tili Rejasi" : "Bugungi IELTS Rejasi"}
+                <Clock size={18} className="text-indigo-400" /> {isKr ? "Koreys Tili Vazifalari" : "IELTS Dars Rejasi"}
               </h3>
-              <p className={`text-xs ${theme.textMuted} mt-0.5`}>Muntazamlik — natija kalitidir</p>
+              <p className={`text-xs ${theme.textMuted} mt-0.5`}>Bugun bajarilishi kerak bo‘lgan mashqlar</p>
             </div>
-            <span className="text-xs font-black bg-emerald-500/15 text-emerald-500 px-3 py-1 rounded-full">
-              {currentDailyPlan.filter(t => t.done).length}/{currentDailyPlan.length} bajarildi
+            <span className="text-xs font-black bg-emerald-500/15 text-emerald-400 px-3 py-1 rounded-full">
+              {currentDailyPlan.filter(t => t.done).length}/{currentDailyPlan.length} tayyor
             </span>
           </div>
 
@@ -358,29 +415,29 @@ export default function App() {
                 onClick={() => toggleTask(task.id, isKr)}
                 className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs cursor-pointer transition active:scale-98 ${
                   task.done 
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' 
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
                     : `${theme.subCard} hover:border-indigo-500/50`
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {task.done ? <CheckSquare size={20} className="text-emerald-500" /> : <Square size={20} className="text-slate-400" />}
+                  {task.done ? <CheckSquare size={20} className="text-emerald-400" /> : <Square size={20} className="text-slate-500" />}
                   <div>
                     <span className={`font-bold text-sm ${task.done ? 'line-through opacity-80' : ''}`}>{task.title}</span>
-                    <span className="block text-[11px] text-slate-400 mt-0.5 font-medium">{task.tag}</span>
+                    <span className="block text-[11px] text-slate-400 mt-0.5">{task.tag}</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold ${task.done ? 'bg-emerald-500/20' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                  <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold ${task.done ? 'bg-emerald-500/20' : 'bg-slate-800'}`}>
                     {task.duration}
                   </span>
-                  <span className="block text-[11px] text-amber-500 font-extrabold mt-1">+{task.xp} XP</span>
+                  <span className="block text-[11px] text-amber-400 font-extrabold mt-1">+{task.xp} XP</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ZiyoAI Murabbiy Banneri */}
+        {/* ZIYOAI BANNER */}
         <div 
           onClick={() => setActiveTab('ai')}
           className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-3xl p-5 text-white flex items-center justify-between cursor-pointer hover:shadow-xl transition group shadow-lg"
@@ -391,21 +448,21 @@ export default function App() {
             </div>
             <div>
               <h4 className="font-black text-base flex items-center gap-1.5">
-                {isKr ? "ZiyoAI Koreys Tili Murabbiyi" : "ZiyoAI IELTS Speaking Coach"} <Sparkles size={16} className="text-amber-300" />
+                {isKr ? "ZiyoAI Koreys Tili Murabbiyi" : "ZiyoAI Speaking Coach"} <Sparkles size={16} className="text-amber-300" />
               </h4>
               <p className="text-xs text-blue-100 mt-0.5">
-                {isKr ? "Ovozli muloqot, 존댓말/반말 tekshirish va talaffuz" : "Ovoz tahlili, talaffuz xatolari va ravonlik"}
+                {isKr ? "Ovozli suhbat, talaffuz va grammatika tekshirish" : "Ovoz tahlili, talaffuz xatolari va ravonlik balli"}
               </p>
             </div>
           </div>
           <ChevronRight size={22} className="text-white/80 group-hover:translate-x-1 transition" />
         </div>
 
-        {/* KOREYS TILI YOKI INGLIZ TILI MODULLARI */}
+        {/* MODULLAR */}
         {isKr ? (
           <div>
             <h3 className={`text-xs font-black uppercase tracking-wider ${theme.textMuted} mb-3.5`}>
-              Koreys Tili Darsliklari (한국어 학습)
+              Koreys Tili Bo‘limlari
             </h3>
             <div className="grid grid-cols-2 gap-3.5">
               <div 
@@ -426,11 +483,11 @@ export default function App() {
                 onClick={() => setActiveTab('tests')}
                 className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
               >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center font-black text-lg">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-black text-lg">
                   시험
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-indigo-500 uppercase">Haqiqiy Testlar</div>
+                  <div className="text-[11px] font-bold text-indigo-400 uppercase">Haqiqiy Testlar</div>
                   <h4 className="font-black text-base mt-0.5">TOPIK & EPS</h4>
                   <p className={`text-xs ${theme.textMuted} mt-1`}>O‘qish va tinglash savollari</p>
                 </div>
@@ -440,19 +497,19 @@ export default function App() {
         ) : (
           <div>
             <h3 className={`text-xs font-black uppercase tracking-wider ${theme.textMuted} mb-3.5`}>
-              IELTS Ko‘nikmalari Modullari
+              IELTS Ko‘nikmalari
             </h3>
             <div className="grid grid-cols-2 gap-3.5">
               <div 
                 onClick={() => setActiveTab('tests')}
                 className={`${theme.card} border rounded-3xl p-4 cursor-pointer group active:scale-95 transition space-y-3`}
               >
-                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-500 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
                   <BookOpen size={24} />
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-blue-500 uppercase">Cambridge 18</div>
-                  <h4 className="font-black text-base mt-0.5">Academic Reading</h4>
+                  <div className="text-[11px] font-bold text-blue-400 uppercase">Cambridge 18</div>
+                  <h4 className="font-black text-base mt-0.5">Reading Test</h4>
                   <p className={`text-xs ${theme.textMuted} mt-1`}>10 ta savol • 60 daqiqalik taymer</p>
                 </div>
               </div>
@@ -479,11 +536,11 @@ export default function App() {
   };
 
   // ==========================================
-  // 2. KOREYS TILI HANGUL (ALIFBO DARSXONASI)
+  // 2. KOREYS TILI HANGUL
   // ==========================================
   const renderHangul = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold">
           <ArrowLeft size={18} /> Bosh sahifa
         </button>
@@ -519,7 +576,7 @@ export default function App() {
   );
 
   // ==========================================
-  // 3. TESTLAR (INGLIZ TILI READING / KOREYS TILI TOPIK)
+  // 3. TESTLAR (INGLIZ & KOREYS)
   // ==========================================
   const renderTests = () => {
     const isKr = selectedLanguage === 'kr';
@@ -527,7 +584,7 @@ export default function App() {
     if (isKr) {
       return (
         <div className="space-y-4 animate-fadeIn pb-8">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold">
               <ArrowLeft size={18} /> Bosh sahifa
             </button>
@@ -576,15 +633,14 @@ export default function App() {
       );
     }
 
-    // Ingliz tili Reading testi
     return (
       <div className="space-y-4 animate-fadeIn pb-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
-          <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold">
             <ArrowLeft size={18} /> Bosh sahifa
           </button>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 px-3.5 py-1 rounded-xl text-xs font-mono font-black text-indigo-500">
+            <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 px-3.5 py-1 rounded-xl text-xs font-mono font-black text-indigo-400">
               <Clock size={15} /> {formatTimer(readingTime)}
             </div>
             <button 
@@ -646,7 +702,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 4. ZIYOAI MURABBIY (INGLIZ & KOREYS)
+  // 4. ZIYOAI MURABBIY
   // ==========================================
   const renderAi = () => {
     const isKr = selectedLanguage === 'kr';
@@ -676,7 +732,7 @@ export default function App() {
 
           <button 
             onClick={() => speakText(isKr ? "안녕하세요! 만나서 반갑습니다. 한국어 발음이 아주 좋습니다!" : "That is great! Your pronunciation is excellent.", isKr ? 'ko-KR' : 'en-US')}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2"
           >
             <Volume2 size={16} /> AI Murabbiy Javobini Eshitish
           </button>
@@ -686,11 +742,11 @@ export default function App() {
   };
 
   // ==========================================
-  // 5. WRITING / LUG'AT
+  // 5. WRITING MODULI
   // ==========================================
   const renderWriting = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 className="font-black text-base">Writing & Lug'at Studiyasi</h3>
         <span className="text-xs bg-amber-500/15 text-amber-500 px-3 py-1 rounded-full font-black">Academic</span>
       </div>
@@ -719,7 +775,7 @@ export default function App() {
   // ==========================================
   const renderProfileOnly = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 className="font-black text-base">Mening Profilim</h3>
         <button 
           onClick={() => {
@@ -768,11 +824,11 @@ export default function App() {
 
       <div className={`${theme.card} border rounded-3xl p-5 space-y-3 text-xs`}>
         <h4 className="font-black text-sm">O‘rganilayotgan Tillar</h4>
-        <div className="flex justify-between py-2 border-b border-slate-700/20">
+        <div className="flex justify-between py-2 border-b border-slate-800">
           <span className={theme.textMuted}>🇬🇧 IELTS Maqsadi:</span>
-          <span className="font-black text-indigo-500">Band {userProfile.targetBand}</span>
+          <span className="font-black text-indigo-400">Band {userProfile.targetBand}</span>
         </div>
-        <div className="flex justify-between py-2 border-b border-slate-700/20">
+        <div className="flex justify-between py-2 border-b border-slate-800">
           <span className={theme.textMuted}>🇰🇷 TOPIK Maqsadi:</span>
           <span className="font-black text-rose-500">{userProfile.koreanTargetLevel}</span>
         </div>
@@ -787,46 +843,47 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
       
-      {/* KATTA HEADER VA TILNI ALMASHTIRGICH (SWITCHER) */}
-      <header className={`sticky top-0 z-40 ${theme.header} backdrop-blur-md border-b px-4 py-3 flex items-center justify-between shadow-sm`}>
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-base shadow-md">
-            Z
+      {/* RASMDAGIDEK ANIQ HEADER */}
+      <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
+        {/* Chap tomon: Menu tugmasi va Bosh sahifa matnlari */}
+        <div className="flex items-center gap-3">
+          <button className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition active:scale-95">
+            <Menu size={20} strokeWidth={2.5} />
+          </button>
+          <div>
+            <h1 className="text-base font-extrabold text-white tracking-tight leading-tight">
+              Bosh sahifa
+            </h1>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Har kuni yangi bilim, yangi imkoniyat.
+            </p>
           </div>
-          <span className="font-black text-xl tracking-tight">Ziyo<span className="text-indigo-500">Prep</span></span>
         </div>
 
-        {/* TILNI ALMASHTIRISH TUGMALARI (🇬🇧 IELTS / 🇰🇷 TOPIK) */}
-        <div className="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-700/30">
-          <button 
-            onClick={() => switchLanguage('en')}
-            className={`px-3 py-1 rounded-xl text-xs font-black transition ${
-              selectedLanguage === 'en' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'
-            }`}
-          >
-            🇬🇧 IELTS
-          </button>
-          <button 
-            onClick={() => switchLanguage('kr')}
-            className={`px-3 py-1 rounded-xl text-xs font-black transition ${
-              selectedLanguage === 'kr' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400'
-            }`}
-          >
-            🇰🇷 TOPIK
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5">
+        {/* O'ng tomon: Kun/Tun, Qo'ng'iroq va Ism bosh harfli Avatar (T) */}
+        <div className="flex items-center gap-2">
           <button 
             onClick={toggleTheme}
-            className={`p-2 rounded-2xl ${theme.subCard} border transition active:scale-95`}
+            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95"
           >
-            {isDarkMode ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-indigo-600" />}
+            {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-400" />}
+          </button>
+
+          <button className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95">
+            <Bell size={19} />
+          </button>
+
+          {/* Rasmdagi binafsha T harfli avatar */}
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 text-white font-black text-sm flex items-center justify-center shadow-md active:scale-95 transition"
+          >
+            {userProfile.name.charAt(0)}
           </button>
         </div>
       </header>
 
-      {/* Asosiy Maydon */}
+      {/* Asosiy Ekran Maydoni */}
       <main className="flex-1 w-full max-w-md mx-auto p-4 pb-44 box-border">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'tests' && renderTests()}
@@ -837,7 +894,7 @@ export default function App() {
       </main>
 
       {/* 5 TALIK KATTA VA QULAY PASTKI MENYU */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 dark:bg-slate-900/98 border-t border-slate-800 backdrop-blur-2xl px-3 pt-2.5 pb-7 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#121421]/95 border-t border-slate-800 backdrop-blur-2xl px-3 pt-2.5 pb-7 shadow-2xl">
         <div className="max-w-md mx-auto flex items-center justify-between relative px-1">
           
           <button 
