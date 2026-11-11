@@ -55,8 +55,8 @@ export default function App() {
       photoBase64: '',
       currentBand: '6.5',
       targetBand: '7.5',
-      koreanCurrentLevel: '2-geup (Boshlang‘ich)',
-      koreanTargetLevel: '4-geup (TOPIK II)',
+      koreanCurrentLevel: '2-금 (Boshlang‘ich)',
+      koreanTargetLevel: '4-급 (TOPIK II)',
       streak: 5,
       xp: 750,
       completedTests: 20
