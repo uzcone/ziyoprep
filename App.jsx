@@ -6,7 +6,7 @@ import {
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Globe, Languages, Menu, Bell, ArrowUpRight
+  Menu, Bell, ArrowUpRight
 } from 'lucide-react';
 
 export default function App() {
@@ -71,9 +71,9 @@ export default function App() {
   ]);
 
   const [dailyPlanKr, setDailyPlanKr] = useState([
-    { id: 101, title: 'TOPIK II O‘qish (읽기): 15 ta grammatik test', duration: '30 daq', done: false, xp: 60, tag: '읽기' },
-    { id: 102, title: 'EPS-TOPIK Tinglash (듣기): Suhbat audiolari', duration: '20 daq', done: false, xp: 50, tag: '듣기' },
-    { id: 103, title: 'Koreys tili 20 ta yangi so‘z & Collocation', duration: '15 daq', done: true, xp: 30, tag: '어휘' }
+    { id: 101, title: 'TOPIK II O‘qish (읽기): 10 ta imtihon testi', duration: '30 daq', done: false, xp: 60, tag: '읽기' },
+    { id: 102, title: 'EPS-TOPIK Tinglash (듣기): Zavod dialoglari', duration: '20 daq', done: false, xp: 50, tag: '듣기' },
+    { id: 103, title: 'Hangul harflari va talaffuz audiolari', duration: '15 daq', done: true, xp: 30, tag: '한글' }
   ]);
 
   useEffect(() => {
@@ -111,27 +111,130 @@ export default function App() {
     }
   };
 
-  // --- 4. INGLIZ TILI READING TESTI ---
-  const [readingTime, setReadingTime] = useState(3600);
-  const [readingTimerRunning, setReadingTimerRunning] = useState(false);
-  const [highlightEvidence, setHighlightEvidence] = useState(false);
-  const [readingAnswers, setReadingAnswers] = useState({});
-  const [readingChecked, setReadingChecked] = useState(false);
-
-  useEffect(() => {
-    let t = null;
-    if (readingTimerRunning && readingTime > 0) {
-      t = setInterval(() => setReadingTime(prev => prev - 1), 1000);
+  // --- 4. OVOZ (IOS SAFARI UCHUN 100% ISHLOVCHI SPEECH ENGINE) ---
+  const speakText = (text, lang = 'ko-KR') => {
+    if (!('speechSynthesis' in window)) {
+      alert("Brauzeringiz ovoz sintezini qo'llab-quvvatlamaydi.");
+      return;
     }
-    return () => clearInterval(t);
-  }, [readingTimerRunning, readingTime]);
-
-  const formatTimer = (sec) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    
+    const cleanText = text.replace(/[\(\)①②③④]/g, '');
+    const ut = new SpeechSynthesisUtterance(cleanText);
+    ut.lang = lang;
+    ut.rate = 0.9;
+    ut.pitch = 1.0;
+    
+    window.speechSynthesis.speak(ut);
   };
 
+  // --- 5. HANGUL ALIFBOSI ---
+  const hangulAlphabet = [
+    { char: "ㄱ", name: "Giyok (g/k)", sound: "가" },
+    { char: "ㄴ", name: "Niun (n)", sound: "나" },
+    { char: "ㄷ", name: "Digeut (d/t)", sound: "다" },
+    { char: "ㄹ", name: "Riel (r/l)", sound: "라" },
+    { char: "ㅁ", name: "Mium (m)", sound: "마" },
+    { char: "ㅂ", name: "Biup (b/p)", sound: "바" },
+    { char: "ㅅ", name: "Siut (s)", sound: "사" },
+    { char: "ㅇ", name: "Iung (ng)", sound: "아" },
+    { char: "ㅈ", name: "Jiut (j)", sound: "자" },
+    { char: "ㅊ", name: "Chiut (ch)", sound: "차" },
+    { char: "ㅋ", name: "Kiuk (k)", sound: "카" },
+    { char: "ㅌ", name: "Tiut (t)", sound: "타" },
+    { char: "ㅍ", name: "Piup (p)", sound: "파" },
+    { char: "ㅎ", name: "Hiut (h)", sound: "하" }
+  ];
+
+  // --- 6. TO‘LIQ 10 TA TOPIK & EPS-TOPIK IMTIHON SAVOLLARI ---
+  const koreanTopikQuestions = [
+    {
+      id: "kr1",
+      question: "1. 저는 아침에 일찍 ________.",
+      options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
+      correct: "① 일어납니다",
+      audio: "저는 아침에 일찍 일어납니다",
+      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
+    },
+    {
+      id: "kr2",
+      question: "2. [EPS-TOPIK] 공장에서 일할 때 반드시 ________을/를 착용해야 합니다.",
+      options: ["① 안전모 (Kaska)", "② 양말 (Paypoq)", "③ 안경 (Ko'zoynak)", "④ 모자 (Oddiy qalpoq)"],
+      correct: "① 안전모 (Kaska)",
+      audio: "공장에서 일할 때 반드시 안전모를 착용해야 합니다",
+      explanation: "Zavod va qurilish maydonlarida boshni himoya qilish uchun xavfsizlik kaskasi (안전모) kiyish majburiydir."
+    },
+    {
+      id: "kr3",
+      question: "3. 식당에서 음식을 먹은 후에 돈을 ________.",
+      options: ["① 냅니다 (To'layman)", "② 먹습니다", "③ 입습니다", "④ 봅니다"],
+      correct: "① 냅니다 (To'layman)",
+      audio: "식당에서 음식을 먹은 후에 돈을 냅니다",
+      explanation: "Pul to'lamoq birikmasi koreys tilida '돈을 내다' deyiladi."
+    },
+    {
+      id: "kr4",
+      question: "4. 어제 비가 와서 날씨가 아주 ________.",
+      options: ["① 추웠습니다 (Sovuq edi)", "② 맛있었습니다", "③ 넓었습니다", "④ 조용합니다"],
+      correct: "① 추웠습니다 (Sovuq edi)",
+      audio: "어제 비가 와서 날씨가 아주 추웠습니다",
+      explanation: "Kecha (어제) yomg'ir yog'gani sababli o'tgan zamonda 'havo sovuq edi' (추웠습니다) bo'ladi."
+    },
+    {
+      id: "kr5",
+      question: "5. [EPS-TOPIK] 물건을 포장할 때 쓰는 상자를 ________(으)로 닫으세요.",
+      options: ["① 테이프 (Skotch)", "② 빗자루 (Supurgi)", "③ 장갑 (Qo'lqop)", "④ 마스크"],
+      correct: "① 테이프 (Skotch)",
+      audio: "물건을 포장할 때 쓰는 상자를 테이프로 닫으세요",
+      explanation: "Yuklarni qadoqlashda qutilar (상자) skotch (테이프) bilan yopiladi."
+    },
+    {
+      id: "kr6",
+      question: "6. 목이 아프고 열이 나요. 그래서 ________에 가서 약을 샀어요.",
+      options: ["① 약국 (Dorixona)", "② 은행 (Bank)", "③ 우체국 (Pochta)", "④ 공항 (Aeroport)"],
+      correct: "① 약국 (Dorixona)",
+      audio: "목이 아프고 열이 나요. 그래서 약국에 가서 약을 샀어요",
+      explanation: "Tomoq og'rib, isitma chiqqanda dori sotib olish uchun dorixonaga (약국) boriladi."
+    },
+    {
+      id: "kr7",
+      question: "7. 버스 정류장에서 버스를 ________.",
+      options: ["① 기다립니다 (Kutaman)", "② 가르칩니다", "③ 만듭니다", "④ 전화합니다"],
+      correct: "① 기다립니다 (Kutaman)",
+      audio: "버스 정류장에서 버스를 기다립니다",
+      explanation: "Avtobus bekatida avtobus kutiladi (기다리다)."
+    },
+    {
+      id: "kr8",
+      question: "8. [EPS-TOPIK] 작업을 끝마친 후에는 기계의 전원을 ________.",
+      options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
+      correct: "① 끕니다 (O'chiraman)",
+      audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
+      explanation: "Ishni yakunlagandan so'ng xavfsizlik maqsadida uskunaning elektr quvvati (전원) o'chiriladi (끄다)."
+    },
+    {
+      id: "kr9",
+      question: "9. 한국어 실력을 늘리기 위해서 매일 드라마를 ________.",
+      options: ["① 봅니다 (Ko'raman)", "② 씁니다", "③ 씻습니다", "④ 걷습니다"],
+      correct: "① 봅니다 (Ko'raman)",
+      audio: "한국어 실력을 늘리기 위해서 매일 드라마를 봅니다",
+      explanation: "Koreys tili mahoratini oshirish uchun har kuni serial ko'rish fe'li (보다 -> 봅니다)."
+    },
+    {
+      id: "kr10",
+      question: "10. 외국인등록증을 신청하려면 ________에 가야 합니다.",
+      options: ["① 출입국관리사무소 (Immigratsiya)", "② 영화관", "③ 세탁소", "④ 소방서"],
+      correct: "① 출입국관리사무소 (Immigratsiya)",
+      audio: "외국인등록증을 신청하려면 출입국관리사무소에 가야 합니다",
+      explanation: "Chet el fuqarosi ID kartasini (외국인등록증) olish uchun Immigratsiya idorasiga (출입국관리사무소) boriladi."
+    }
+  ];
+
+  const [koreanAnswers, setKoreanAnswers] = useState({});
+  const [koreanChecked, setKoreanChecked] = useState(false);
+
+  // --- 7. INGLIZ TILI READING TESTI (10 TA SAVOL) ---
   const fullReadingQuestions = [
     {
       id: "q1",
@@ -166,46 +269,6 @@ export default function App() {
       explanation: "Matnda aksincha: 'Far from creating interference, it strengthens mental agility' deb ta'kidlanadi."
     }
   ];
-
-  // --- 5. KOREYS TILI DARS MATERIALLARI ---
-  const hangulAlphabet = [
-    { char: "ㄱ", name: "Giyok (g/k)", sound: "가 (ga)" },
-    { char: "ㄴ", name: "Niun (n)", sound: "나 (na)" },
-    { char: "ㄷ", name: "Digeut (d/t)", sound: "다 (da)" },
-    { char: "ㄹ", name: "Riel (r/l)", sound: "라 (ra)" },
-    { char: "ㅁ", name: "Mium (m)", sound: "마 (ma)" },
-    { char: "ㅂ", name: "Biup (b/p)", sound: "바 (ba)" },
-    { char: "ㅅ", name: "Siut (s)", sound: "사 (sa)" },
-    { char: "ㅇ", name: "Iung (ng)", sound: "아 (a)" }
-  ];
-
-  const koreanTopikQuestions = [
-    {
-      id: "kr1",
-      question: "1. 다음 빈칸에 들어갈 가장 알맞은 것을 고르십시오: 저는 아침에 일찍 ________.",
-      options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
-      correct: "① 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan harakat uchun '일어나다' fe'li to'g'ri keladi."
-    },
-    {
-      id: "kr2",
-      question: "2. [EPS-TOPIK] 공장에서 일할 때 반드시 ________을/를 착용해야 합니다.",
-      options: ["① 안전모 (Kaska)", "② 양말 (Paypoq)", "③ 안경 (Ko'zoynak)", "④ 모자 (Oddiy qalpoq)"],
-      correct: "① 안전모 (Kaska)",
-      explanation: "Xavfsizlik qoidasi: Zavod yoki qurilishda ishlaganda albatta himoya kaskasini (안전모) kiyish shart."
-    }
-  ];
-
-  const [koreanAnswers, setKoreanAnswers] = useState({});
-  const [koreanChecked, setKoreanChecked] = useState(false);
-
-  const speakText = (text, lang = 'en-US') => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const ut = new SpeechSynthesisUtterance(text);
-    ut.lang = lang;
-    window.speechSynthesis.speak(ut);
-  };
 
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100',
@@ -441,7 +504,7 @@ export default function App() {
                 <div>
                   <div className="text-[11px] font-bold text-rose-500 uppercase">Alifbo & O‘qish</div>
                   <h4 className="font-black text-base mt-0.5">Hangul (한글)</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>Ovozli unli va undosh harflar</p>
+                  <p className={`text-xs ${theme.textMuted} mt-1`}>14 ta unli va undosh harf</p>
                 </div>
               </div>
 
@@ -453,9 +516,9 @@ export default function App() {
                   시험
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-indigo-400 uppercase">Haqiqiy Testlar</div>
+                  <div className="text-[11px] font-bold text-indigo-400 uppercase">10 Ta Savolli Test</div>
                   <h4 className="font-black text-base mt-0.5">TOPIK & EPS</h4>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>O‘qish va tinglash savollari</p>
+                  <p className={`text-xs ${theme.textMuted} mt-1`}>Ovozli imtihon savollari</p>
                 </div>
               </div>
             </div>
@@ -502,13 +565,17 @@ export default function App() {
   };
 
   // ==========================================
-  // 2. KOREYS TILI HANGUL
+  // 2. KOREYS TILI HANGUL (BIR MARTALIK TOZA HEADER)
   // ==========================================
   const renderHangul = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
+      {/* TOZA YAGONA HEADER */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold">
-          <ArrowLeft size={18} /> Bosh sahifa
+        <button 
+          onClick={() => setActiveTab('home')} 
+          className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+        >
+          <ArrowLeft size={16} /> Bosh sahifa
         </button>
         <span className="text-xs bg-rose-500/15 text-rose-500 px-3 py-1 rounded-full font-black">한글 기초</span>
       </div>
@@ -530,7 +597,7 @@ export default function App() {
             <div>
               <div className="text-3xl font-black text-rose-500">{item.char}</div>
               <div className="text-xs font-bold mt-1">{item.name}</div>
-              <div className={`text-[10px] ${theme.textMuted}`}>Masalan: {item.sound}</div>
+              <div className={`text-[10px] ${theme.textMuted}`}>Ovoz: {item.sound}</div>
             </div>
             <button className="p-2.5 rounded-xl bg-rose-500/15 text-rose-500">
               <Volume2 size={18} />
@@ -542,7 +609,7 @@ export default function App() {
   );
 
   // ==========================================
-  // 3. TESTLAR (INGLIZ & KOREYS)
+  // 3. 10 TA TOPIK & EPS TESTLARI (OVOZLI VA IZOHLI)
   // ==========================================
   const renderTests = () => {
     const isKr = selectedLanguage === 'kr';
@@ -551,16 +618,31 @@ export default function App() {
       return (
         <div className="space-y-4 animate-fadeIn pb-8">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold">
-              <ArrowLeft size={18} /> Bosh sahifa
+            <button 
+              onClick={() => setActiveTab('home')} 
+              className="flex items-center gap-1.5 text-xs text-rose-500 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+            >
+              <ArrowLeft size={16} /> Bosh sahifa
             </button>
-            <span className="text-xs bg-rose-500/15 text-rose-500 px-3 py-1 rounded-full font-black">TOPIK & EPS</span>
+            <span className="text-xs bg-rose-500/15 text-rose-500 px-3 py-1 rounded-full font-black">
+              10 ta TOPIK & EPS savoli
+            </span>
           </div>
 
           <div className="space-y-3">
             {koreanTopikQuestions.map((q) => (
               <div key={q.id} className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
-                <p className="font-bold text-sm leading-relaxed">{q.question}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-bold text-sm leading-relaxed text-white">{q.question}</p>
+                  <button 
+                    onClick={() => speakText(q.audio, 'ko-KR')}
+                    className="p-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 rounded-xl shrink-0"
+                    title="Savolni tinglash"
+                  >
+                    <Volume2 size={18} />
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 gap-2 pt-1">
                   {q.options.map(opt => (
                     <button
@@ -592,7 +674,7 @@ export default function App() {
               onClick={() => setKoreanChecked(true)}
               className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-2xl text-sm transition active:scale-95 shadow-xl"
             >
-              Javoblarni Tekshirish va Tahlil Qilish
+              10 Ta Savolni Tekshirish va Tahlil Qilish
             </button>
           </div>
         </div>
@@ -602,8 +684,11 @@ export default function App() {
     return (
       <div className="space-y-4 animate-fadeIn pb-8">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <button onClick={() => setActiveTab('home')} className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold">
-            <ArrowLeft size={18} /> Bosh sahifa
+          <button 
+            onClick={() => setActiveTab('home')} 
+            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+          >
+            <ArrowLeft size={16} /> Bosh sahifa
           </button>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 px-3.5 py-1 rounded-xl text-xs font-mono font-black text-indigo-400">
@@ -674,6 +759,16 @@ export default function App() {
     const isKr = selectedLanguage === 'kr';
     return (
       <div className="space-y-4 animate-fadeIn pb-8">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <button 
+            onClick={() => setActiveTab('home')} 
+            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+          >
+            <ArrowLeft size={16} /> Bosh sahifa
+          </button>
+          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">AI Voice Coach</span>
+        </div>
+
         <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
           <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white mx-auto flex items-center justify-center shadow-xl">
             <Bot size={40} />
@@ -737,7 +832,7 @@ export default function App() {
   );
 
   // ==========================================
-  // 6. SHAXSIY PROFIL (AYLANA SHAKLDA VA TARTIBLI)
+  // 6. SHAXSIY PROFIL
   // ==========================================
   const renderProfileOnly = () => (
     <div className="space-y-5 animate-fadeIn pb-8">
@@ -754,7 +849,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* AYLANA SHAKLDAGI PROFIL RASMI VA BLOKI */}
       <div className={`${theme.card} border rounded-[32px] p-6 text-center space-y-4 shadow-xl relative`}>
         <div className="relative w-32 h-32 mx-auto">
           {userProfile.photoBase64 ? (
@@ -769,7 +863,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Kamera tugmasi (Aylana chetida) */}
           <button 
             onClick={() => fileInputRef.current.click()}
             className="absolute bottom-0 right-0 p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-xl border-2 border-slate-900 active:scale-90 transition"
@@ -793,7 +886,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* O‘rganilayotgan Tillar Ro‘yxati */}
       <div className={`${theme.card} border rounded-[28px] p-5 space-y-3.5 text-xs`}>
         <h4 className="font-black text-sm text-slate-200">O‘rganilayotgan Tillar</h4>
         
@@ -824,47 +916,48 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
       
-      {/* HEADER */}
-      <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
-        <div className="flex items-center gap-3">
-          <button className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition active:scale-95">
-            <Menu size={20} strokeWidth={2.5} />
-          </button>
-          <div>
-            <h1 className="text-base font-extrabold text-white tracking-tight leading-tight">
-              Bosh sahifa
-            </h1>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Har kuni yangi bilim, yangi imkoniyat.
-            </p>
+      {/* FAQAT ASOSIY SAHIFADA CHIQADIGAN BOSH HEADER */}
+      {activeTab === 'home' && (
+        <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
+          <div className="flex items-center gap-3">
+            <button className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition active:scale-95">
+              <Menu size={20} strokeWidth={2.5} />
+            </button>
+            <div>
+              <h1 className="text-base font-extrabold text-white tracking-tight leading-tight">
+                Bosh sahifa
+              </h1>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Har kuni yangi bilim, yangi imkoniyat.
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95"
-          >
-            {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-400" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95"
+            >
+              {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-400" />}
+            </button>
 
-          <button className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95">
-            <Bell size={19} />
-          </button>
+            <button className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95">
+              <Bell size={19} />
+            </button>
 
-          {/* HEADERDAGI DUMALOQ AVATAR */}
-          <button 
-            onClick={() => setActiveTab('profile')}
-            className="w-9 h-9 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md active:scale-95 transition flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-black text-sm"
-          >
-            {userProfile.photoBase64 ? (
-              <img src={userProfile.photoBase64} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              userProfile.name.charAt(0)
-            )}
-          </button>
-        </div>
-      </header>
+            <button 
+              onClick={() => setActiveTab('profile')}
+              className="w-9 h-9 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md active:scale-95 transition flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-black text-sm"
+            >
+              {userProfile.photoBase64 ? (
+                <img src={userProfile.photoBase64} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                userProfile.name.charAt(0)
+              )}
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Asosiy Ekran Maydoni */}
       <main className="flex-1 w-full max-w-md mx-auto p-4 pb-44 box-border">
@@ -894,12 +987,12 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('tests')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'tests' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'tests' || activeTab === 'korean_hangul' ? 'text-indigo-400 font-black' : 'text-slate-400'
             }`}
           >
-            <BookOpen size={26} strokeWidth={activeTab === 'tests' ? 2.8 : 2} />
+            <BookOpen size={26} strokeWidth={activeTab === 'tests' || activeTab === 'korean_hangul' ? 2.8 : 2} />
             <span className="text-xs mt-1 font-bold">Testlar</span>
-            {activeTab === 'tests' && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
+            {(activeTab === 'tests' || activeTab === 'korean_hangul') && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
 
           {/* O'rtadagi Katta ZiyoAI Tugmasi */}
