@@ -6,40 +6,40 @@ import {
   Layers, Sun, Moon, Target, TrendingUp, Clock, AlertTriangle,
   CheckSquare, Square, FileText, BarChart3, BookmarkCheck,
   Calendar, Cake, ArrowRight, Zap, RefreshCw, Camera, Upload, Check,
-  Menu, Bell, ArrowUpRight, GraduationCap, Lock, Star, X, Settings, HelpCircle, LogOut
+  Menu, Bell, ArrowUpRight, GraduationCap, Lock, Star, X
 } from 'lucide-react';
 
 export default function App() {
   // --- 1. TIL VA MAVZU SOZLAMALARI ---
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    return localStorage.getItem('ziyoprep_lang') || 'kr';
+    return localStorage.getItem('fariz_lang') || 'kr';
   });
 
   const switchLanguage = (lang) => {
     setSelectedLanguage(lang);
-    localStorage.setItem('ziyoprep_lang', lang);
+    localStorage.setItem('fariz_lang', lang);
     setActiveTab('home');
     setIsSidebarOpen(false);
   };
 
+  // Kunduzgi / Kechki rejim (100% ishlaydigan State)
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('ziyoprep_theme');
+    const saved = localStorage.getItem('fariz_theme');
     if (saved !== null) return saved === 'dark';
-    const h = new Date().getHours();
-    return h < 7 || h >= 19;
+    return true; // Default qora rejim
   });
 
   const toggleTheme = () => {
     setIsDarkMode(prev => {
       const next = !prev;
-      localStorage.setItem('ziyoprep_theme', next ? 'dark' : 'light');
+      localStorage.setItem('fariz_theme', next ? 'dark' : 'light');
       return next;
     });
   };
 
-  // --- 2. FOYDALANUVCHI PROFILI (XATOSIZ XAVFSIZ STORAGE) ---
+  // --- 2. FOYDALANUVCHI PROFILI ---
   const [userProfile, setUserProfile] = useState(() => {
-    const saved = localStorage.getItem('ziyoprep_user');
+    const saved = localStorage.getItem('fariz_user');
     if (saved) {
       try { 
         const parsed = JSON.parse(saved);
@@ -74,10 +74,10 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('ziyoprep_user', JSON.stringify(userProfile));
+    localStorage.setItem('fariz_user', JSON.stringify(userProfile));
   }, [userProfile]);
 
-  // Asosiy sahifa holatlari
+  // Navigatsiya holatlari
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState('beginner');
@@ -89,26 +89,27 @@ export default function App() {
   const [editForm, setEditForm] = useState(userProfile);
   const fileInputRef = useRef(null);
 
-  // --- 3. AKADEMIYA DARSLAR BAZASI ---
+  // --- 3. TO‘LIQ DARSLAR BAZASI (BO'SH BOSQICHLAR YO'Q) ---
   const coursesData = {
     kr: {
       title: "Korean Academy",
-      subtitle: "한국어 기초 과정",
-      desc: "Koreys tilini noldan mukammal o‘rganish",
+      subtitle: "한국어 마스터 과정",
+      desc: "Koreys tilini noldan TOPIK II gacha professional o‘rganish",
       levels: [
-        { id: 'beginner', title: 'Beginner (초급 1)', desc: 'Noldan alifbo va asosiy iboralar' },
-        { id: 'elementary', title: 'Elementary (초급 2)', desc: 'Kundalik muloqot va fe’l zamonlari' },
-        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'TOPIK II va murakkab grammatika' },
-        { id: 'advanced', title: 'Advanced (고급)', desc: 'Ish joyi va rasmiy muloqot' }
+        { id: 'beginner', title: 'Beginner (초급 1)', desc: 'Hangul alifbosi va tanishuv' },
+        { id: 'elementary', title: 'Elementary (초급 2)', desc: 'Hozirgi va o‘tgan zamon fe’llari' },
+        { id: 'intermediate', title: 'Intermediate (중급)', desc: 'Bog‘lovchilar, sabab va niyat' },
+        { id: 'advanced', title: 'Advanced (고급)', desc: 'Rasmiy muloqot va TOPIK II insholari' }
       ],
       lessons: [
+        // Beginner darslari
         {
           id: 1,
           level: 'beginner',
           section: '1-bo‘lim: Hangul',
           title: '1-dars: Koreys alifbosi',
           desc: 'Unlilar va undoshlar',
-          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar blok (bo‘g‘in) ko‘rinishida birlashadi.',
+          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar doim bo‘g‘in bloklari ko‘rinishida yoziladi.',
           words: [
             { word: '가', meaning: 'Ga (ㄱ + ㅏ)', sound: '가' },
             { word: '나', meaning: 'Na (ㄴ + ㅏ)', sound: '나' },
@@ -119,7 +120,7 @@ export default function App() {
             question: "Koreys tilida 'N' tovushini qaysi harf ifodalaydi?",
             options: ["① ㄱ", "② ㄴ", "③ ㄷ", "④ ㄹ"],
             correct: 1,
-            explanation: "ㄴ (Niun) harfi o‘zbek tilidagi 'N' tovushini beradi."
+            explanation: "ㄴ (Niun) harfi 'N' tovushini ifodalaydi."
           }
         },
         {
@@ -127,37 +128,96 @@ export default function App() {
           level: 'beginner',
           section: '1-bo‘lim: Hangul',
           title: '2-dars: Bo‘g‘in tuzish',
-          desc: '가, 나, 다, 라… so‘zlari',
-          theory: 'Har bir bo‘g‘in kamida bitta undosh va bitta unlidan tashkil topadi. Masalan: ㄱ + ㅏ = 가 (ga).',
+          desc: 'Oddiy so‘zlarni o‘qish',
+          theory: 'Har bir bo‘g‘in kamida bitta undosh va bitta unlidan iborat bo‘ladi. Masalan: 나무 (namu) — daraxt.',
           words: [
             { word: '나무', meaning: 'Daraxt (Namu)', sound: '나무' },
             { word: '다리', meaning: 'Ko‘prik / Oyoq (Dari)', sound: '다리' },
             { word: '라디오', meaning: 'Radio (Radio)', sound: '라디오' }
           ],
           quiz: {
-            question: "'Daraxt' so‘zining to‘g‘ri koreyscha shakli qaysi?",
+            question: "'Daraxt' so‘zining koreyscha yozilishi qaysi?",
             options: ["① 나비", "② 나무", "③ 나라", "④ 다리"],
             correct: 1,
-            explanation: "나무 (namu) — daraxt degan ma’noni anglatadi."
+            explanation: "나무 (namu) — daraxt degani."
+          }
+        },
+        // Elementary darslari
+        {
+          id: 3,
+          level: 'elementary',
+          section: '2-bo‘lim: Hozirgi zamon',
+          title: '1-dars: -아요/어요 qo‘shimchasi',
+          desc: 'Fe’llarni tuslash qoidalari',
+          theory: 'Fe’l o‘zagidagi oxirgi unli ㅏ yoki ㅗ bo‘lsa -아요, boshqa unlilar bo‘lsa -어요 qo‘shiladi. Masalan: 가다 -> 가요, 먹다 -> 먹어요.',
+          words: [
+            { word: '가요', meaning: 'Boryapman / Boraman', sound: '가요' },
+            { word: '먹어요', meaning: 'Yeyapman / Yeyman', sound: '먹어요' },
+            { word: '자요', meaning: 'Uxlayapman / Uxlayman', sound: '자요' }
+          ],
+          quiz: {
+            question: "'Ovqat yemoq' fe'lining hozirgi zamon xushmuomala shakli qaysi?",
+            options: ["① 가요", "② 먹어요", "③ 봐요", "④ 자요"],
+            correct: 1,
+            explanation: "먹다 fe'liga -어요 qo'shilib '먹어요' bo'ladi."
           }
         },
         {
-          id: 3,
-          level: 'beginner',
-          section: '2-bo‘lim: Salomlashish',
-          title: '3-dars: Rasmiy salomlashish',
-          desc: '안녕하세요, 감사합니다',
-          theory: 'Koreys tilida hurmat uslubi muhim. Yoshi kattalar va yangi tanishlar bilan gaplashganda xushmuomala qo‘shimchalar qo‘llaniladi.',
+          id: 4,
+          level: 'elementary',
+          section: '2-bo‘lim: Joy va Harakat',
+          title: '2-dars: -에 / -에서 qo‘shimchalari',
+          desc: 'Joy qo‘shimchalari farqi',
+          theory: "Borish/kelish yo'nalishi uchun -에 (학교에 가요), biror harakat sodir bo'layotgan joy uchun -에서 (도서관에서 공부해요) ishlatiladi.",
           words: [
-            { word: '안녕하세요', meaning: 'Assalomu alaykum (Salom)', sound: '안녕하세요' },
-            { word: '감사합니다', meaning: 'Rahmat', sound: '감사합니다' },
-            { word: '죄송합니다', meaning: 'Kechirasiz (Uzr)', sound: '죄송합니다' }
+            { word: '학교에', meaning: 'Maktabga', sound: '학교에' },
+            { word: '집에서', meaning: 'Uyda (harakat qilmoq)', sound: '집에서' },
+            { word: '회사에', meaning: 'Ishxonaga / Kompaniyaga', sound: '회사에' }
           ],
           quiz: {
-            question: "Eng keng tarqalgan xushmuomala salomlashish iborasini tanlang:",
-            options: ["① 안녕", "② 안녕하세요", "③ 잘 가", "④ 고마워"],
+            question: "'Uyda ovqat yeyman' gapi qanday bo'ladi?",
+            options: ["① 집에 밥을 먹어요", "② 집에서 밥을 먹어요", "③ 집으로 밥을 먹어요", "④ 집은 밥을 먹어요"],
             correct: 1,
-            explanation: "안녕하세요 — rasmiy va xushmuomala salomlashish iborasi."
+            explanation: "Ovqat yeyish harakati sodir bo'layotgan joy uchun '-에서' qo'shiladi."
+          }
+        },
+        // Intermediate darslari
+        {
+          id: 5,
+          level: 'intermediate',
+          section: '3-bo‘lim: Murakkab bog‘lovchilar',
+          title: '1-dars: -(으)니까 (Sabab-oqibat)',
+          desc: 'Chunki, shu sababli',
+          theory: "-(으)니까 sabab bildiradi va undan keyin buyruq yoki taklif gaplar (-(으)세요, -(으)ㅂ시다) ishlatilishi mumkin.",
+          words: [
+            { word: '더우니까', meaning: 'Issiq bo‘lgani uchun', sound: '더우니까' },
+            { word: '바쁘니까', meaning: 'Band bo‘lgani sababli', sound: '바쁘니까' },
+            { word: '비가 오니까', meaning: 'Yomg‘ir yog‘ayotgani uchun', sound: '비가 오니까' }
+          ],
+          quiz: {
+            question: "Qaysi gapda sabab to'g'ri ifodalangan?",
+            options: ["① 비가 오니까 우산을 쓰세요", "② 비가 와서 우산을 쓰세요", "③ 비가 오지만 가세요", "④ 비가 오고 우산"],
+            correct: 0,
+            explanation: "Buyruq gaplarda (우산을 쓰세요) faqat -(으)니까 ishlatiladi, -아서/어서 mumkin emas."
+          }
+        },
+        // Advanced darslari
+        {
+          id: 6,
+          level: 'advanced',
+          section: '4-bo‘lim: Rasmiy Nutq & TOPIK II',
+          title: '1-dars: -기 마련이다 (Muqarrarlik)',
+          desc: 'Albatta shunday bo‘ladi',
+          theory: "Qonuniyat yoki muqarrar voqealarni ifodalashda 'fe'l + -기 마련이다' formulasi qo'llaniladi.",
+          words: [
+            { word: '성공하기 마련이다', meaning: 'Albatta muvaffaqiyat qozonadi', sound: '성공하기 마련이다' },
+            { word: '변하기 마련이다', meaning: 'O‘zgarishi tabiiy', sound: '변하기 마련이다' }
+          ],
+          quiz: {
+            question: "'Mehnat qilsa, albatta natija bo‘ladi' ma'nosi qaysi biri?",
+            options: ["① 노력하면 성공하기 마련이다", "② 노력하면 성공할 뻔했다", "③ 노력하면 성공하는 셈이다", "④ 노력하면 성공할 뿐이다"],
+            correct: 0,
+            explanation: "-기 마련이다 tabiat qonuniyati yoki muqarrar natijani bildiradi."
           }
         }
       ]
@@ -165,7 +225,7 @@ export default function App() {
     en: {
       title: "English Academy",
       subtitle: "General & Academic English",
-      desc: "Ingliz tilini noldan IELTS 7.5 gacha o‘rganish",
+      desc: "Ingliz tilini noldan IELTS 7.5 gacha mukammal o‘rganish",
       levels: [
         { id: 'beginner', title: 'Beginner (A1)', desc: 'Alphabet, basic phonics and words' },
         { id: 'elementary', title: 'Elementary (A2)', desc: 'Daily life & Present Simple' },
@@ -191,12 +251,66 @@ export default function App() {
             correct: 1,
             explanation: "'Nice to meet you' is the standard polite greeting."
           }
+        },
+        {
+          id: 102,
+          level: 'elementary',
+          section: 'Unit 2: Present Tense',
+          title: 'Lesson 2: Daily Routines',
+          desc: 'Present Simple vs Continuous',
+          theory: 'Use Present Simple for habits and routines (I work every day). Use Present Continuous for actions happening now.',
+          words: [
+            { word: 'Usually', meaning: 'Odatda', sound: 'Usually' },
+            { word: 'Currently', meaning: 'Hozirgi paytda', sound: 'Currently' }
+          ],
+          quiz: {
+            question: "I ________ my homework right now.",
+            options: ["① do", "② am doing", "③ did", "④ done"],
+            correct: 1,
+            explanation: "'Right now' indicates an action happening at the moment of speaking."
+          }
+        },
+        {
+          id: 103,
+          level: 'intermediate',
+          section: 'Unit 3: Conditionals',
+          title: 'Lesson 3: Second Conditional',
+          desc: 'Hypothetical situations',
+          theory: 'If + Past Simple, would + base verb. Used for imaginary or unreal situations in the present or future.',
+          words: [
+            { word: 'Hypothetical', meaning: 'Faraziy', sound: 'Hypothetical' },
+            { word: 'Opportunity', meaning: 'Imkoniyat', sound: 'Opportunity' }
+          ],
+          quiz: {
+            question: "If I ________ more time, I would learn Korean.",
+            options: ["① have", "② had", "③ will have", "④ having"],
+            correct: 1,
+            explanation: "Second conditional uses Past Simple in the if-clause."
+          }
+        },
+        {
+          id: 104,
+          level: 'advanced',
+          section: 'Unit 4: Academic Writing',
+          title: 'Lesson 4: High-Band Cohesive Devices',
+          desc: 'Furthermore, In contrast, Consequently',
+          theory: 'To achieve Band 7.5+ in IELTS Writing, link paragraphs with advanced discourse markers.',
+          words: [
+            { word: 'Consequently', meaning: 'Natijada', sound: 'Consequently' },
+            { word: 'Nevertheless', meaning: 'Shunga qaramasdan', sound: 'Nevertheless' }
+          ],
+          quiz: {
+            question: "Select the formal synonym for 'As a result':",
+            options: ["① So", "② Consequently", "③ But", "④ Because"],
+            correct: 1,
+            explanation: "'Consequently' is a formal transition word for cause and effect."
+          }
         }
       ]
     }
   };
 
-  // --- 4. 10 TA TOPIK & EPS TEST SAVOLLARI ---
+  // --- 4. 10 TA TOPIK & EPS IMTIHON SAVOLLARI ---
   const koreanTopikQuestions = [
     {
       id: "kr1",
@@ -204,7 +318,7 @@ export default function App() {
       options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
       correct: "① 일어납니다",
       audio: "저는 아침에 일찍 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Ertalab bajariladigan odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
+      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
     },
     {
       id: "kr2",
@@ -212,7 +326,7 @@ export default function App() {
       options: ["① 안전모 (Kaska)", "② 양말 (Paypoq)", "③ 안경 (Ko'zoynak)", "④ 모자 (Oddiy qalpoq)"],
       correct: "① 안전모 (Kaska)",
       audio: "공장에서 일할 때 반드시 안전모를 착용해야 합니다",
-      explanation: "Zavod va qurilish maydonlarida boshni himoya qilish uchun xavfsizlik kaskasi (안전모) kiyish majburiydir."
+      explanation: "Zavod va qurilishda xavfsizlik kaskasi (안전모) kiyish shart."
     },
     {
       id: "kr3",
@@ -220,7 +334,7 @@ export default function App() {
       options: ["① 냅니다 (To'layman)", "② 먹습니다", "③ 입습니다", "④ 봅니다"],
       correct: "① 냅니다 (To'layman)",
       audio: "식당에서 음식을 먹은 후에 돈을 냅니다",
-      explanation: "Pul to'lamoq birikmasi koreys tilida '돈을 내다' deyiladi."
+      explanation: "Pul to'lamoq koreys tilida '돈을 내다' deyiladi."
     },
     {
       id: "kr4",
@@ -228,7 +342,7 @@ export default function App() {
       options: ["① 추웠습니다 (Sovuq edi)", "② 맛있었습니다", "③ 넓었습니다", "④ 조용합니다"],
       correct: "① 추웠습니다 (Sovuq edi)",
       audio: "어제 비가 와서 날씨가 아주 추웠습니다",
-      explanation: "Kecha (어제) yomg'ir yog'gani sababli o'tgan zamonda 'havo sovuq edi' (추웠습니다) bo'ladi."
+      explanation: "Kecha sovuq bo'lgani uchun o'tgan zamon: 추웠습니다."
     },
     {
       id: "kr5",
@@ -236,7 +350,47 @@ export default function App() {
       options: ["① 테이프 (Skotch)", "② 빗자루 (Supurgi)", "③ 장갑 (Qo'lqop)", "④ 마스크"],
       correct: "① 테이프 (Skotch)",
       audio: "물건을 포장할 때 쓰는 상자를 테이프로 닫으세요",
-      explanation: "Yuklarni qadoqlashda qutilar (상자) skotch (테이프) bilan yopiladi."
+      explanation: "Qadoqlashda quti skotch (테이프) bilan yopiladi."
+    },
+    {
+      id: "kr6",
+      question: "6. 목이 아프고 열이 나요. 그래서 ________에 가서 약을 샀어요.",
+      options: ["① 약국 (Dorixona)", "② 은행 (Bank)", "③ 우체국 (Pochta)", "④ 공항 (Aeroport)"],
+      correct: "① 약국 (Dorixona)",
+      audio: "목이 아프고 열이 나요 그래서 약국에 가서 약을 샀어요",
+      explanation: "Dori sotib olish uchun dorixonaga (약국) boriladi."
+    },
+    {
+      id: "kr7",
+      question: "7. 버스 정류장에서 버스를 ________.",
+      options: ["① 기다립니다 (Kutaman)", "② 가르칩니다", "③ 만듭니다", "④ 전화합니다"],
+      correct: "① 기다립니다 (Kutaman)",
+      audio: "버스 정류장에서 버스를 기다립니다",
+      explanation: "Bekatda avtobus kutiladi (기다리다)."
+    },
+    {
+      id: "kr8",
+      question: "8. [EPS-TOPIK] 작업을 끝마친 후에는 기계의 전원을 ________.",
+      options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
+      correct: "① 끕니다 (O'chiraman)",
+      audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
+      explanation: "Ish tugagach elektr quvvati o'chiriladi (끄다)."
+    },
+    {
+      id: "kr9",
+      question: "9. 한국어 실력을 늘리기 위해서 매일 드라마를 ________.",
+      options: ["① 봅니다 (Ko'raman)", "② 씁니다", "③ 씻습니다", "④ 걷습니다"],
+      correct: "① 봅니다 (Ko'raman)",
+      audio: "한국어 실력을 늘리기 위해서 매일 드라마를 봅니다",
+      explanation: "Serial yoki kino ko'rmoq: 보다 -> 봅니다."
+    },
+    {
+      id: "kr10",
+      question: "10. 외국인등록증을 신청하려면 ________에 가야 합니다.",
+      options: ["① 출입국관리사무소 (Immigratsiya)", "② 영화관", "③ 세탁소", "④ 소방서"],
+      correct: "① 출입국관리사무소 (Immigratsiya)",
+      audio: "외국인등록증을 신청하려면 출입국관리사무소에 가야 합니다",
+      explanation: "ID kartani rasmiylashtirish uchun Immigratsiya idorasiga boriladi."
     }
   ];
 
@@ -275,15 +429,16 @@ export default function App() {
   const currentCourse = coursesData[selectedLanguage] || coursesData.kr;
   const activeLessonsList = currentCourse.lessons.filter(l => l.level === selectedLevel);
 
-  // Mavzu ranglari
+  // --- MAVZU RANG USLUBLARI (KUNDUZGI / KECHKI) ---
   const theme = {
-    bg: isDarkMode ? 'bg-[#0b0c16] text-slate-100' : 'bg-slate-900 text-slate-100',
-    card: 'bg-[#151728] border-slate-800 shadow-xl',
-    subCard: 'bg-[#1b1e34] border-slate-700/60',
-    header: 'bg-[#0e101f]/95 border-b border-slate-800/80 backdrop-blur-xl',
-    textMuted: 'text-slate-400',
-    navBg: 'bg-[#121424]/95 border-t border-slate-800 backdrop-blur-2xl shadow-2xl',
-    inputBg: 'bg-slate-900 border-slate-700 text-white'
+    bg: isDarkMode ? 'bg-[#0b0c16] text-slate-100' : 'bg-slate-100 text-slate-900',
+    card: isDarkMode ? 'bg-[#151728] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-md',
+    subCard: isDarkMode ? 'bg-[#1b1e34] border-slate-700/60' : 'bg-slate-50 border-slate-200',
+    header: isDarkMode ? 'bg-[#0e101f]/95 border-b border-slate-800/80 backdrop-blur-xl' : 'bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm',
+    textMain: isDarkMode ? 'text-white' : 'text-slate-900',
+    textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-500',
+    navBg: isDarkMode ? 'bg-[#121424]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200 shadow-xl',
+    inputBg: isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
   };
 
   // ==========================================
@@ -302,7 +457,7 @@ export default function App() {
           <div className="flex items-start justify-between relative z-10">
             <div className="space-y-3 max-w-[62%]">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 block">
-                {currentCourse.title.toUpperCase()}
+                FARIZ ACADEMY • {currentCourse.title.toUpperCase()}
               </span>
               
               <div className="space-y-0.5">
@@ -354,7 +509,7 @@ export default function App() {
         </div>
 
         {/* TIL TANLASH (IELTS / TOPIK) */}
-        <div className="flex items-center justify-between p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800">
+        <div className={`flex items-center justify-between p-1.5 rounded-2xl ${isDarkMode ? 'bg-slate-900/90 border border-slate-800' : 'bg-slate-200 border border-slate-300'}`}>
           <button 
             onClick={() => switchLanguage('en')}
             className={`flex-1 py-2.5 rounded-xl text-xs font-black transition flex items-center justify-center gap-2 ${
@@ -376,12 +531,12 @@ export default function App() {
         {/* BOSQICHLAR TIZIMI */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-sm uppercase tracking-wider text-slate-300">
+            <h3 className={`font-black text-sm uppercase tracking-wider ${theme.textMain}`}>
               {currentCourse.title} Bosqichlari
             </h3>
             <button 
               onClick={() => setActiveTab('academy')}
-              className="text-xs font-bold text-indigo-400 hover:underline"
+              className="text-xs font-bold text-indigo-500 hover:underline"
             >
               Barcha darslar
             </button>
@@ -401,12 +556,12 @@ export default function App() {
                   <span className="text-xl">
                     {lvl.id === 'beginner' ? '🌱' : lvl.id === 'elementary' ? '🌿' : lvl.id === 'intermediate' ? '🌳' : '🎓'}
                   </span>
-                  <span className="text-[10px] bg-indigo-500/15 text-indigo-400 font-black px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-indigo-500/15 text-indigo-500 font-black px-2 py-0.5 rounded-full">
                     Faol
                   </span>
                 </div>
                 <div>
-                  <h4 className="font-black text-sm text-white">{lvl.title}</h4>
+                  <h4 className={`font-black text-sm ${theme.textMain}`}>{lvl.title}</h4>
                   <p className={`text-[11px] ${theme.textMuted} mt-0.5 leading-snug`}>{lvl.desc}</p>
                 </div>
               </div>
@@ -420,14 +575,14 @@ export default function App() {
           className={`${theme.card} border rounded-3xl p-5 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition shadow-sm`}
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-500 flex items-center justify-center">
               <Award size={26} />
             </div>
             <div>
-              <div className="text-[10px] text-indigo-400 font-black uppercase tracking-wider">
+              <div className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">
                 {isKr ? 'TOPIK & EPS Imtihoni' : 'Cambridge IELTS Mock'}
               </div>
-              <h4 className="font-black text-base mt-0.5 text-white">
+              <h4 className={`font-black text-base mt-0.5 ${theme.textMain}`}>
                 {isKr ? 'Haqiqiy 10 Ta TOPIK Testlari' : 'Full Reading & Audio Test'}
               </h4>
             </div>
@@ -445,14 +600,14 @@ export default function App() {
   const renderAcademy = () => {
     return (
       <div className="space-y-5 animate-fadeIn pb-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <button 
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+            className={`flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold ${theme.subCard} border px-3 py-1.5 rounded-xl active:scale-95`}
           >
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
-          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">
+          <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">
             {currentCourse.title}
           </span>
         </div>
@@ -475,7 +630,7 @@ export default function App() {
 
         <div className="space-y-3">
           <div className="px-1">
-            <h3 className="font-black text-base text-white">{currentCourse.subtitle}</h3>
+            <h3 className={`font-black text-base ${theme.textMain}`}>{currentCourse.subtitle}</h3>
             <p className={`text-xs ${theme.textMuted} mt-0.5`}>Qadamma-qadam amaliy darslar</p>
           </div>
 
@@ -497,18 +652,18 @@ export default function App() {
                 >
                   <div className="flex items-center gap-3.5">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
-                      isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
+                      isCompleted ? 'bg-emerald-500/20 text-emerald-500' : 'bg-indigo-500/20 text-indigo-500'
                     }`}>
                       {isCompleted ? <CheckCircle2 size={24} /> : <BookOpen size={24} />}
                     </div>
                     <div>
-                      <span className="text-[10px] text-indigo-400 font-bold uppercase">{lesson.section}</span>
-                      <h4 className="font-black text-sm text-white mt-0.5">{lesson.title}</h4>
+                      <span className="text-[10px] text-indigo-500 font-bold uppercase">{lesson.section}</span>
+                      <h4 className={`font-black text-sm mt-0.5 ${theme.textMain}`}>{lesson.title}</h4>
                       <p className={`text-xs ${theme.textMuted} mt-0.5`}>{lesson.desc}</p>
                     </div>
                   </div>
                   
-                  <span className="text-[10px] bg-emerald-500/15 text-emerald-400 font-black px-2.5 py-1 rounded-full">
+                  <span className="text-[10px] bg-emerald-500/15 text-emerald-500 font-black px-2.5 py-1 rounded-full">
                     Bepul
                   </span>
                 </div>
@@ -516,9 +671,9 @@ export default function App() {
             })
           ) : (
             <div className={`${theme.card} border rounded-3xl p-8 text-center space-y-2`}>
-              <Award size={32} className="mx-auto text-indigo-400" />
-              <h4 className="font-bold text-sm text-white">Bu bosqich darslari tez orada ochiladi</h4>
-              <p className={`text-xs ${theme.textMuted}`}>Beginner bo‘limi darslarini o‘rganishni davom ettiring.</p>
+              <Award size={32} className="mx-auto text-indigo-500" />
+              <h4 className={`font-bold text-sm ${theme.textMain}`}>Darslar yangilanmoqda</h4>
+              <p className={`text-xs ${theme.textMuted}`}>Boshqa bosqich darslarini o‘rganishni davom ettiring.</p>
             </div>
           )}
         </div>
@@ -534,14 +689,14 @@ export default function App() {
 
     return (
       <div className="space-y-5 animate-fadeIn pb-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <button 
             onClick={() => setActiveTab('academy')}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+            className={`flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold ${theme.subCard} border px-3 py-1.5 rounded-xl active:scale-95`}
           >
             <ArrowLeft size={16} /> Darslar
           </button>
-          <span className="text-xs font-black text-slate-300">
+          <span className={`text-xs font-black ${theme.textMain}`}>
             {activeLesson.title}
           </span>
         </div>
@@ -569,11 +724,11 @@ export default function App() {
 
         {lessonStep === 'theory' && (
           <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
-            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-indigo-500 font-black text-xs uppercase tracking-wider">
               <Sparkles size={16} /> Dars Nazariyasi
             </div>
-            <h3 className="font-black text-lg text-white">{activeLesson.title}</h3>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+            <h3 className={`font-black text-lg ${theme.textMain}`}>{activeLesson.title}</h3>
+            <p className={`text-sm leading-relaxed font-normal ${theme.subCard} p-4 rounded-2xl border`}>
               {activeLesson.theory}
             </p>
             <button 
@@ -588,7 +743,7 @@ export default function App() {
         {lessonStep === 'vocab' && (
           <div className="space-y-3">
             <div className="px-1">
-              <h4 className="font-black text-sm text-white">Yangi so‘zlar va Audio Talaffuz:</h4>
+              <h4 className={`font-black text-sm ${theme.textMain}`}>Yangi so‘zlar va Audio Talaffuz:</h4>
               <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing</p>
             </div>
 
@@ -600,15 +755,15 @@ export default function App() {
                   className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500`}
                 >
                   <div className="flex items-center gap-3">
-                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-400">
+                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500">
                       <Volume2 size={20} />
                     </button>
                     <div>
-                      <div className="text-lg font-black text-white">{w.word}</div>
+                      <div className={`text-lg font-black ${theme.textMain}`}>{w.word}</div>
                       <div className={`text-xs ${theme.textMuted}`}>{w.meaning}</div>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-indigo-400">Eshitish 🔊</span>
+                  <span className="text-[11px] font-bold text-indigo-500">Eshitish 🔊</span>
                 </div>
               ))}
             </div>
@@ -624,10 +779,10 @@ export default function App() {
 
         {lessonStep === 'quiz' && (
           <div className={`${theme.card} border rounded-3xl p-6 space-y-4`}>
-            <div className="flex items-center gap-2 text-indigo-400 font-black text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-indigo-500 font-black text-xs uppercase tracking-wider">
               <CheckCircle2 size={16} /> Yakuniy Test
             </div>
-            <h4 className="font-black text-base text-white">{activeLesson.quiz.question}</h4>
+            <h4 className={`font-black text-base ${theme.textMain}`}>{activeLesson.quiz.question}</h4>
 
             <div className="space-y-2 pt-1">
               {activeLesson.quiz.options.map((opt, i) => (
@@ -647,12 +802,12 @@ export default function App() {
 
             {quizAnswer !== null && (
               <div className={`p-3.5 rounded-2xl text-xs ${
-                quizAnswer === activeLesson.quiz.correct ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                quizAnswer === activeLesson.quiz.correct ? 'bg-emerald-500/20 text-emerald-500' : 'bg-rose-500/20 text-rose-500'
               }`}>
                 <div className="font-bold">
                   {quizAnswer === activeLesson.quiz.correct ? "To‘g‘ri javob! 🎉" : "Noto‘g‘ri javob"}
                 </div>
-                <div className="mt-1 text-slate-300">{activeLesson.quiz.explanation}</div>
+                <div className={`mt-1 ${theme.textMuted}`}>{activeLesson.quiz.explanation}</div>
               </div>
             )}
 
@@ -667,7 +822,7 @@ export default function App() {
                       completedLessons: [...new Set([...currentCompleted, activeLesson.id])]
                     };
                   });
-                  alert("Tabriklaymiz! Dars muvaffaqiyatli yakunlandi (+50 XP qo‘shildi).");
+                  alert("Tabriklaymiz! Dars yakunlandi (+50 XP qo‘shildi).");
                   setActiveTab('academy');
                 } else {
                   alert("Iltimos, to‘g‘ri javobni tanlang!");
@@ -684,19 +839,19 @@ export default function App() {
   };
 
   // ==========================================
-  // 4. TESTLAR MARKAZI (TOPIK VA IELTS)
+  // 4. TESTLAR MARKAZI (TOPIK & IELTS)
   // ==========================================
   const renderTests = () => {
     return (
       <div className="space-y-4 animate-fadeIn pb-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
           <button 
             onClick={() => setActiveTab('home')} 
-            className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+            className={`flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold ${theme.subCard} border px-3 py-1.5 rounded-xl active:scale-95`}
           >
             <ArrowLeft size={16} /> Bosh sahifa
           </button>
-          <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">
+          <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">
             TOPIK & EPS Imtihon Testlari
           </span>
         </div>
@@ -705,10 +860,10 @@ export default function App() {
           {koreanTopikQuestions.map((q) => (
             <div key={q.id} className={`${theme.card} border rounded-3xl p-5 text-xs space-y-3`}>
               <div className="flex items-start justify-between gap-2">
-                <p className="font-bold text-sm leading-relaxed text-white">{q.question}</p>
+                <p className={`font-bold text-sm leading-relaxed ${theme.textMain}`}>{q.question}</p>
                 <button 
                   onClick={() => speakText(q.audio, 'ko-KR')}
-                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-400 rounded-xl shrink-0"
+                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-500 rounded-xl shrink-0"
                   title="Savolni tinglash"
                 >
                   <Volume2 size={18} />
@@ -754,18 +909,18 @@ export default function App() {
   };
 
   // ==========================================
-  // 5. ZIYOAI SHAXSIY MURABBIY
+  // 5. FARIZAI SHAXSIY MURABBIY
   // ==========================================
   const renderAi = () => (
     <div className="space-y-4 animate-fadeIn pb-8">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
         <button 
           onClick={() => setActiveTab('home')} 
-          className="flex items-center gap-1.5 text-xs text-indigo-400 font-extrabold bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl active:scale-95"
+          className={`flex items-center gap-1.5 text-xs text-indigo-500 font-extrabold ${theme.subCard} border px-3 py-1.5 rounded-xl active:scale-95`}
         >
           <ArrowLeft size={16} /> Bosh sahifa
         </button>
-        <span className="text-xs bg-indigo-500/15 text-indigo-400 px-3 py-1 rounded-full font-black">AI Voice Coach</span>
+        <span className="text-xs bg-indigo-500/15 text-indigo-500 px-3 py-1 rounded-full font-black">FarizAI Voice Coach</span>
       </div>
 
       <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-lg`}>
@@ -773,14 +928,14 @@ export default function App() {
           <Bot size={40} />
         </div>
         <div>
-          <h3 className="font-black text-lg text-white">ZiyoAI Murabbiy</h3>
+          <h3 className={`font-black text-lg ${theme.textMain}`}>FarizAI Murabbiy</h3>
           <p className={`text-xs ${theme.textMuted} mt-0.5`}>
             {selectedLanguage === 'kr' ? "Koreys tilida ovozli muloqot va talaffuz mashqlari" : "Ingliz tili Speaking va Writing AI murabbiyi"}
           </p>
         </div>
 
         <button 
-          onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 한국어 공부를 시작해 볼까요?" : "Hello! Let us practice English speaking today.")}
+          onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 파리즈 아카데미에 오신 것을 환영합니다. 한국어 공부를 시작해 볼까요?" : "Hello! Welcome to Fariz Academy. Let us practice speaking today.")}
           className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg"
         >
           <Volume2 size={16} /> AI Murabbiy bilan ovozli mashq qilish
@@ -794,8 +949,8 @@ export default function App() {
   // ==========================================
   const renderProfileOnly = () => (
     <div className="space-y-5 animate-fadeIn pb-8">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <h3 className="font-black text-base text-white">Mening Profilim</h3>
+      <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
+        <h3 className={`font-black text-base ${theme.textMain}`}>Mening Profilim</h3>
         <button 
           onClick={() => {
             setEditForm(userProfile);
@@ -831,27 +986,27 @@ export default function App() {
         </div>
 
         <div>
-          <h3 className="text-xl font-black tracking-tight text-white">{userProfile.name}</h3>
-          <p className="text-xs text-indigo-400 font-bold mt-0.5">• {userProfile.currentLevel || 'B2 Upper-Intermediate'}</p>
+          <h3 className={`text-xl font-black tracking-tight ${theme.textMain}`}>{userProfile.name}</h3>
+          <p className="text-xs text-indigo-500 font-bold mt-0.5">• {userProfile.currentLevel || 'B2 Upper-Intermediate'}</p>
         </div>
       </div>
 
       <div className={`${theme.card} border rounded-[28px] p-5 space-y-3.5 text-xs`}>
-        <h4 className="font-black text-sm text-slate-200">Ta’lim Natijalari & Progress</h4>
+        <h4 className={`font-black text-sm ${theme.textMain}`}>Ta’lim Natijalari & Progress</h4>
         
-        <div className="flex justify-between items-center py-2 border-b border-slate-800">
-          <span className="text-slate-400 font-semibold">Tugallangan Darslar:</span>
-          <span className="font-black text-emerald-400 text-sm">{(userProfile.completedLessons || []).length} ta dars</span>
+        <div className="flex justify-between items-center py-2 border-b border-slate-700/30">
+          <span className={theme.textMuted}>Tugallangan Darslar:</span>
+          <span className="font-black text-emerald-500 text-sm">{(userProfile.completedLessons || []).length} ta dars</span>
         </div>
 
-        <div className="flex justify-between items-center py-2 border-b border-slate-800">
-          <span className="text-slate-400 font-semibold">To‘plangan Tajriba (XP):</span>
-          <span className="font-black text-amber-400 text-sm">{userProfile.xp} XP</span>
+        <div className="flex justify-between items-center py-2 border-b border-slate-700/30">
+          <span className={theme.textMuted}>To‘plangan Tajriba (XP):</span>
+          <span className="font-black text-amber-500 text-sm">{userProfile.xp} XP</span>
         </div>
 
         <div className="flex justify-between items-center py-2">
-          <span className="text-slate-400 font-semibold">Kunlik Ketma-ketlik:</span>
-          <span className="font-black text-rose-400 text-sm flex items-center gap-1">
+          <span className={theme.textMuted}>Kunlik Ketma-ketlik:</span>
+          <span className="font-black text-rose-500 text-sm flex items-center gap-1">
             🔥 {userProfile.streak} kun
           </span>
         </div>
@@ -862,33 +1017,34 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
       
-      {/* 1. ASOSIY HEADER (FAQAT HOME DA CHIQADI) */}
+      {/* 1. ASOSIY HEADER */}
       {activeTab === 'home' && (
         <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
-            {/* ☰ MENYU TUGMASI (DRAWER OCHILADI) */}
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition active:scale-95"
+              className={`p-2.5 rounded-2xl ${theme.subCard} border transition active:scale-95`}
             >
               <Menu size={20} strokeWidth={2.5} />
             </button>
             <div>
-              <h1 className="text-base font-extrabold text-white tracking-tight leading-tight">
-                Ziyo Academy
+              <h1 className={`text-base font-extrabold tracking-tight leading-tight ${theme.textMain}`}>
+                Fariz Academy
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className={`text-[11px] font-medium ${theme.textMuted}`}>
                 Har kuni yangi bilim, yangi imkoniyat.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* 100% ISHLOVCHI KUN / TUN (OY VA QUYOSH) TUGMASI */}
             <button 
               onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-900 transition active:scale-95"
+              className={`p-2 rounded-xl transition active:scale-95 ${theme.subCard} border`}
+              title="Mavzuni almashtirish"
             >
-              {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-400" />}
+              {isDarkMode ? <Sun size={19} className="text-amber-400" /> : <Moon size={19} className="text-indigo-600" />}
             </button>
 
             <button 
@@ -905,37 +1061,37 @@ export default function App() {
         </header>
       )}
 
-      {/* 2. INTERAKTIV YON PANEL (DRAWER MENYU) */}
+      {/* 2. YON PANEL (DRAWER MENYU) */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div 
             onClick={() => setIsSidebarOpen(false)} 
             className="fixed inset-0 bg-black/70 backdrop-blur-sm"
           ></div>
-          <div className="relative w-72 max-w-[80%] bg-[#121424] border-r border-slate-800 p-5 flex flex-col justify-between shadow-2xl z-10 animate-fadeIn">
+          <div className={`relative w-72 max-w-[80%] ${isDarkMode ? 'bg-[#121424] border-slate-800' : 'bg-white border-slate-200'} border-r p-5 flex flex-col justify-between shadow-2xl z-10 animate-fadeIn`}>
             <div className="space-y-6">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-700/40">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white text-sm">
-                    Z
+                    F
                   </div>
-                  <span className="font-black text-base text-white">Ziyo Menu</span>
+                  <span className={`font-black text-base ${theme.textMain}`}>Fariz Academy</span>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-900"
+                  className={`p-1.5 rounded-lg ${theme.subCard}`}
                 >
                   <X size={18} />
                 </button>
               </div>
 
               <div className="space-y-2">
-                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Ta’lim Tili</span>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ta’lim Tili</span>
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => switchLanguage('en')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                      selectedLanguage === 'en' ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400'
+                      selectedLanguage === 'en' ? 'bg-indigo-600 text-white' : `${theme.subCard}`
                     }`}
                   >
                     🇬🇧 English
@@ -943,7 +1099,7 @@ export default function App() {
                   <button 
                     onClick={() => switchLanguage('kr')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                      selectedLanguage === 'kr' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-slate-400'
+                      selectedLanguage === 'kr' ? 'bg-rose-600 text-white' : `${theme.subCard}`
                     }`}
                   >
                     🇰🇷 Korean
@@ -954,39 +1110,39 @@ export default function App() {
               <div className="space-y-1 text-xs font-semibold">
                 <button 
                   onClick={() => { setActiveTab('academy'); setIsSidebarOpen(false); }}
-                  className="w-full p-3 rounded-2xl flex items-center gap-3 text-slate-300 hover:bg-slate-900 hover:text-white"
+                  className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <GraduationCap size={18} className="text-indigo-400" /> Akademiya Darslari
+                  <GraduationCap size={18} className="text-indigo-500" /> Akademiya Darslari
                 </button>
                 <button 
                   onClick={() => { setActiveTab('tests'); setIsSidebarOpen(false); }}
-                  className="w-full p-3 rounded-2xl flex items-center gap-3 text-slate-300 hover:bg-slate-900 hover:text-white"
+                  className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Award size={18} className="text-emerald-400" /> Imtihon Testlari
+                  <Award size={18} className="text-emerald-500" /> Imtihon Testlari
                 </button>
                 <button 
                   onClick={() => { setActiveTab('ai'); setIsSidebarOpen(false); }}
-                  className="w-full p-3 rounded-2xl flex items-center gap-3 text-slate-300 hover:bg-slate-900 hover:text-white"
+                  className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard} mb-1.5`}
                 >
-                  <Bot size={18} className="text-purple-400" /> ZiyoAI Murabbiy
+                  <Bot size={18} className="text-purple-500" /> FarizAI Murabbiy
                 </button>
                 <button 
                   onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }}
-                  className="w-full p-3 rounded-2xl flex items-center gap-3 text-slate-300 hover:bg-slate-900 hover:text-white"
+                  className={`w-full p-3 rounded-2xl flex items-center gap-3 ${theme.subCard}`}
                 >
-                  <User size={18} className="text-amber-400" /> Shaxsiy Profil
+                  <User size={18} className="text-amber-500" /> Shaxsiy Profil
                 </button>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 text-xs text-slate-500">
-              ZiyoPrep Platformasi v2.5
+            <div className="pt-4 border-t border-slate-700/40 text-xs text-slate-400">
+              Fariz Academy Platformasi v3.0
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. ASOSIY MAYDON (CRASH BO'LMASLIGI UCHUN XAVFSIZ ROUTING) */}
+      {/* 3. ASOSIY MAYDON */}
       <main className="flex-1 w-full max-w-md mx-auto p-4 pb-44 box-border">
         {activeTab === 'home' && renderHome()}
         {activeTab === 'academy' && renderAcademy()}
@@ -997,13 +1153,13 @@ export default function App() {
       </main>
 
       {/* 4. 5 TALIK KATTA PASTKI MENYU */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#121424]/95 border-t border-slate-800 backdrop-blur-2xl px-3 pt-2.5 pb-7 shadow-2xl">
+      <div className={`fixed bottom-0 left-0 right-0 z-50 ${theme.navBg} backdrop-blur-2xl px-3 pt-2.5 pb-7 shadow-2xl`}>
         <div className="max-w-md mx-auto flex items-center justify-between relative px-1">
           
           <button 
             onClick={() => setActiveTab('home')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'home' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'home' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
             }`}
           >
             <Compass size={26} strokeWidth={activeTab === 'home' ? 2.8 : 2} />
@@ -1014,7 +1170,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('academy')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'academy' || activeTab === 'lesson_detail' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'academy' || activeTab === 'lesson_detail' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
             }`}
           >
             <GraduationCap size={26} strokeWidth={2.8} />
@@ -1022,25 +1178,25 @@ export default function App() {
             {(activeTab === 'academy' || activeTab === 'lesson_detail') && <span className="w-6 h-1 bg-emerald-500 rounded-full mt-0.5"></span>}
           </button>
 
-          {/* O'rtadagi Katta ZiyoAI Tugmasi */}
+          {/* O'rtadagi Katta FarizAI Tugmasi */}
           <button 
             onClick={() => setActiveTab('ai')}
             className="flex flex-col items-center -mt-8 px-2 active:scale-90 transition group"
           >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-2xl ring-4 ring-slate-900 transition ${
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-2xl ring-4 ${isDarkMode ? 'ring-slate-900' : 'ring-white'} transition ${
               activeTab === 'ai' 
                 ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 scale-105' 
                 : 'bg-gradient-to-tr from-indigo-600 to-blue-600'
             }`}>
               <Bot size={32} />
             </div>
-            <span className="text-xs text-indigo-400 font-black mt-1">ZiyoAI</span>
+            <span className="text-xs text-indigo-500 font-black mt-1">FarizAI</span>
           </button>
 
           <button 
             onClick={() => setActiveTab('tests')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'tests' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'tests' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
             }`}
           >
             <Award size={26} strokeWidth={2.8} />
@@ -1051,7 +1207,7 @@ export default function App() {
           <button 
             onClick={() => setActiveTab('profile')}
             className={`flex-1 flex flex-col items-center py-1 transition active:scale-90 ${
-              activeTab === 'profile' ? 'text-indigo-400 font-black' : 'text-slate-400'
+              activeTab === 'profile' ? 'text-indigo-500 font-black' : `${theme.textMuted}`
             }`}
           >
             <User size={26} strokeWidth={2.8} />
@@ -1066,13 +1222,13 @@ export default function App() {
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl`}>
-            <h3 className="font-black text-base text-white">Profilni Tahrirlash</h3>
+            <h3 className={`font-black text-base ${theme.textMain}`}>Profilni Tahrirlash</h3>
             
             <div className="flex items-center gap-3.5">
               {editForm.photoBase64 ? (
                 <img src={editForm.photoBase64} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-md" />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 text-lg">
+                <div className="w-16 h-16 rounded-full bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-500 text-lg">
                   Rasm
                 </div>
               )}
@@ -1097,7 +1253,7 @@ export default function App() {
             <div className="flex gap-2.5 pt-2">
               <button 
                 onClick={() => setIsEditingProfile(false)}
-                className="flex-1 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold"
+                className={`flex-1 py-2.5 ${theme.subCard} rounded-xl text-xs font-bold`}
               >
                 Bekor qilish
               </button>
