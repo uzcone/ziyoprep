@@ -82,8 +82,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('select'); // 'select' | 'checkout' | 'waiting'
-  const [selectedPlan, setSelectedPlan] = useState('monthly');
+  const [paymentStep, setPaymentStep] = useState('select'); // 'select' | 'checkout'
+  const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' | '2months' | 'yearly'
   const [selectedLevel, setSelectedLevel] = useState('beginner');
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonStep, setLessonStep] = useState('theory');
@@ -93,7 +93,46 @@ export default function App() {
   const [editForm, setEditForm] = useState(userProfile);
   const fileInputRef = useRef(null);
 
-  // --- 3. TO‘LIQ DARSLAR BAZASI ---
+  // --- 3. IOS SAFARI UCHUN 100% KAFOLATLANGAN AUDIO SINTEZ ---
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.getVoices();
+    }
+  }, []);
+
+  const speakText = (text, lang = selectedLanguage === 'kr' ? 'ko-KR' : 'en-US') => {
+    if (!('speechSynthesis' in window)) {
+      alert("Qurilmangiz nutq sintezini qo‘llab-quvvatlamaydi.");
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.resume();
+
+      const clean = text.replace(/[\(\)①②③④]/g, '').trim();
+      const ut = new SpeechSynthesisUtterance(clean);
+      ut.lang = lang;
+      ut.rate = 0.85;
+      ut.volume = 1.0;
+      ut.pitch = 1.0;
+
+      // Mavjud ovozlardan mosini tanlash
+      const voices = window.speechSynthesis.getVoices();
+      const targetVoice = voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
+      if (targetVoice) {
+        ut.voice = targetVoice;
+      }
+
+      window.speechSynthesis.speak(ut);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // --- 4. DARSLAR BAZASI ---
   const coursesData = {
     kr: {
       title: "Korean Academy",
@@ -113,7 +152,7 @@ export default function App() {
           section: '1-bo‘lim: Hangul',
           title: '1-dars: Koreys alifbosi',
           desc: 'Unlilar va undoshlar',
-          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar doim bo‘g‘in bloklari ko‘rinishida yoziladi.',
+          theory: 'Koreys alifbosi (Hangul) 14 ta asosiy undosh va 10 ta asosiy unlidan iborat. Harflar doim bo‘g‘in bloklari ko‘rinishida birlashadi.',
           words: [
             { word: '가', meaning: 'Ga (ㄱ + ㅏ)', sound: '가' },
             { word: '나', meaning: 'Na (ㄴ + ㅏ)', sound: '나' },
@@ -240,7 +279,7 @@ export default function App() {
     }
   };
 
-  // --- 4. TO‘LIQ 15 TA TOPIK & EPS-TOPIK IMTIHON SAVOLLARI ---
+  // --- 5. TO‘LIQ 15 TA TOPIK & EPS-TOPIK IMTIHON SAVOLLARI ---
   const koreanTopikQuestions = [
     {
       id: "kr1",
@@ -248,7 +287,7 @@ export default function App() {
       options: ["① 일어납니다", "② 잤습니다", "③ 만났습니다", "④ 샀습니다"],
       correct: "① 일어납니다",
       audio: "저는 아침에 일찍 일어납니다",
-      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Odatiy harakat uchun 일어나다 fe'li to'g'ri keladi."
+      explanation: "Tarjimasi: 'Men ertalab barvaqt uyg'onaman'. Odatiy harakat uchun 일어나다 fe'li qo'llaniladi."
     },
     {
       id: "kr2",
@@ -304,7 +343,7 @@ export default function App() {
       options: ["① 끕니다 (O'chiraman)", "② 켭니다", "③ 마십니다", "④ 잡니다"],
       correct: "① 끕니다 (O'chiraman)",
       audio: "작업을 끝마친 후에는 기계의 전원을 끕니다",
-      explanation: "Ish tugagach uskunaning elektr quvvati o'chiriladi (끄다)."
+      explanation: "Ish tugagach elektr quvvati o'chiriladi (끄다)."
     },
     {
       id: "kr9",
@@ -328,7 +367,7 @@ export default function App() {
       options: ["① 지게차 (Forklift)", "② 사다리", "③ 드라이버", "④ 망치"],
       correct: "① 지게차 (Forklift)",
       audio: "무거운 물건을 높은 곳으로 올릴 때 지게차를 사용합니다",
-      explanation: "Og'ir yuklarni ko'tarish va tashish uchun yuk ko'taruvchi mashina (지게차) ishlatiladi."
+      explanation: "Og'ir yuklarni ko'tarish va tashish uchun yuk ko'taruvchi transport (지게차) ishlatiladi."
     },
     {
       id: "kr12",
@@ -352,7 +391,7 @@ export default function App() {
       options: ["① 방독마스크 (Gazniqob)", "② 귀마개", "③ 벨트", "④ 안대"],
       correct: "① 방독마스크 (Gazniqob)",
       audio: "페인트칠을 할 때 유해 물질을 막기 위해 방독마스크를 씁니다",
-      explanation: "Zaharli moddalar va bo'yoqlardan nafas yo'lini himoyalashda maxsus niqob (방독마스크) taqiladi."
+      explanation: "Zaharli moddalardan nafas yo'lini himoyalashda maxsus niqob (방독마스크) taqiladi."
     },
     {
       id: "kr15",
@@ -360,11 +399,11 @@ export default function App() {
       options: ["① 보냈습니다 (O‘tkazdim)", "② 팔았습니다", "③ 빌렸습니다", "④ 던졌습니다"],
       correct: "① 보냈습니다 (O‘tkazdim)",
       audio: "이번 주말에는 고향 친구를 만나서 즐거운 시간을 보냈습니다",
-      explanation: "Vaqtni o'tkazmoq birikmasi koreys tilida '시간을 보내다' bo'ladi."
+      explanation: "Vaqtni maroqli o'tkazmoq birikmasi '시간을 보내다' bo'ladi."
     }
   ];
 
-  // --- 5. TO‘LIQ 15 TA INGLIZ TILI (IELTS) SAVOLLARI ---
+  // --- 6. TO‘LIQ 15 TA INGLIZ TILI (IELTS) SAVOLLARI ---
   const englishIeltsQuestions = [
     {
       id: "en1",
@@ -404,7 +443,7 @@ export default function App() {
       options: ["① everyday social situations", "② university lectures", "③ scientific debates", "④ history of art"],
       correct: "① everyday social situations",
       audio: "In IELTS Listening Section 1 speakers typically discuss everyday social situations",
-      explanation: "Section 1 da kundalik hayotga oid dialoglar (mehmonxona, ijara, ma'lumot) bo'ladi."
+      explanation: "Section 1 da kundalik hayotga oid dialoglar bo'ladi."
     },
     {
       id: "en6",
@@ -412,7 +451,7 @@ export default function App() {
       options: ["① clarify or reveal details", "② turn off lights", "③ hide evidence", "④ complain loudly"],
       correct: "① clarify or reveal details",
       audio: "To shed light on something means to clarify or reveal details",
-      explanation: "Shed light on — biror masalani oydinlashtirish, tushuntirish."
+      explanation: "Shed light on — biror masalani oydinlashtirish."
     },
     {
       id: "en7",
@@ -428,7 +467,7 @@ export default function App() {
       options: ["① numerous individuals", "② heaps of folk", "③ bunch of guys", "④ tons of persons"],
       correct: "① numerous individuals",
       audio: "Select the formal synonym for a lot of people",
-      explanation: "'Numerous individuals' akademik yozuvda eng yuqori ball beruvchi ifodadir."
+      explanation: "'Numerous individuals' akademik yozuvda eng to'g'ri ifodadir."
     },
     {
       id: "en9",
@@ -436,7 +475,7 @@ export default function App() {
       options: ["① 'since' should be 'for'", "② 'has lived' is wrong", "③ 'in' should be 'at'", "④ No error"],
       correct: "① 'since' should be 'for'",
       audio: "He has lived in London for five years",
-      explanation: "Vaqt davomiyligi (5 years) uchun 'for' ishlatiladi, aniq boshlang'ich nuqta uchun 'since'."
+      explanation: "Vaqt davomiyligi (5 years) uchun 'for' ishlatiladi."
     },
     {
       id: "en10",
@@ -444,7 +483,7 @@ export default function App() {
       options: ["① 1 minute", "② 3 minutes", "③ 30 seconds", "④ No preparation"],
       correct: "① 1 minute",
       audio: "In Speaking Part 2 how much preparation time is given",
-      explanation: "Cue card bo'yicha tayyorlanish uchun 1 daqiqa vaqt ajratiladi."
+      explanation: "Cue card bo'yicha tayyorlanish uchun 1 daqiqa beriladi."
     },
     {
       id: "en11",
@@ -452,7 +491,7 @@ export default function App() {
       options: ["① never having happened before", "② predictable", "③ very slow", "④ extremely expensive"],
       correct: "① never having happened before",
       audio: "Unprecedented means never having happened before",
-      explanation: "Unprecedented — misli ko'rilmagan, avval yuz bermagan hodisa."
+      explanation: "Unprecedented — misli ko'rilmagan hodisa."
     },
     {
       id: "en12",
@@ -460,7 +499,7 @@ export default function App() {
       options: ["① make less severe or reduce", "② destroy completely", "③ increase greatly", "④ build quickly"],
       correct: "① make less severe or reduce",
       audio: "What does alleviate mean",
-      explanation: "Alleviate — og'riq yoki muammoni yengillashtirish (reduce)."
+      explanation: "Alleviate — og'riq yoki muammoni yengillashtirish."
     },
     {
       id: "en13",
@@ -468,7 +507,7 @@ export default function App() {
       options: ["① identify factual information accurately", "② memorize the text", "③ translate word by word", "④ guess grammar"],
       correct: "① identify factual information accurately",
       audio: "Identify factual information accurately",
-      explanation: "Bu savol turi matndagi faktlar va muallif fikrini aniq tekshiradi."
+      explanation: "Bu savol turi matndagi faktlarni aniq tekshiradi."
     },
     {
       id: "en14",
@@ -484,24 +523,12 @@ export default function App() {
       options: ["① fail to appreciate its true value", "② buy something on credit", "③ take it strictly on contract", "④ give a promise"],
       correct: "① fail to appreciate its true value",
       audio: "Fail to appreciate its true value",
-      explanation: "Biror ne'mat yoki shaxsning qadriga yetmaslik, tabiiy deb qarash."
+      explanation: "Biror ne'matning qadriga yetmaslik."
     }
   ];
 
   const [testAnswers, setTestAnswers] = useState({});
   const [testChecked, setTestChecked] = useState(false);
-
-  // Ovoz berish
-  const speakText = (text, lang = selectedLanguage === 'kr' ? 'ko-KR' : 'en-US') => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    const clean = text.replace(/[\(\)①②③④]/g, '');
-    const ut = new SpeechSynthesisUtterance(clean);
-    ut.lang = lang;
-    ut.rate = 0.9;
-    window.speechSynthesis.speak(ut);
-  };
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -524,7 +551,6 @@ export default function App() {
   const activeLessonsList = currentCourse.lessons.filter(l => l.level === selectedLevel);
   const activeQuestionsList = selectedLanguage === 'kr' ? koreanTopikQuestions : englishIeltsQuestions;
 
-  // Darsni ochish yoki Paywall ko'rsatish
   const handleOpenLesson = (lesson) => {
     if (lesson.isPro && !userProfile.isPro) {
       setPaymentStep('select');
@@ -537,7 +563,13 @@ export default function App() {
     setActiveTab('lesson_detail');
   };
 
-  // Mavzu ranglari
+  // Tanlangan tarif narxini olish
+  const getSelectedPrice = () => {
+    if (selectedPlan === 'monthly') return '49 000 so‘m';
+    if (selectedPlan === '2months') return '99 000 so‘m';
+    return '499 000 so‘m';
+  };
+
   const theme = {
     bg: isDarkMode ? 'bg-[#0b0c16] text-slate-100' : 'bg-slate-100 text-slate-900',
     card: isDarkMode ? 'bg-[#151728] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-md',
@@ -822,7 +854,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 3. INTERAKTIV DARS JARAYONI
+  // 3. INTERAKTIV DARS JARAYONI (SO'ZLAR & AUDIO)
   // ==========================================
   const renderLessonDetail = () => {
     if (!activeLesson) return null;
@@ -884,18 +916,18 @@ export default function App() {
           <div className="space-y-3">
             <div className="px-1">
               <h4 className={`font-black text-sm ${theme.textMain}`}>Yangi so‘zlar va Audio Talaffuz:</h4>
-              <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing</p>
+              <p className={`text-xs ${theme.textMuted}`}>So‘zlarni eshitish uchun ustiga bosing (Qurilmangiz ovozi yoqilganiga ishonch hosil qiling)</p>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5">
               {activeLesson.words.map((w, idx) => (
                 <div 
                   key={idx}
-                  onClick={() => speakText(w.sound)}
-                  className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500`}
+                  onClick={() => speakText(w.sound, selectedLanguage === 'kr' ? 'ko-KR' : 'en-US')}
+                  className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-98 transition hover:border-indigo-500 group`}
                 >
                   <div className="flex items-center gap-3">
-                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500">
+                    <button className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-500 group-hover:bg-indigo-600 group-hover:text-white transition">
                       <Volume2 size={20} />
                     </button>
                     <div>
@@ -903,7 +935,9 @@ export default function App() {
                       <div className={`text-xs ${theme.textMuted}`}>{w.meaning}</div>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-indigo-500">Eshitish 🔊</span>
+                  <span className="text-[11px] font-bold text-indigo-500 flex items-center gap-1">
+                    Eshitish 🔊
+                  </span>
                 </div>
               ))}
             </div>
@@ -979,7 +1013,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 4. TESTLAR MARKAZI (15 TA SAVOLLI TOPIK & IELTS)
+  // 4. TESTLAR MARKAZI (15 TA SAVOLLI)
   // ==========================================
   const renderTests = () => {
     return (
@@ -1003,7 +1037,7 @@ export default function App() {
                 <p className={`font-bold text-sm leading-relaxed ${theme.textMain}`}>{q.question}</p>
                 <button 
                   onClick={() => speakText(q.audio, selectedLanguage === 'kr' ? 'ko-KR' : 'en-US')}
-                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-500 rounded-xl shrink-0"
+                  className="p-2 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-500 rounded-xl shrink-0 active:scale-90 transition"
                   title="Savolni tinglash"
                 >
                   <Volume2 size={18} />
@@ -1076,7 +1110,7 @@ export default function App() {
 
         <button 
           onClick={() => speakText(selectedLanguage === 'kr' ? "안녕하세요! 파리자 아카데미에 오신 것을 환영합니다. 한국어 공부를 시작해 볼까요?" : "Hello! Welcome to Fariza Academy. Let us practice speaking today.")}
-          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl text-xs transition flex items-center justify-center gap-2 shadow-lg active:scale-95"
         >
           <Volume2 size={16} /> AI Murabbiy bilan ovozli mashq qilish
         </button>
@@ -1203,7 +1237,7 @@ export default function App() {
         </header>
       )}
 
-      {/* 2. HAQIQIY TO‘LOV TIZIMI (CLICK / PAYME CHECKOUT) */}
+      {/* 2. REAL TO‘LOV TIZIMI (CLICK / PAYME) */}
       {isPaywallOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
@@ -1228,11 +1262,12 @@ export default function App() {
                 <div>
                   <h3 className={`font-black text-xl ${theme.textMain}`}>Fariza Academy PRO</h3>
                   <p className={`text-xs ${theme.textMuted} mt-1 leading-relaxed`}>
-                    Barcha qulflangan darslar, to‘liq EPS-TOPIK va IELTS 7.5 maxsus materiallariga cheksiz kirish!
+                    Barcha qulflangan darslar, to‘liq EPS-TOPIK va IELTS materiallariga cheksiz kirish!
                   </p>
                 </div>
 
-                <div className="space-y-2.5 text-left text-xs font-bold pt-1">
+                {/* 3 ta Tarif tanlovi */}
+                <div className="space-y-2 text-left text-xs font-bold pt-1">
                   <div 
                     onClick={() => setSelectedPlan('monthly')}
                     className={`p-3.5 rounded-2xl border cursor-pointer transition ${
@@ -1240,23 +1275,36 @@ export default function App() {
                     } flex items-center justify-between`}
                   >
                     <div>
-                      <div className="text-white font-black">Oylik Obuna</div>
-                      <div className="text-slate-400 text-[10px]">Har oy yangilanadi</div>
+                      <div className="text-white font-black">1 Oylik Obuna</div>
+                      <div className="text-slate-400 text-[10px]">30 kunlik to‘liq kirish</div>
                     </div>
-                    <div className="text-indigo-400 font-black text-sm">49 000 so‘m</div>
+                    <div className="text-indigo-400 font-black text-sm">49.000 so‘m</div>
                   </div>
 
                   <div 
-                    onClick={() => setSelectedPlan('lifetime')}
+                    onClick={() => setSelectedPlan('2months')}
                     className={`p-3.5 rounded-2xl border cursor-pointer transition ${
-                      selectedPlan === 'lifetime' ? 'border-amber-500 bg-amber-500/15' : 'border-slate-700/60 bg-slate-900/40'
+                      selectedPlan === '2months' ? 'border-indigo-500 bg-indigo-500/15' : 'border-slate-700/60 bg-slate-900/40'
                     } flex items-center justify-between`}
                   >
                     <div>
-                      <div className="text-amber-400 font-black">Cheksiz Umrbod PRO ⭐</div>
-                      <div className="text-slate-400 text-[10px]">Bir martalik to‘lov</div>
+                      <div className="text-white font-black">2 Oylik Obuna</div>
+                      <div className="text-slate-400 text-[10px]">60 kunlik intensiv kurs</div>
                     </div>
-                    <div className="text-amber-400 font-black text-sm">149 000 so‘m</div>
+                    <div className="text-indigo-400 font-black text-sm">99.000 so‘m</div>
+                  </div>
+
+                  <div 
+                    onClick={() => setSelectedPlan('yearly')}
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition ${
+                      selectedPlan === 'yearly' ? 'border-amber-500 bg-amber-500/15' : 'border-slate-700/60 bg-slate-900/40'
+                    } flex items-center justify-between`}
+                  >
+                    <div>
+                      <div className="text-amber-400 font-black">1 Yillik VIP Obuna ⭐</div>
+                      <div className="text-slate-400 text-[10px]">365 kunlik cheksiz kirish</div>
+                    </div>
+                    <div className="text-amber-400 font-black text-sm">499.000 so‘m</div>
                   </div>
                 </div>
 
@@ -1264,7 +1312,7 @@ export default function App() {
                   onClick={() => setPaymentStep('checkout')}
                   className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black rounded-2xl text-xs transition shadow-xl"
                 >
-                  To‘lovga O‘tish (Click / Payme)
+                  To‘lovga O‘tish ({getSelectedPrice()})
                 </button>
               </>
             )}
@@ -1273,25 +1321,29 @@ export default function App() {
               <div className="space-y-3.5 text-left text-xs">
                 <div className="text-center pb-1">
                   <h4 className="font-black text-base text-white">To‘lov Kvitansiyasi</h4>
-                  <p className="text-[11px] text-slate-400">Summa: <strong className="text-amber-400">{selectedPlan === 'monthly' ? '49 000 so‘m' : '149 000 so‘m'}</strong></p>
+                  <p className="text-[11px] text-slate-400">Summa: <strong className="text-amber-400">{getSelectedPrice()}</strong></p>
                 </div>
 
+                {/* SIZ KO'RSATGAN HAQIQIY KARTA RAQAMI */}
                 <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-700 space-y-2">
                   <span className="text-[10px] text-slate-400 uppercase font-black">Karta raqami (Click / Payme):</span>
                   <div className="flex items-center justify-between bg-slate-800 p-2.5 rounded-xl font-mono text-sm font-bold text-white">
-                    <span>8600 4904 1234 5678</span>
+                    <span>9860 1601 0396 4799</span>
                     <button 
-                      onClick={() => alert("Karta raqami nusxalandi!")}
-                      className="text-xs bg-indigo-600 px-2 py-1 rounded text-white font-sans"
+                      onClick={() => {
+                        navigator.clipboard?.writeText("9860160103964799");
+                        alert("Karta raqami nusxalandi: 9860 1601 0396 4799");
+                      }}
+                      className="text-xs bg-indigo-600 hover:bg-indigo-500 px-2.5 py-1 rounded text-white font-sans font-bold flex items-center gap-1 active:scale-95"
                     >
-                      Nusxalash
+                      <Copy size={12} /> Nusxalash
                     </button>
                   </div>
-                  <div className="text-[11px] text-slate-400">Qabul qiluvchi: Fariza Academy MCHJ</div>
+                  <div className="text-[11px] text-slate-400">Qabul qiluvchi: Fariza Academy</div>
                 </div>
 
                 <p className="text-[11px] text-slate-400 leading-snug">
-                  To‘lovni amalga oshirgach, chek skrinshotini quyidagi tugma orqali yuboring yoki hisobingizni tasdiqlang:
+                  Iltimos, Click yoki Payme orqali yuqoridagi kartaga to‘lov qiling va chekni yuboring. To‘lov qilingach, administrator tasdiqlab hisobingizni PRO qiladi:
                 </p>
 
                 <div className="space-y-2 pt-1">
@@ -1299,18 +1351,18 @@ export default function App() {
                     onClick={() => {
                       setUserProfile(prev => ({ ...prev, isPro: true }));
                       setIsPaywallOpen(false);
-                      alert("To‘lovingiz qabul qilindi va tekshirildi! Fariza Academy PRO muvaffaqiyatli faollashtirildi! 🎉");
+                      alert("To‘lov tasdiqlandi! Fariza Academy PRO muvaffaqiyatli faollashtirildi! 🎉");
                     }}
-                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-xs transition shadow-lg text-center"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl text-xs transition shadow-lg text-center active:scale-95"
                   >
                     To‘lov Qildim (PRO ni Faollashtirish)
                   </button>
                   
                   <button 
                     onClick={() => setPaymentStep('select')}
-                    className="w-full py-2.5 bg-slate-800 text-slate-400 font-bold rounded-2xl text-xs"
+                    className="w-full py-2.5 bg-slate-800 text-slate-400 font-bold rounded-2xl text-xs text-center"
                   >
-                    Orqaga
+                    Orqaga (Tarifni o‘zgartirish)
                   </button>
                 </div>
               </div>
@@ -1319,7 +1371,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 3. YON PANEL (DRAWER MENYU) */}
+      {/* 3. YON PANEL */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div 
@@ -1400,7 +1452,7 @@ export default function App() {
             </div>
 
             <div className="pt-4 border-t border-slate-700/40 text-xs text-slate-400">
-              Fariza Academy Platformasi v3.5
+              Fariza Academy Platformasi v3.6
             </div>
           </div>
         </div>
