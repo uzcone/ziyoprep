@@ -308,14 +308,14 @@ export default function App() {
                 <span className="text-xs uppercase tracking-wider text-rose-200 font-bold flex items-center gap-1.5">
                   <BarChart3 size={15} /> Hozirgi Daraja
                 </span>
-                <div className="text-3xl font-black mt-1.5 tracking-tight">2-geup (TOPIK I)</div>
+                <div className="text-3xl font-black mt-1.5 tracking-tight">2-급 (TOPIK I)</div>
                 <span className="text-[11px] text-rose-100 font-medium">Boshlang'ich muloqot darajasi</span>
               </div>
               <div className="border-l border-white/20 pl-5">
                 <span className="text-xs uppercase tracking-wider text-amber-200 font-bold flex items-center gap-1.5">
                   <Target size={15} /> Maqsadli Daraja
                 </span>
-                <div className="text-3xl font-black mt-1.5 tracking-tight text-amber-300">4-geup (TOPIK II)</div>
+                <div className="text-3xl font-black mt-1.5 tracking-tight text-amber-300">4-급 (TOPIK II)</div>
                 <span className="text-[11px] text-rose-100 font-medium">Koreya Universitetlari va Viza</span>
               </div>
             </div>
