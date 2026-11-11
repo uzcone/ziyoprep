@@ -12,7 +12,7 @@ import {
 export default function App() {
   // --- 1. TILNI ALMASHTIRISH (INGLIZ TILI / KOREYS TILI) ---
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    return localStorage.getItem('ziyoprep_lang') || 'en'; // 'en' (IELTS) yoki 'kr' (TOPIK)
+    return localStorage.getItem('ziyoprep_lang') || 'en';
   });
 
   const switchLanguage = (lang) => {
@@ -103,13 +103,15 @@ export default function App() {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEditForm(prev => ({ ...prev, photoBase64: reader.result }));
+        const base64Data = reader.result;
+        setEditForm(prev => ({ ...prev, photoBase64: base64Data }));
+        setUserProfile(prev => ({ ...prev, photoBase64: base64Data }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // --- 4. INGLIZ TILI READING TESTI (10 TA SAVOL VA TAYMER) ---
+  // --- 4. INGLIZ TILI READING TESTI ---
   const [readingTime, setReadingTime] = useState(3600);
   const [readingTimerRunning, setReadingTimerRunning] = useState(false);
   const [highlightEvidence, setHighlightEvidence] = useState(false);
@@ -197,7 +199,6 @@ export default function App() {
   const [koreanAnswers, setKoreanAnswers] = useState({});
   const [koreanChecked, setKoreanChecked] = useState(false);
 
-  // Ovoz berish funksiyasi
   const speakText = (text, lang = 'en-US') => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
@@ -206,7 +207,6 @@ export default function App() {
     window.speechSynthesis.speak(ut);
   };
 
-  // Dinamik ranglar
   const theme = {
     bg: isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-900 text-slate-100',
     card: isDarkMode ? 'bg-[#151726] border-slate-800 shadow-xl' : 'bg-[#1a1d30] border-slate-700/60 shadow-md',
@@ -218,7 +218,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 1. RASMDAGIDEK ZAMONAVIY BOSH SAHIFA
+  // 1. ASOSIY BOSH SAHIFA
   // ==========================================
   const renderHome = () => {
     const isKr = selectedLanguage === 'kr';
@@ -227,21 +227,18 @@ export default function App() {
     return (
       <div className="space-y-5 animate-fadeIn pb-6">
 
-        {/* RASMDAGI ASOSIY BANNER (YOUR LANGUAGE JOURNEY) */}
+        {/* YOUR LANGUAGE JOURNEY BANNERI */}
         <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#261f5c] via-[#1a1a40] to-[#12132b] p-6 text-white border border-indigo-500/25 shadow-2xl">
-          {/* Orqa fondagi nafis konsentrik doira chiziqlari */}
           <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full border border-indigo-400/10 pointer-events-none"></div>
           <div className="absolute -top-6 -right-6 w-52 h-52 rounded-full border border-indigo-400/15 pointer-events-none"></div>
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full border border-indigo-400/20 pointer-events-none"></div>
 
           <div className="flex items-start justify-between relative z-10">
-            {/* Chap tomon matnlar va tugma */}
-            <div className="space-y-3.5 max-w-[62%]">
+            <div className="space-y-3 max-w-[62%]">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300/90 block">
                 YOUR LANGUAGE JOURNEY
               </span>
               
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
                   Salom! Xush kelibsiz 👋
                 </h2>
@@ -263,19 +260,10 @@ export default function App() {
               </button>
             </div>
 
-            {/* O'ng tomon dumaloq 68% progress indikatori */}
             <div className="flex flex-col items-center justify-center pt-2">
               <div className="relative w-24 h-24 flex items-center justify-center">
-                {/* SVG Progress Circle */}
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    stroke="#2e335a"
-                    strokeWidth="9"
-                    fill="transparent"
-                  />
+                  <circle cx="50" cy="50" r="40" stroke="#2e335a" strokeWidth="9" fill="transparent" />
                   <circle
                     cx="50"
                     cy="50"
@@ -293,13 +281,12 @@ export default function App() {
                 </div>
               </div>
               <span className="text-[11px] font-semibold text-indigo-200/70 mt-1">Umumiy progress</span>
-              <span className="text-xs font-bold text-indigo-100 mt-2">Haftalik</span>
-              <span className="text-xs font-bold text-indigo-100">maqsad</span>
+              <span className="text-xs font-bold text-indigo-100 mt-2">Haftalik maqsad</span>
             </div>
           </div>
         </div>
 
-        {/* TIL TANLASH (IELTS / TOPIK) REJIMI */}
+        {/* TIL TANLASH (IELTS / TOPIK) */}
         <div className="flex items-center justify-between p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800">
           <button 
             onClick={() => switchLanguage('en')}
@@ -319,7 +306,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* DARAXA VA BALLAR TAHLILI */}
+        {/* DARAXA VA BALLAR */}
         {!isKr ? (
           <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-blue-600 rounded-[28px] p-5 text-white shadow-xl relative overflow-hidden">
             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-white/20">
@@ -435,27 +422,6 @@ export default function App() {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* ZIYOAI BANNER */}
-        <div 
-          onClick={() => setActiveTab('ai')}
-          className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-3xl p-5 text-white flex items-center justify-between cursor-pointer hover:shadow-xl transition group shadow-lg"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
-              <Bot size={28} />
-            </div>
-            <div>
-              <h4 className="font-black text-base flex items-center gap-1.5">
-                {isKr ? "ZiyoAI Koreys Tili Murabbiyi" : "ZiyoAI Speaking Coach"} <Sparkles size={16} className="text-amber-300" />
-              </h4>
-              <p className="text-xs text-blue-100 mt-0.5">
-                {isKr ? "Ovozli suhbat, talaffuz va grammatika tekshirish" : "Ovoz tahlili, talaffuz xatolari va ravonlik balli"}
-              </p>
-            </div>
-          </div>
-          <ChevronRight size={22} className="text-white/80 group-hover:translate-x-1 transition" />
         </div>
 
         {/* MODULLAR */}
@@ -771,10 +737,10 @@ export default function App() {
   );
 
   // ==========================================
-  // 6. SHAXSIY PROFIL
+  // 6. SHAXSIY PROFIL (AYLANA SHAKLDA VA TARTIBLI)
   // ==========================================
   const renderProfileOnly = () => (
-    <div className="space-y-4 animate-fadeIn pb-8">
+    <div className="space-y-5 animate-fadeIn pb-8">
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 className="font-black text-base">Mening Profilim</h3>
         <button 
@@ -782,31 +748,36 @@ export default function App() {
             setEditForm(userProfile);
             setIsEditingProfile(true);
           }}
-          className="text-xs bg-indigo-600 text-white px-4 py-2 rounded-2xl font-black flex items-center gap-1.5 transition active:scale-95 shadow"
+          className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-2xl font-black flex items-center gap-1.5 transition active:scale-95 shadow-md"
         >
           <Edit3 size={15} /> Tahrirlash
         </button>
       </div>
 
-      <div className={`${theme.card} border rounded-3xl p-6 text-center space-y-3.5 shadow-md relative`}>
-        <div className="relative w-22 h-22 mx-auto">
+      {/* AYLANA SHAKLDAGI PROFIL RASMI VA BLOKI */}
+      <div className={`${theme.card} border rounded-[32px] p-6 text-center space-y-4 shadow-xl relative`}>
+        <div className="relative w-32 h-32 mx-auto">
           {userProfile.photoBase64 ? (
             <img 
               src={userProfile.photoBase64} 
               alt={userProfile.name}
-              className="w-full h-full rounded-3xl object-cover border-4 border-indigo-500 shadow-lg"
+              className="w-full h-full rounded-full object-cover border-4 border-indigo-500 shadow-2xl ring-4 ring-indigo-500/20"
             />
           ) : (
-            <div className="w-full h-full rounded-3xl bg-indigo-600/20 border-4 border-indigo-500/40 flex items-center justify-center text-3xl font-black text-indigo-400">
+            <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 border-4 border-indigo-400 flex items-center justify-center text-4xl font-black text-white shadow-2xl ring-4 ring-indigo-500/20">
               {userProfile.name.charAt(0)}
             </div>
           )}
+
+          {/* Kamera tugmasi (Aylana chetida) */}
           <button 
             onClick={() => fileInputRef.current.click()}
-            className="absolute -bottom-1 -right-1 p-2 bg-indigo-600 text-white rounded-xl shadow-md border border-white/20 active:scale-95"
+            className="absolute bottom-0 right-0 p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full shadow-xl border-2 border-slate-900 active:scale-90 transition"
+            title="Rasm yuklash"
           >
-            <Camera size={15} />
+            <Camera size={16} />
           </button>
+
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -817,24 +788,34 @@ export default function App() {
         </div>
 
         <div>
-          <h3 className="text-xl font-black">{userProfile.name}</h3>
-          <p className={`text-xs ${theme.textMuted} font-bold mt-0.5`}>{userProfile.gender} • {userProfile.currentLevel}</p>
+          <h3 className="text-xl font-black tracking-tight">{userProfile.name}</h3>
+          <p className="text-xs text-indigo-400 font-bold mt-0.5">• {userProfile.currentLevel}</p>
         </div>
       </div>
 
-      <div className={`${theme.card} border rounded-3xl p-5 space-y-3 text-xs`}>
-        <h4 className="font-black text-sm">O‘rganilayotgan Tillar</h4>
-        <div className="flex justify-between py-2 border-b border-slate-800">
-          <span className={theme.textMuted}>🇬🇧 IELTS Maqsadi:</span>
-          <span className="font-black text-indigo-400">Band {userProfile.targetBand}</span>
+      {/* O‘rganilayotgan Tillar Ro‘yxati */}
+      <div className={`${theme.card} border rounded-[28px] p-5 space-y-3.5 text-xs`}>
+        <h4 className="font-black text-sm text-slate-200">O‘rganilayotgan Tillar</h4>
+        
+        <div className="flex justify-between items-center py-2 border-b border-slate-800">
+          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+            🇬🇧 IELTS Maqsadi:
+          </span>
+          <span className="font-black text-indigo-400 text-sm">Band {userProfile.targetBand}</span>
         </div>
-        <div className="flex justify-between py-2 border-b border-slate-800">
-          <span className={theme.textMuted}>🇰🇷 TOPIK Maqsadi:</span>
-          <span className="font-black text-rose-500">{userProfile.koreanTargetLevel}</span>
+
+        <div className="flex justify-between items-center py-2 border-b border-slate-800">
+          <span className="text-slate-400 font-semibold flex items-center gap-1.5">
+            🇰🇷 TOPIK Maqsadi:
+          </span>
+          <span className="font-black text-rose-400 text-sm">{userProfile.koreanTargetLevel}</span>
         </div>
-        <div className="flex justify-between py-2">
-          <span className={theme.textMuted}>Kunlik Streak:</span>
-          <span className="font-black text-amber-500">🔥 {userProfile.streak} kun</span>
+
+        <div className="flex justify-between items-center py-2">
+          <span className="text-slate-400 font-semibold">Kunlik Streak:</span>
+          <span className="font-black text-amber-400 text-sm flex items-center gap-1">
+            🔥 {userProfile.streak} kun
+          </span>
         </div>
       </div>
     </div>
@@ -843,9 +824,8 @@ export default function App() {
   return (
     <div className={`min-h-screen w-full ${theme.bg} overflow-x-hidden flex flex-col font-sans select-none antialiased transition-colors duration-300 touch-pan-y`}>
       
-      {/* RASMDAGIDEK ANIQ HEADER */}
+      {/* HEADER */}
       <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 flex items-center justify-between`}>
-        {/* Chap tomon: Menu tugmasi va Bosh sahifa matnlari */}
         <div className="flex items-center gap-3">
           <button className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition active:scale-95">
             <Menu size={20} strokeWidth={2.5} />
@@ -860,7 +840,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* O'ng tomon: Kun/Tun, Qo'ng'iroq va Ism bosh harfli Avatar (T) */}
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleTheme}
@@ -873,12 +852,16 @@ export default function App() {
             <Bell size={19} />
           </button>
 
-          {/* Rasmdagi binafsha T harfli avatar */}
+          {/* HEADERDAGI DUMALOQ AVATAR */}
           <button 
             onClick={() => setActiveTab('profile')}
-            className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 text-white font-black text-sm flex items-center justify-center shadow-md active:scale-95 transition"
+            className="w-9 h-9 rounded-full overflow-hidden border-2 border-indigo-500 shadow-md active:scale-95 transition flex items-center justify-center bg-gradient-to-tr from-indigo-600 to-purple-500 text-white font-black text-sm"
           >
-            {userProfile.name.charAt(0)}
+            {userProfile.photoBase64 ? (
+              <img src={userProfile.photoBase64} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              userProfile.name.charAt(0)
+            )}
           </button>
         </div>
       </header>
@@ -967,9 +950,9 @@ export default function App() {
             
             <div className="flex items-center gap-3.5">
               {editForm.photoBase64 ? (
-                <img src={editForm.photoBase64} alt="Avatar" className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500" />
+                <img src={editForm.photoBase64} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-indigo-500 shadow-md" />
               ) : (
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400">
+                <div className="w-16 h-16 rounded-full bg-indigo-600/20 border-2 border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 text-lg">
                   Rasm
                 </div>
               )}
