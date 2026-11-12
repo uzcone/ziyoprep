@@ -1,18 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Home, BookOpen, RotateCcw, User, Volume2, ArrowLeft, 
-  Sun, Moon, ArrowRight, Flame, Heart, Zap, 
-  LogOut, Shuffle, CheckCircle2, Sparkles, Grid, 
-  Trophy, Mic, Headphones, Star, Clock, Target, 
-  Award, BarChart3, Lock, Play, Bookmark
+  Sun, Moon, Flame, Heart, Zap, LogOut, Shuffle, 
+  CheckCircle2, Grid, Trophy, Mic, Headphones, Star, 
+  Clock, Target, Award, Lock, Play
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, updateProfile, 
   signOut, onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, googleProvider, db } from './firebase';
+import { auth, googleProvider } from './firebase';
 
 function shuffleArray(array) {
   const arr = [...array];
@@ -24,7 +22,7 @@ function shuffleArray(array) {
 }
 
 export default function App() {
-  // --- 1. AUTENTIFIKATSIYA & FIREBASE SYNC ---
+  // --- 1. AUTENTIFIKATSIYA (AKKAUNTSIZ KIRISH + GOOGLE + EMAIL) ---
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('snu_auth_user');
     return saved ? JSON.parse(saved) : null;
@@ -43,9 +41,7 @@ export default function App() {
     isPro: false,
     studyMinutes: 185,
     completedNodes: ['1a-1'],
-    savedWords: ['도서관', '경험', '실력'],
-    mistakes: [],
-    dailyTasks: { vocabDone: false, grammarDone: false, listeningDone: false }
+    savedWords: ['도서관', '경험', '실력']
   };
 
   const [stats, setStats] = useState(() => {
@@ -58,17 +54,13 @@ export default function App() {
     return defaultStats;
   });
 
-  // LocalStorage + Firebase Firestore sinxronizatsiyasi
   useEffect(() => {
     localStorage.setItem('snu_master_stats', JSON.stringify(stats));
-    if (currentUser && !currentUser.isGuest && db) {
-      setDoc(doc(db, 'users', currentUser.uid), stats, { merge: true }).catch(() => {});
-    }
-  }, [stats, currentUser]);
+  }, [stats]);
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+    const unsub = onAuthStateChanged(auth, (fbUser) => {
       if (fbUser) {
         const u = {
           uid: fbUser.uid,
@@ -77,16 +69,7 @@ export default function App() {
         };
         setCurrentUser(u);
         localStorage.setItem('snu_auth_user', JSON.stringify(u));
-        if (db) {
-          try {
-            const snap = await getDoc(doc(db, 'users', fbUser.uid));
-            if (snap.exists()) {
-              setStats(prev => ({ ...prev, ...snap.data() }));
-            } else {
-              setStats(prev => ({ ...prev, name: u.name }));
-            }
-          } catch (e) {}
-        }
+        setStats(prev => ({ ...prev, name: u.name }));
       }
     });
     return () => unsub();
@@ -154,11 +137,10 @@ export default function App() {
     });
   };
 
-  // 4 ta asosiy tab: 'home' (홈) | 'learn' (학습) | 'review' (복습) | 'profile' (프로필) + 'lesson_player' + 'hangul'
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'learn' | 'review' | 'profile' | 'lesson_player' | 'hangul'
   const [selectedBookId, setSelectedBookId] = useState('1a');
 
-  // --- 3. KOREYSCHA NATIVE AUDIO & SPEECH RECOGNITION ---
+  // --- 3. KOREYSCHA NATIVE AUDIO ---
   const speakKo = (text, rate = 0.85) => {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -171,7 +153,7 @@ export default function App() {
     } catch (e) {}
   };
 
-  // --- 4. 서울대 한국어 1A — 6B TO‘LIQ O‘QUV DASTURI VA INTERAKTIV DARSLAR ---
+  // --- 4. 서울대 한국어 1A — 6B TO‘LIQ DASTUR ---
   const snuCurriculum = [
     {
       id: '1a', code: '1A', title: '서울대 한국어 1A', topixTarget: 'TOPIK 1-daraja', estHours: '18 soat',
@@ -424,17 +406,15 @@ export default function App() {
     }
   ];
 
-  // Barcha dars tugunlari (nodes) ro‘yxati
   const allNodes = snuCurriculum.flatMap(b => b.nodes.map(n => ({ ...n, bookId: b.id, bookCode: b.code, bookTitle: b.title })));
   const allVocabList = allNodes.flatMap(n => n.vocab.map(v => ({ ...v, bookCode: n.bookCode })));
   const allExercisesPool = allNodes.flatMap(n => n.exercises);
 
-  // Hozir davom ettirilayotgan (keyingi ochiq) darsni topish
   const currentActiveNode = allNodes.find(n => !stats.completedNodes.includes(n.id)) || allNodes[0];
 
-  // --- 5. INTERAKTIV DARS PLAYER HOLATLARI ---
+  // --- 5. INTERAKTIV DARS PLAYER ---
   const [activeNode, setActiveNode] = useState(null);
-  const [playerStage, setPlayerStage] = useState('intro'); // 'intro' | 'exercise' | 'complete'
+  const [playerStage, setPlayerStage] = useState('intro');
   const [sessionExercises, setSessionExercises] = useState([]);
   const [exIdx, setExIdx] = useState(0);
   const [userChoice, setUserChoice] = useState(null);
@@ -449,7 +429,6 @@ export default function App() {
     }
     setActiveNode(node);
     setPlayerStage('intro');
-    // Savollar va variantlarni har safar yangidan aralashtirish
     const randomized = shuffleArray(node.exercises).map(ex => ({
       ...ex,
       opts: ex.opts ? shuffleArray(ex.opts) : undefined,
@@ -463,27 +442,24 @@ export default function App() {
     setActiveTab('lesson_player');
   };
 
-  // --- 6. TAKRORLASH (복습) BO‘LIMI HOLATLARI ---
-  const [reviewSubTab, setReviewSubTab] = useState('vocab'); // 'vocab' | 'listening' | 'speaking' | 'mock'
+  // --- 6. TAKRORLASH (복습) BO‘LIMI ---
+  const [reviewSubTab, setReviewSubTab] = useState('vocab');
   const [flashIdx, setFlashIdx] = useState(0);
   const [flashFlipped, setFlashFlipped] = useState(false);
 
-  // Listening state
   const [listenIdx, setListenIdx] = useState(0);
   const [listenChoice, setListenChoice] = useState(null);
 
-  // Speaking (Mikrofon) state
   const [speakIdx, setSpeakIdx] = useState(0);
   const [isListeningMic, setIsListeningMic] = useState(false);
   const [spokenResult, setSpokenResult] = useState('');
   const [speakFeedback, setSpeakFeedback] = useState(null);
 
-  // TOPIK Mock Test state
   const [mockStarted, setMockStarted] = useState(false);
   const [mockQuestions, setMockQuestions] = useState([]);
   const [mockIdx, setMockIdx] = useState(0);
   const [mockAnswers, setMockAnswers] = useState({});
-  const [mockTimeLeft, setMockTimeLeft] = useState(300); // 5 daqiqa
+  const [mockTimeLeft, setMockTimeLeft] = useState(300);
   const [mockFinished, setMockFinished] = useState(false);
 
   useEffect(() => {
@@ -515,7 +491,6 @@ export default function App() {
     setMockStarted(true);
   };
 
-  // Mikrofon orqali talaffuzni tekshirish
   const startSpeechCheck = (targetWord) => {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
@@ -647,7 +622,7 @@ export default function App() {
   }
 
   // =========================================================================
-  // 1. 홈 — IDEAL BOSH SAHIFA (DASHBOARD)
+  // 1. 홈 — BOSH SAHIFA (DASHBOARD)
   // =========================================================================
   const renderHome = () => {
     const dailyPercent = Math.min(100, Math.round((stats.dailyXp / 100) * 100));
@@ -660,7 +635,6 @@ export default function App() {
 
     return (
       <div className="space-y-5 pb-24">
-        {/* 1. KUNLIK MAQSAD BAJARILISHI */}
         <div className={`${theme.card} border rounded-3xl p-4 space-y-2.5`}>
           <div className="flex items-center justify-between text-xs font-black">
             <div className="flex items-center gap-2">
@@ -674,7 +648,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 2. HOZIR DAVOM ETTIRILAYOTGAN DARS — KATTA CONTINUE LEARNING */}
         <div className="rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-blue-700 to-slate-900 text-white border-b-4 border-indigo-950 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full bg-white/15 text-[10px] font-black uppercase tracking-wider">
@@ -694,7 +667,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* 3. BUGUNGI VAZIFALAR (IXCHAM VA FOYDALI) */}
         <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
           <div className="flex items-center justify-between">
             <span className={`text-xs font-black uppercase tracking-wider ${theme.textMain}`}>Bugungi Vazifalar</span>
@@ -727,7 +699,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 4. KURSLAR VA DARAJALAR (BATAFSIL METRIKALAR BILAN) */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className={`text-sm font-black ${theme.textMain}`}>서울대 한국어 Kurslari (1A — 6B)</h3>
@@ -760,7 +731,6 @@ export default function App() {
                     <span className="text-xs font-black text-emerald-500">{percent}%</span>
                   </div>
 
-                  {/* Progress bar & darslar soni */}
                   <div className="space-y-1.5">
                     <div className="w-full h-2 bg-slate-800/40 rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percent}%` }} />
@@ -776,7 +746,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 5. HAFTALIK REYTING */}
         <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
           <div className="flex items-center gap-2 text-xs font-black text-amber-500">
             <Trophy size={16} /> <span>Haftalik Olmos Ligasi</span>
@@ -798,7 +767,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 2. 학습 — KETMA-KET OCHILADIGAN DUOLINGO DARS YO‘LAGI (S-PATH)
+  // 2. 학습 — KETMA-KET OCHILADIGAN DUOLINGO DARS YO‘LAGI
   // =========================================================================
   const renderLearnPath = () => {
     const book = snuCurriculum.find(b => b.id === selectedBookId) || snuCurriculum[0];
@@ -806,7 +775,6 @@ export default function App() {
 
     return (
       <div className="space-y-5 pb-24">
-        {/* Kitob tanlash gorizontal lenta */}
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           {snuCurriculum.map(b => (
             <button
@@ -821,14 +789,12 @@ export default function App() {
           ))}
         </div>
 
-        {/* Tanlangan bosqich sarlavhasi */}
         <div className={`rounded-3xl p-5 bg-gradient-to-r ${book.color} text-white border-b-4 border-black/30 shadow-xl`}>
           <div className="text-[10px] font-black uppercase tracking-widest opacity-85">{book.topixTarget} • {book.estHours}</div>
           <h2 className="text-xl font-black mt-0.5">{book.title}</h2>
           <p className="text-xs opacity-90 mt-1">Darslar ketma-ket ochiladi. Keyingi darsni ochish uchun joriy darsni yakunlang!</p>
         </div>
 
-        {/* Ketma-ket ochiluvchi S-yo‘lak */}
         <div className={`${theme.card} border rounded-3xl p-6 flex flex-col items-center space-y-10`}>
           {book.nodes.map((node, idx) => {
             const isCompleted = stats.completedNodes.includes(node.id);
@@ -876,7 +842,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // INTERAKTIV DARS PLAYER (GRAMMATIKA + GAP TUZISH + LISTENING + TEST)
+  // INTERAKTIV DARS PLAYER
   // =========================================================================
   const renderLessonPlayer = () => {
     if (!activeNode) return null;
@@ -917,7 +883,6 @@ export default function App() {
 
     return (
       <div className="space-y-5 pb-24">
-        {/* Progress bar */}
         <div className="flex items-center gap-3">
           <button onClick={() => setActiveTab('learn')} className={`p-2 rounded-xl ${theme.subCard} border`}>
             <ArrowLeft size={18} />
@@ -933,7 +898,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 1-BOSQICH: GRAMMATIKA VA YANGI SO‘ZLAR */}
         {playerStage === 'intro' && (
           <div className="space-y-4">
             <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-3`}>
@@ -974,7 +938,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 2-BOSQICH: INTERAKTIV MASHQLAR (CHOICE, WORD BUILDER, LISTENING) */}
         {playerStage === 'exercise' && currentEx && (
           <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-5`}>
             <div className="flex items-center justify-between text-[11px] font-black text-indigo-400 uppercase">
@@ -984,7 +947,6 @@ export default function App() {
 
             <h3 className={`text-base font-black ${theme.textMain}`}>{currentEx.q}</h3>
 
-            {/* LISTENING AUDIO TUGMASI */}
             {currentEx.type === 'listen' && (
               <button
                 onClick={() => speakKo(currentEx.audio)}
@@ -994,7 +956,6 @@ export default function App() {
               </button>
             )}
 
-            {/* VARIANT TANLASH (CHOICE & LISTEN) */}
             {(currentEx.type === 'choice' || currentEx.type === 'listen') && (
               <div className="space-y-2.5">
                 {currentEx.opts.map(opt => (
@@ -1012,7 +973,6 @@ export default function App() {
               </div>
             )}
 
-            {/* SO‘ZLARDAN GAP TUZISH (WORD BUILDER) */}
             {currentEx.type === 'build' && (
               <div className="space-y-4">
                 <div className={`min-h-[56px] p-3 rounded-2xl ${theme.subCard} border-2 border-dashed border-indigo-500/40 flex flex-wrap gap-2`}>
@@ -1047,7 +1007,6 @@ export default function App() {
               </div>
             )}
 
-            {/* NATIJA VA AI IZOH */}
             {isChecked && (
               <div className={`p-4 rounded-2xl text-xs space-y-1 ${isCorrect ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`}>
                 <div className="font-black">{isCorrect ? "To‘g‘ri javob! 🎉" : `Xato! To‘g‘ri javob: ${currentEx.ans}`}</div>
@@ -1074,7 +1033,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 3-BOSQICH: DARS YAKUNI */}
         {playerStage === 'complete' && (
           <div className={`${theme.card} border-2 rounded-3xl p-8 text-center space-y-4`}>
             <div className="text-6xl">🏆</div>
@@ -1090,7 +1048,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 3. 복습 — TAKRORLASH (SMART VOCABULARY, LISTENING, SPEAKING, TOPIK MOCK)
+  // 3. 복습 — TAKRORLASH
   // =========================================================================
   const renderReview = () => {
     const vocabSource = stats.savedWords.length > 0
@@ -1102,7 +1060,6 @@ export default function App() {
 
     return (
       <div className="space-y-5 pb-24">
-        {/* 4 ta aqlli takrorlash rejimi */}
         <div className="grid grid-cols-4 gap-1.5 text-[10px] font-black">
           {[
             { id: 'vocab', label: 'Smart Lug‘at', icon: Star },
@@ -1123,7 +1080,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* 1. SMART VOCABULARY */}
         {reviewSubTab === 'vocab' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center text-xs font-black">
@@ -1162,7 +1118,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. LISTENING (TINGLAB TUSHUNISH) */}
         {reviewSubTab === 'listening' && (
           <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
             <h3 className={`font-black text-base ${theme.textMain}`}>Tinglab Tushunish Mashqi</h3>
@@ -1173,12 +1128,12 @@ export default function App() {
               <Volume2 size={26} /> Audioni Eshitish
             </button>
             <div className="grid grid-cols-2 gap-2.5">
-              {shuffleArray([
+              {[
                 currentListen.uz,
                 allVocabList[(listenIdx + 2) % allVocabList.length].uz,
                 allVocabList[(listenIdx + 4) % allVocabList.length].uz,
                 allVocabList[(listenIdx + 6) % allVocabList.length].uz
-              ]).map(opt => (
+              ].map(opt => (
                 <button
                   key={opt}
                   onClick={() => {
@@ -1206,7 +1161,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. SPEAKING (MIKROFON ORQALI TALAFFUZ TEKSHIRUVI) */}
         {reviewSubTab === 'speaking' && (
           <div className={`${theme.card} border-2 rounded-3xl p-6 text-center space-y-4`}>
             <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-[10px] font-black uppercase">
@@ -1240,7 +1194,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. TOPIK MOCK TEST (VAQT CHEGARALI IMTIHON) */}
         {reviewSubTab === 'mock' && (
           <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
             {!mockStarted ? (
@@ -1331,7 +1284,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* STATISTIKA KARTALARI */}
       <div className="grid grid-cols-2 gap-3">
         <div className={`${theme.card} border rounded-3xl p-4`}>
           <div className="text-xs text-slate-400 font-bold">Jami XP</div>
@@ -1369,7 +1321,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // ASOSIY SHELL (TOP BAR + CONTENT + 4 TA KOREYSCHA NAVIGATSIYA)
+  // ASOSIY SHELL
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${theme.bg} flex flex-col font-sans select-none transition-colors`}>
@@ -1414,7 +1366,6 @@ export default function App() {
         )}
       </main>
 
-      {/* PASTKI 4 TA KOREYSCHA NAVIGATSIYA: 홈 • 학습 • 복습 • 프로필 */}
       <nav className={`fixed bottom-0 inset-x-0 z-40 ${theme.navBg} px-2 py-2.5 backdrop-blur-xl`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
           <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center ${activeTab === 'home' ? 'text-indigo-400' : theme.textMuted}`}>
