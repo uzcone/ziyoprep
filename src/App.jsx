@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  BookOpen, Volume2, ArrowLeft, Sun, Moon, ArrowRight, 
-  X, Flame, Heart, Zap, 
-  LogOut, Layers, Shuffle, CheckCircle2, 
-  Grid, User
+  Home, BookOpen, RotateCcw, User, Volume2, ArrowLeft, 
+  Sun, Moon, ArrowRight, Flame, Heart, Zap, 
+  LogOut, Shuffle, CheckCircle2, Sparkles, Grid, 
+  Trophy, Mic, Headphones, Star, Clock, Target, 
+  Award, BarChart3, Lock, Play, Bookmark
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, updateProfile, 
   signOut, onAuthStateChanged 
 } from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, googleProvider, db } from './firebase';
 
 function shuffleArray(array) {
   const arr = [...array];
@@ -22,6 +24,7 @@ function shuffleArray(array) {
 }
 
 export default function App() {
+  // --- 1. AUTENTIFIKATSIYA & FIREBASE SYNC ---
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('snu_auth_user');
     return saved ? JSON.parse(saved) : null;
@@ -31,19 +34,59 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
+  const defaultStats = {
+    name: 'Tokhirbek',
+    streak: 12,
+    xp: 1450,
+    dailyXp: 65,
+    hearts: 5,
+    isPro: false,
+    studyMinutes: 185,
+    completedNodes: ['1a-1'],
+    savedWords: ['도서관', '경험', '실력'],
+    mistakes: [],
+    dailyTasks: { vocabDone: false, grammarDone: false, listeningDone: false }
+  };
+
+  const [stats, setStats] = useState(() => {
+    const saved = localStorage.getItem('snu_master_stats');
+    if (saved) {
+      try {
+        return { ...defaultStats, ...JSON.parse(saved) };
+      } catch (e) {}
+    }
+    return defaultStats;
+  });
+
+  // LocalStorage + Firebase Firestore sinxronizatsiyasi
+  useEffect(() => {
+    localStorage.setItem('snu_master_stats', JSON.stringify(stats));
+    if (currentUser && !currentUser.isGuest && db) {
+      setDoc(doc(db, 'users', currentUser.uid), stats, { merge: true }).catch(() => {});
+    }
+  }, [stats, currentUser]);
+
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (fbUser) => {
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         const u = {
           uid: fbUser.uid,
           name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Talaba',
-          email: fbUser.email,
-          photoURL: fbUser.photoURL || ''
+          email: fbUser.email
         };
         setCurrentUser(u);
         localStorage.setItem('snu_auth_user', JSON.stringify(u));
-        setUserProfile(prev => ({ ...prev, name: u.name, photoBase64: u.photoURL || prev.photoBase64 }));
+        if (db) {
+          try {
+            const snap = await getDoc(doc(db, 'users', fbUser.uid));
+            if (snap.exists()) {
+              setStats(prev => ({ ...prev, ...snap.data() }));
+            } else {
+              setStats(prev => ({ ...prev, name: u.name }));
+            }
+          } catch (e) {}
+        }
       }
     });
     return () => unsub();
@@ -97,6 +140,7 @@ export default function App() {
     setAuthMode('welcome');
   };
 
+  // --- 2. MAVZU & NAVIGATSIYA ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('snu_theme');
     return saved !== null ? saved === 'dark' : true;
@@ -110,434 +154,413 @@ export default function App() {
     });
   };
 
-  const [userProfile, setUserProfile] = useState(() => {
-    const saved = localStorage.getItem('snu_profile');
-    if (saved) {
-      try {
-        const p = JSON.parse(saved);
-        return {
-          name: p.name || 'Tokhirbek',
-          photoBase64: p.photoBase64 || '',
-          streak: p.streak ?? 12,
-          xp: p.xp ?? 1450,
-          hearts: p.hearts ?? 5,
-          isPro: p.isPro || false,
-          completedBooks: Array.isArray(p.completedBooks) ? p.completedBooks : ['hangul']
-        };
-      } catch (e) {}
-    }
-    return {
-      name: 'Tokhirbek',
-      photoBase64: '',
-      streak: 12,
-      xp: 1450,
-      hearts: 5,
-      isPro: false,
-      completedBooks: ['hangul']
-    };
-  });
+  // 4 ta asosiy tab: 'home' (홈) | 'learn' (학습) | 'review' (복습) | 'profile' (프로필) + 'lesson_player' + 'hangul'
+  const [activeTab, setActiveTab] = useState('home');
+  const [selectedBookId, setSelectedBookId] = useState('1a');
 
-  useEffect(() => {
-    localStorage.setItem('snu_profile', JSON.stringify(userProfile));
-  }, [userProfile]);
-
-  const [activeTab, setActiveTab] = useState('books');
-  const [selectedBook, setSelectedBook] = useState(null);
-  const [studySection, setStudySection] = useState('grammar');
-  const [shuffledQuizzes, setShuffledQuizzes] = useState([]);
-  const [quizIdx, setQuizIdx] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [quizScore, setQuizScore] = useState(0);
-  const [quizFinished, setQuizFinished] = useState(false);
-
-  const [cardIdx, setCardIdx] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editForm, setEditForm] = useState(userProfile);
-
-  const speakKo = (text) => {
+  // --- 3. KOREYSCHA NATIVE AUDIO & SPEECH RECOGNITION ---
+  const speakKo = (text, rate = 0.85) => {
     if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const clean = text.replace(/[\(\)\[\]]/g, '').trim();
       const ut = new SpeechSynthesisUtterance(clean);
       ut.lang = 'ko-KR';
-      ut.rate = 0.85;
+      ut.rate = rate;
       window.speechSynthesis.speak(ut);
     } catch (e) {}
   };
 
-  const hangulConsonants = [
-    { char: 'ㄱ', name: '기역 (Giyok)', ex: '가방 (Sumka)' },
-    { char: 'ㄴ', name: '니은 (Niin)', ex: '나무 (Daraxt)' },
-    { char: 'ㄷ', name: '디귿 (Digid)', ex: '다리 (Oyoq / Ko‘prik)' },
-    { char: 'ㄹ', name: '리을 (Riil)', ex: '라디오 (Radio)' },
-    { char: 'ㅁ', name: '미음 (Miim)', ex: '모자 (Shapka)' },
-    { char: 'ㅂ', name: '비읍 (Biip)', ex: '바다 (Dengiz)' },
-    { char: 'ㅅ', name: '시옷 (Siot)', ex: '사과 (Olma)' },
-    { char: 'ㅇ', name: '이응 (Iing)', ex: '아이 (Bola)' },
-    { char: 'ㅈ', name: '지읒 (Jiit)', ex: '지도 (Xarita)' },
-    { char: 'ㅊ', name: '치읓 (Chiit)', ex: '차 (Choy / Mashina)' },
-    { char: 'ㅋ', name: '키읔 (Khiik)', ex: '코 (Burun)' },
-    { char: 'ㅌ', name: '티읕 (Thiit)', ex: '타조 (Tuyaqush)' },
-    { char: 'ㅍ', name: '피읖 (Phiip)', ex: '포도 (Uzum)' },
-    { char: 'ㅎ', name: '히읗 (Hiih)', ex: '하늘 (Osmon)' }
-  ];
-
-  const hangulVowels = [
-    { char: 'ㅏ', name: '아 (A)', ex: '아버지 (Ota)' },
-    { char: 'ㅑ', name: '야 (Ya)', ex: '야구 (Beysbol)' },
-    { char: 'ㅓ', name: '어 (Eo)', ex: '어머니 (Ona)' },
-    { char: 'ㅕ', name: '여 (Yeo)', ex: '여자 (Ayol)' },
-    { char: 'ㅗ', name: '오 (O)', ex: '오이 (Bodring)' },
-    { char: 'ㅛ', name: '요 (Yo)', ex: '요리 (Taom)' },
-    { char: 'ㅜ', name: '우 (U)', ex: '우유 (Sut)' },
-    { char: 'ㅠ', name: '유 (Yu)', ex: '유리 (Shisha)' },
-    { char: 'ㅡ', name: '으 (Eu)', ex: '으뜸 (Eng yaxshi)' },
-    { char: 'ㅣ', name: '이 (I)', ex: '이름 (Ism)' }
-  ];
-
-  const snuBooks = [
+  // --- 4. 서울대 한국어 1A — 6B TO‘LIQ O‘QUV DASTURI VA INTERAKTIV DARSLAR ---
+  const snuCurriculum = [
     {
-      id: '1a',
-      code: '1A',
-      title: '서울대 한국어 1A',
-      level: 'Boshlang‘ich 1 • TOPIK 1',
+      id: '1a', code: '1A', title: '서울대 한국어 1A', topixTarget: 'TOPIK 1-daraja', estHours: '18 soat',
       color: 'from-emerald-500 to-teal-700',
-      topics: 'Tanishuv, Kundalik hayot, Joylashuv, Raqamlar va Sana',
-      grammar: [
-        { pattern: 'N은/는 N이에요/예요', desc: 'Ot kesim (Men ...man / Bu ...dir). Unli bilan tugasa -예요, undosh bilan tugasa -이에요.', ex: '저는 우즈베키스탄 사람이에요. (Men O‘zbekistonlikman.)' },
-        { pattern: 'V-아요/어요', desc: 'Hozirgi zamon xushmuomala shakli. ㅏ/ㅗ bo‘lsa -아요, boshqalarda -어요, 하다 -> 해요.', ex: '매일 도서관에서 한국어를 공부해요. (Har kuni kutubxonada koreys tilini o‘rganaman.)' },
-        { pattern: 'N에 가다/오다', desc: 'Yo‘nalish kelishigi (-ga bormoq/kelmoq).', ex: '내일 친구하고 명동에 가요. (Ertaga do‘stim bilan Myongdongga boraman.)' },
-        { pattern: 'N을/를', desc: 'Tushum kelishigi (-ni).', ex: '아침에 빵하고 우유를 먹어요. (Ertalab non va sut yeyman.)' }
-      ],
-      vocab: [
-        { ko: '자기소개', uz: 'O‘zini tanishtirish', ex: '자기소개를 해 주세요.' },
-        { ko: '도서관', uz: 'Kutubxona', ex: '도서관이 아주 조용해요.' },
-        { ko: '편의점', uz: '24 soatlik do‘kon', ex: '편의점에서 김밥을 샀어요.' },
-        { ko: '학생증', uz: 'Talabalik guvohnomasi', ex: '학생증을 꼭 가지고 오세요.' },
-        { ko: '오늘', uz: 'Bugun', ex: '오늘은 날씨가 참 좋아요.' },
-        { ko: '얼마예요?', uz: 'Necha pul?', ex: '이 사과 한 개에 얼마예요?' }
-      ],
-      dialogue: [
-        { sp: '민수', ko: '안녕하세요? 저는 김민수예요. 어느 나라 사람이에요?', uz: 'Salom! Men Kim Minsuman. Qaysi davlatdansiz?' },
-        { sp: '토히르벡', ko: '안녕하세요? 저는 토히르벡이에요. 우즈베키스탄에서 왔어요.', uz: 'Salom! Men Tokhirbekman. O‘zbekistondan keldim.' },
-        { sp: '민수', ko: '반갑습니다! 지금 대학교에서 무엇을 공부해요?', uz: 'Tanishganimdan xursandman! Hozir universitetda nimani o‘rganyapsiz?' },
-        { sp: '토히르벡', ko: '컴퓨터공학을 공부해요. 한국어 수업도 들어요.', uz: 'Kompyuter injiniringini o‘rganyapman. Koreys tili darsiga ham qatnashaman.' }
-      ],
-      quizzes: [
-        { q: "‘저는 학생___.’ Bo‘sh joyga to‘g‘ri qo‘shimchani tanlang:", opts: ['이에요', '예요', '을', '에서'], ans: '이에요', exp: "‘학생’ undosh (ㅇ) bilan tugagani uchun ‘-이에요’ qo‘shiladi." },
-        { q: "‘공부하다’ fe’lining hozirgi zamon shakli qaysi?", opts: ['공부해요', '공부하아요', '공부허요', '공부았어요'], ans: '공부해요', exp: "‘하다’ fe’llari doim ‘해요’ shaklida tuslanadi." },
-        { q: "Do‘konda narx so‘rash iborasi qaysi?", opts: ['얼마예요?', '어디예요?', '누구예요?', '몇 시예요?'], ans: '얼마예요?', exp: "‘얼마예요?’ — Necha pul? degan ma’noni bildiradi." },
-        { q: "Qayerda harakat bajarilganini bildiruvchi qo‘shimcha qaysi? (도서관___ 책을 읽어요)", opts: ['에서', '에', '을', '와'], ans: '에서', exp: "Harakat sodir bo‘lgan joy uchun ‘-에서’ ishlatiladi." },
-        { q: "‘우유’ so‘zining tarjimasi nima?", opts: ['Sut', 'Suv', 'Non', 'Olma'], ans: 'Sut', exp: "‘우유’ — sut." }
+      nodes: [
+        {
+          id: '1a-1', title: '1-dars: Tanishuv va Millat', subtitle: 'N은/는 N이에요/예요', xp: 40,
+          grammar: { pattern: 'N은/는 N이에요/예요', desc: 'O‘zini tanishtirish va kasb/millatni aytish. Undoshdan keyin -이에요, unlidan keyin -예요.', ex: '저는 우즈베키스탄 사람이에요.' },
+          vocab: [
+            { ko: '자기소개', uz: 'O‘zini tanishtirish', ex: '자기소개를 해 주세요.' },
+            { ko: '학생', uz: 'Talaba / O‘quvchi', ex: '저는 대학교 학생이에요.' },
+            { ko: '선생님', uz: 'O‘qituvchi', ex: '선생님이 친절해요.' },
+            { ko: '우즈베키스탄', uz: 'O‘zbekiston', ex: '우즈베키스탄에서 왔어요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘저는 대학생___.’ Bo‘sh joyga to‘g‘ri qo‘shimchani tanlang:", opts: ['이에요', '예요', '을', '에서'], ans: '이에요', exp: "‘대학생’ undosh (ㅇ) bilan tugagani uchun ‘-이에요’ qo‘shiladi." },
+            { type: 'build', q: "So‘zlardan to‘g‘ri gap tuzing: ‘Men O‘zbekistonlik talabaman’", words: ['저는', '우즈베키스탄', '학생이에요.'], ans: '저는 우즈베키스탄 학생이에요.', exp: "Ega (저는) + Aniqlovchi (우즈베키스탄) + Kesim (학생이에요)." },
+            { type: 'listen', q: "Audioni tinglang va eshitilgan so‘zni tanlang:", audio: '선생님', opts: ['선생님', '학생증', '도서관', '편의점'], ans: '선생님', exp: "Audioda ‘선생님’ (O‘qituvchi) so‘zi o‘qildi." }
+          ]
+        },
+        {
+          id: '1a-2', title: '2-dars: Kundalik Harakatlar', subtitle: 'V-아요/어요 • N에서', xp: 50,
+          grammar: { pattern: 'V-아요/어요 & N에서', desc: 'Hozirgi zamon fe’li va harakat sodir bo‘lgan joy (-da).', ex: '도서관에서 한국어를 공부해요.' },
+          vocab: [
+            { ko: '도서관', uz: 'Kutubxona', ex: '도서관에서 책을 읽어요.' },
+            { ko: '공부하다', uz: 'O‘rganmoq / Dars qilmoq', ex: '매일 한국어를 공부해요.' },
+            { ko: '마시다', uz: 'Ichmoq', ex: '카페에서 커피를 마셔요.' },
+            { ko: '편의점', uz: '24 soatlik do‘kon', ex: '편의점에서 우유를 사요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘공부하다’ fe’lining hozirgi zamon shakli qaysi?", opts: ['공부해요', '공부하아요', '공부허요', '공부았어요'], ans: '공부해요', exp: "‘하다’ fe’llari doim ‘해요’ bo‘lib tuslanadi." },
+            { type: 'build', q: "Gap tuzing: ‘Kutubxonada koreys tilini o‘rganaman’", words: ['도서관에서', '한국어를', '공부해요.'], ans: '도서관에서 한국어를 공부해요.', exp: "Joy (도서관에서) + Obyekt (한국어를) + Fe’l (공부해요)." },
+            { type: 'listen', q: "Audioni tinglang va to‘g‘ri javobni toping:", audio: '도서관', opts: ['도서관', '편의점', '우체국', '백화점'], ans: '도서관', exp: "‘도서관’ — kutubxona." }
+          ]
+        },
+        {
+          id: '1a-3', title: '3-dars: Raqamlar va Xarid', subtitle: '얼마예요? • N 개/잔', xp: 50,
+          grammar: { pattern: 'Xitoy-koreys va Asl koreys raqamlari', desc: 'Pul birligi (원) uchun 일, 이, 삼...; buyum soni (개, 잔) uchun 한, 두, 세... ishlatiladi.', ex: '아메리카노 두 잔에 팔천 원이에요.' },
+          vocab: [
+            { ko: '얼마예요?', uz: 'Necha pul?', ex: '이 사과 얼마예요?' },
+            { ko: '천 원', uz: '1,000 von', ex: '물 한 병에 천 원이에요.' },
+            { ko: '영수증', uz: 'Chek', ex: '영수증 드릴까요?' }
+          ],
+          exercises: [
+            { type: 'choice', q: "Do‘konda narx so‘rash uchun nima deyiladi?", opts: ['얼마예요?', '어디예요?', '몇 시예요?', '누구예요?'], ans: '얼마예요?', exp: "‘얼마예요?’ — Necha pul?" },
+            { type: 'build', q: "Gap tuzing: ‘Bu olma necha pul?’", words: ['이', '사과', '얼마예요?'], ans: '이 사과 얼마예요?', exp: "Ko‘rsatish olmoshi (이) + Ot (사과) + Savol (얼마예요?)." }
+          ]
+        }
       ]
     },
     {
-      id: '1b',
-      code: '1B',
-      title: '서울대 한국어 1B',
-      level: 'Boshlang‘ich 2 • TOPIK 1',
+      id: '1b', code: '1B', title: '서울대 한국어 1B', topixTarget: 'TOPIK 1–2', estHours: '20 soat',
       color: 'from-teal-500 to-cyan-700',
-      topics: 'O‘tgan zamon, Kelajak rejalari, Buyruq va Iltimos, Ob-havo',
-      grammar: [
-        { pattern: 'V-았/었어요', desc: 'O‘tgan zamon shakli (-di / -gan).', ex: '어제 친구하고 영화를 봤어요. (Kecha do‘stim bilan kino ko‘rdim.)' },
-        { pattern: 'V-(으)ㄹ 거예요', desc: 'Kelajak zamon reja va taxmini (-moqchiman / -adi).', ex: '주말에 부산에 여행을 갈 거예요. (Dam olish kuni Pusanga sayohatga bormoqchiman.)' },
-        { pattern: 'V-(으)세요', desc: 'Hurmat ma’nosidagi buyruq va iltimos (-ing).', ex: '여기에 이름을 쓰세요. (Bu yerga ismingizni yozing.)' },
-        { pattern: 'A/V-지만', desc: 'Qarama-qarshilik bog‘lovchisi (-lekin / -ammo).', ex: '한국어는 어렵지만 재미있어요. (Koreys tili qiyin, lekin qiziqarli.)' }
-      ],
-      vocab: [
-        { ko: '주말', uz: 'Dam olish kunlari', ex: '주말 잘 보내세요!' },
-        { ko: '날씨', uz: 'Ob-havo', ex: '오늘 날씨가 아주 맑아요.' },
-        { ko: '지하철', uz: 'Metro', ex: '지하철을 타고 학교에 가요.' },
-        { ko: '약속', uz: 'Va’da / Uchrashuv', ex: '오늘 저녁에 친구와 약속이 있어요.' },
-        { ko: '감기', uz: 'Shamollash', ex: '감기에 걸려서 병원에 갔어요.' }
-      ],
-      dialogue: [
-        { sp: '수진', ko: '어제 무엇을 했어요?', uz: 'Kecha nima qildingiz?' },
-        { sp: '토히르벡', ko: '집에서 쉬고 한국 드라마를 봤어요. 수진 씨는요?', uz: 'Uyda dam oldim va koreys serialini ko‘rdim. Siz-chi?' },
-        { sp: '수진', ko: '저는 백화점에 가서 부모님 선물을 샀어요.', uz: 'Men univermagga borib ota-onamga sovg‘a oldim.' }
-      ],
-      quizzes: [
-        { q: "‘보다’ (ko‘rmoq) fe’lining o‘tgan zamon shakli qaysi?", opts: ['봤어요', '보었어요', '보았어요', '볼 거예요'], ans: '봤어요', exp: "‘보 + 았어요’ qisqarib ‘봤어요’ bo‘ladi." },
-        { q: "‘Ertaga kutubxonaga bormoqchiman’ gapini to‘g‘ri toping:", opts: ['내일 도서관에 갈 거예요', '내일 도서관에 갔어요', '어제 도서관에 갈 거예요', '내일 도서관에 가세요'], ans: '내일 도서관에 갈 거예요', exp: "Kelajak reja uchun ‘-(으)ㄹ 거예요’ ishlatiladi." },
-        { q: "‘Ovqat qimmat, lekin mazali’ — to‘g‘ri bog‘lovchini tanlang:", opts: ['음식이 비싸지만 맛있어요', '음식이 비싸서 맛있어요', '음식이 비싸고 맛있어요', '음식이 비싸면 맛있어요'], ans: '음식이 비싸지만 맛있어요', exp: "Zidlov ma’nosi uchun ‘-지만’ ishlatiladi." },
-        { q: "‘지하철’ nima?", opts: ['Metro', 'Avtobus', 'Taksi', 'Samolyot'], ans: 'Metro', exp: "‘지하철’ — yer osti metrosi." }
+      nodes: [
+        {
+          id: '1b-1', title: '1-dars: O‘tgan Zamon', subtitle: 'V-았/었어요', xp: 50,
+          grammar: { pattern: 'V-았/었어요', desc: 'O‘tgan zamon harakati (-di / -gan).', ex: '어제 친구하고 영화를 봤어요.' },
+          vocab: [
+            { ko: '어제', uz: 'Kecha', ex: '어제 비가 왔어요.' },
+            { ko: '주말', uz: 'Dam olish kunlari', ex: '주말에 집에서 쉬었어요.' },
+            { ko: '지하철', uz: 'Metro', ex: '지하철을 타고 갔어요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘보다’ (ko‘rmoq) fe’lining o‘tgan zamon shakli:", opts: ['봤어요', '보었어요', '보았어요', '볼 거예요'], ans: '봤어요', exp: "‘보 + 았어요’ qisqarib ‘봤어요’ bo‘ladi." },
+            { type: 'build', q: "Gap tuzing: ‘Kecha kino ko‘rdim’", words: ['어제', '영화를', '봤어요.'], ans: '어제 영화를 봤어요.', exp: "Vaqt (어제) + Obyekt (영화를) + O‘tgan zamon fe’li (봤어요)." }
+          ]
+        },
+        {
+          id: '1b-2', title: '2-dars: Kelajak Rejalari', subtitle: 'V-(으)ㄹ 거예요', xp: 50,
+          grammar: { pattern: 'V-(으)ㄹ 거예요', desc: 'Kelajak zamon reja va niyati (-moqchiman).', ex: '내일 부산에 갈 거예요.' },
+          vocab: [
+            { ko: '내일', uz: 'Ertaga', ex: '내일 도서관에 갈 거예요.' },
+            { ko: '여행', uz: 'Sayohat', ex: '방학에 여행을 갈 거예요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Ertaga kutubxonaga bormoqchiman’:", opts: ['내일 도서관에 갈 거예요', '내일 도서관에 갔어요', '어제 도서관에 갈 거예요', '도서관에서 갔어요'], ans: '내일 도서관에 갈 거예요', exp: "Kelajak zamon uchun ‘-(으)ㄹ 거예요’ ishlatiladi." }
+          ]
+        }
       ]
     },
     {
-      id: '2a',
-      code: '2A',
-      title: '서울대 한국어 2A',
-      level: 'O‘rta-boshlang‘ich 1 • TOPIK 2',
+      id: '2a', code: '2A', title: '서울대 한국어 2A', topixTarget: 'TOPIK 2-daraja', estHours: '22 soat',
       color: 'from-sky-500 to-blue-700',
-      topics: 'Sabab-natija, Tajriba, Qobiliyat va Ruxsat',
-      grammar: [
-        { pattern: 'A/V-아서/어서', desc: 'Sabab va ketma-ketlik (-gani uchun / -ib). Buyruq bilan ishlatilmaydi!', ex: '비가 와서 집에 있었어요. (Yomg‘ir yog‘gani uchun uyda bo‘ldim.)' },
-        { pattern: 'V-(으)ㄴ 적이 있다/없다', desc: 'O‘tmishdagi tajriba (-gan joyim bor/yo‘q).', ex: '제주도에 가 본 적이 있어요. (Jeju oroliga borib ko‘rganman.)' },
-        { pattern: 'V-(으)ㄹ 수 있다/없다', desc: 'Imkoniyat va qobiliyat (-a olaman / -a olmayman).', ex: '저는 한국 신문을 읽을 수 있어요. (Men koreys gazetasini o‘qiy olaman.)' },
-        { pattern: 'V-(으)면 안 되다', desc: 'Taqiq (-ish mumkin emas).', ex: '박물관에서 사진을 찍으면 안 돼요. (Muzeyda rasmga olish mumkin emas.)' }
-      ],
-      vocab: [
-        { ko: '경험', uz: 'Tajriba', ex: '좋은 경험을 많이 했어요.' },
-        { ko: '박물관', uz: 'Muzey', ex: '국립중앙박물관에 갔어요.' },
-        { ko: '운전면허', uz: 'Haydovchilik guvohnomasi', ex: '작년에 운전면허를 땄어요.' },
-        { ko: '회의', uz: 'Majlis / Yig‘ilish', ex: '오후 2시에 중요한 회의가 있어요.' }
-      ],
-      dialogue: [
-        { sp: '지훈', ko: '한국 음식을 만들어 본 적이 있어요?', uz: 'Koreys taomini tayyorlab ko‘rganmisiz?' },
-        { sp: '토히르벡', ko: '네, 김치볶음밥을 만들어 본 적이 있어요. 생각보다 쉬웠어요.', uz: 'Ha, kimchili qovurma guruch tayyorlab ko‘rganman. O‘ylaganimdan oson edi.' }
-      ],
-      quizzes: [
-        { q: "Qaysi gap grammatik jihatdan TO‘G‘RI?", opts: ['배가 아파서 병원에 갔어요', '배가 아파서 병원에 가세요', '배가 아파서 병원에 갑시다', '배가 아팠어서 병원에 갔어요'], ans: '배가 아파서 병원에 갔어요', exp: "‘-아서/어서’ oldidan o‘tgan zamon qo‘shilmaydi va buyruq gap bilan kelmaydi." },
-        { q: "‘Koreys tilida gapira olaman’ tarjimasi qaysi?", opts: ['한국어를 말할 수 있어요', '한국어를 말한 적이 있어요', '한국어를 말하면 안 돼요', '한국어를 말하려고 해요'], ans: '한국어를 말할 수 있어요', exp: "Qobiliyat uchun ‘-(으)ㄹ 수 있다’ ishlatiladi." },
-        { q: "‘Muzeyda rasmga olish mumkin emas’ qanday aytiladi?", opts: ['박물관에서 사진을 찍으면 안 돼요', '박물관에서 사진을 찍어도 돼요', '박물관에서 사진을 찍어야 돼요', '박물관에서 사진을 찍을 거예요'], ans: '박물관에서 사진을 찍으면 안 돼요', exp: "Taqiq shakli: ‘-(으)면 안 되다’." }
+      nodes: [
+        {
+          id: '2a-1', title: '1-dars: Sabab va Tajriba', subtitle: '-아서/어서 • -(으)ㄴ 적이 있다', xp: 60,
+          grammar: { pattern: 'A/V-아서/어서 & V-(으)ㄴ 적이 있다', desc: 'Sabab (-gani uchun) va tajriba (-gan joyim bor).', ex: '제주도에 가 본 적이 있어요.' },
+          vocab: [
+            { ko: '경험', uz: 'Tajriba', ex: '좋은 경험을 했어요.' },
+            { ko: '박물관', uz: 'Muzey', ex: '박물관에 가 본 적이 있어요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "Qaysi gap grammatik jihatdan TO‘G‘RI?", opts: ['배가 아파서 병원에 갔어요', '배가 아파서 병원에 가세요', '배가 아팠어서 병원에 갔어요', '배가 아파서 병원에 갑시다'], ans: '배가 아파서 병원에 갔어요', exp: "‘-아서/어서’ oldidan o‘tgan zamon kelmaydi va buyruq gap bilan ishlatilmaydi." }
+          ]
+        }
       ]
     },
     {
-      id: '2b',
-      code: '2B',
-      title: '서울대 한국어 2B',
-      level: 'O‘rta-boshlang‘ich 2 • TOPIK 2',
+      id: '2b', code: '2B', title: '서울대 한국어 2B', topixTarget: 'TOPIK 2–3', estHours: '22 soat',
       color: 'from-blue-600 to-indigo-800',
-      topics: 'Maqsad, Shart, Qiyoslash va Holat o‘zgarishi',
-      grammar: [
-        { pattern: 'V-(으)려고 하다', desc: 'Niyat va maqsad (-moqchiman / -ish niyatidaman).', ex: '내년에 TOPIK 5급을 따려고 해요. (Kelasi yili TOPIK 5-darajani olmoqchiman.)' },
-        { pattern: 'A/V-(으)니까', desc: 'Aniq sabab va dalil (-gani sababli). Buyruq/taklif bilan ishlaydi!', ex: '날씨가 추우니까 따뜻한 옷을 입으세요. (Havo sovuq bo‘lgani uchun issiq kiyim kiying.)' },
-        { pattern: 'A-아/어지다', desc: 'Sifatning o‘zgarishi (-lashmoq).', ex: '한국어 실력이 많이 좋아졌어요. (Koreys tili darajam ancha yaxshilandi.)' }
-      ],
-      vocab: [
-        { ko: '실력', uz: 'Mahorat / Bilim darajasi', ex: '매일 연습해서 실력이 늘었어요.' },
-        { ko: '준비하다', uz: 'Tayyorlanmoq', ex: '취업 면접을 준비하고 있어요.' },
-        { ko: '인기', uz: 'Mashhurlik', ex: '이 노래는 전 세계에서 인기가 많아요.' },
-        { ko: '습관', uz: 'Odat', ex: '아침에 일찍 일어나는 습관이 있어요.' }
-      ],
-      dialogue: [
-        { sp: '선생님', ko: '졸업한 후에 무엇을 하려고 해요?', uz: 'Bitirganingizdan keyin nima qilmoqchisiz?' },
-        { sp: '토히르벡', ko: '한국 IT 회사에 프론트엔드 개발자로 취직하려고 해요.', uz: 'Koreya IT kompaniyasiga frontend dasturchi bo‘lib ishga kirmoqchiman.' }
-      ],
-      quizzes: [
-        { q: "Buyruq gap (‘Issiq kiyim kiying’) bilan qaysi sabab qo‘shimchasi ishlatiladi?", opts: ['추우니까', '추워서', '춥지만', '춥고'], ans: '추우니까', exp: "Buyruq va taklif gaplarda ‘-아서/어서’ emas, ‘-(으)니까’ ishlatiladi." },
-        { q: "‘Yaxshilandi / yaxshi bo‘lib qoldi’ qaysi so‘z?", opts: ['좋아졌어요', '좋았어요', '좋겠어요', '좋아요'], ans: '좋아졌어요', exp: "Holat o‘zgarishi ‘-아/어지다’ bilan yasaladi." }
+      nodes: [
+        {
+          id: '2b-1', title: '1-dars: Maqsad va Aniq Sabab', subtitle: '-(으)려고 하다 • -(으)니까', xp: 60,
+          grammar: { pattern: 'V-(으)려고 하다 & A/V-(으)니까', desc: 'Maqsad (-moqchiman) va buyruq bilan ishlatiluvchi sabab (-gani sababli).', ex: '날씨가 추우니까 따뜻한 옷을 입으세요.' },
+          vocab: [
+            { ko: '실력', uz: 'Mahorat / Bilim', ex: '한국어 실력이 늘었어요.' },
+            { ko: '취직하다', uz: 'Ishga kirmoq', ex: 'IT 회사에 취직하려고 해요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "Buyruq gap bilan qaysi sabab qo‘shimchasi ishlaydi?", opts: ['추우니까', '추워서', '춥지만', '춥고'], ans: '추우니까', exp: "Buyruq va taklif gaplarda ‘-(으)니까’ ishlatiladi." }
+          ]
+        }
       ]
     },
     {
-      id: '3a',
-      code: '3A',
-      title: '서울대 한국어 3A',
-      level: 'O‘rta 1 • TOPIK 3',
+      id: '3a', code: '3A', title: '서울대 한국어 3A', topixTarget: 'TOPIK 3-daraja', estHours: '25 soat',
       color: 'from-indigo-500 to-purple-700',
-      topics: 'Bilvosita nutq, Taxmin va Kutilmagan natija',
-      grammar: [
-        { pattern: 'A/V-다고 하다 / N(이)라고 하다', desc: 'O‘zga gapini yetkazish (Bilvosita nutq: -deb aytdi).', ex: '친구가 내일 서울에 온다고 했어요. (Do‘stim ertaga Seulga kelaman deb aytdi.)' },
-        { pattern: 'A/V-(으)ㄴ/는 것 같다', desc: 'Taxmin va fikr bildirish (-ga o‘xshaydi / -shekilli).', ex: '밖에 눈이 오는 것 같아요. (Tashqarida qor yog‘ayotganga o‘xshaydi.)' },
-        { pattern: 'V-는 길에', desc: 'Yo‘l-yo‘lakay (-ga ketayotganda).', ex: '집에 오는 길에 우체국에 들렀어요. (Uyga kelayotib pochtaga kirib o‘tdim.)' }
-      ],
-      vocab: [
-        { ko: '면접', uz: 'Suhbat (Intervyu)', ex: '내일 회사 면접을 보러 가요.' },
-        { ko: '성격', uz: 'Xarakter / Fe’l-atvor', ex: '성격이 활발하고 긍정적이에요.' },
-        { ko: '예보', uz: 'Ob-havo ma’lumoti', ex: '일기 예보에 따르면 오후에 비가 온대요.' },
-        { ko: '들르다', uz: 'Yo‘l-yo‘lakay kirib o‘tmoq', ex: '퇴근길에 마트에 들렀어요.' }
-      ],
-      dialogue: [
-        { sp: '현우', ko: '토히르벡 씨, 내일 모임에 민지 씨도 와요?', uz: 'Tokhirbek, ertangi yig‘ilishga Minji ham keladimi?' },
-        { sp: '토히르벡', ko: '아니요, 아까 전화했는데 시험 때문에 못 온다고 했어요.', uz: 'Yo‘q, boya qo‘ng‘iroq qilgandi, imtihon sababli kela olmayman deb aytdi.' }
-      ],
-      quizzes: [
-        { q: "‘Do‘stim ertaga kelaman deb aytdi’ — to‘g‘ri bilvosita nutq shakli:", opts: ['친구가 내일 온다고 했어요', '친구가 내일 오라고 했어요', '친구가 내일 오자고 했어요', '친구가 내일 오냐고 했어요'], ans: '친구가 내일 온다고 했어요', exp: "Darak gapni yetkazishda fe’lga ‘-ㄴ/는다고 하다’ qo‘shiladi." },
-        { q: "‘Yomg‘ir yog‘ayotganga o‘xshaydi’ qanday tarjima qilinadi?", opts: ['비가 오는 것 같아요', '비가 온 것 같아요', '비가 올 것 같아요', '비가 오기 때문이에요'], ans: '비가 오는 것 같아요', exp: "Hozirgi zamon taxmini: ‘-는 것 같다’." }
+      nodes: [
+        {
+          id: '3a-1', title: '1-dars: Bilvosita Nutq', subtitle: '-다고 하다 • -(으)ㄴ/는 것 같다', xp: 70,
+          grammar: { pattern: 'A/V-다고 하다', desc: 'Boshqa birovning gapini yetkazish (-deb aytdi).', ex: '친구가 내일 서울에 온다고 했어요.' },
+          vocab: [
+            { ko: '면접', uz: 'Intervyu / Suhbat', ex: '내일 회사 면접을 봐요.' },
+            { ko: '성격', uz: 'Xarakter', ex: '성격이 아주 활발해요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Do‘stim ertaga kelaman deb aytdi’:", opts: ['친구가 내일 온다고 했어요', '친구가 내일 오라고 했어요', '친구가 내일 오자고 했어요', '친구가 내일 오냐고 했어요'], ans: '친구가 내일 온다고 했어요', exp: "Darak gapni yetkazishda ‘-ㄴ/는다고 하다’ qo‘shiladi." }
+          ]
+        }
       ]
     },
     {
-      id: '3b',
-      code: '3B',
-      title: '서울대 한국어 3B',
-      level: 'O‘rta 2 • TOPIK 3–4',
+      id: '3b', code: '3B', title: '서울대 한국어 3B', topixTarget: 'TOPIK 3–4', estHours: '25 soat',
       color: 'from-purple-600 to-fuchsia-800',
-      topics: 'Afsuslanish, Ma’lumot manbasi va Qaror qabul qilish',
-      grammar: [
-        { pattern: 'V-(으)ㄹ 뻔하다', desc: 'Biror hodisaga sal qolish (-ishiga sal qoldi).', ex: '늦잠을 자서 비행기를 놓칠 뻔했어요. (Uxlab qolib samolyotga kech qolishimga sal qoldi.)' },
-        { pattern: 'V-기로 하다', desc: 'Qaror qabul qilish va kelishish (-ishga qaror qildim).', ex: '건강을 위해 매일 30분씩 걷기로 했어요. (Sog‘liq uchun har kuni 30 daqiqa piyoda yurishga qaror qildim.)' },
-        { pattern: 'A/V-거든요', desc: 'Suhbatdosh bilmagan sababni tushuntirish (-chunki ...-da).', ex: '오늘 사람이 많네요. 주말이거든요. (Bugun odam ko‘p-a. Chunki dam olish kuni-da.)' }
-      ],
-      vocab: [
-        { ko: '놓치다', uz: 'O‘tkazib yubormoq / Kech qolmoq', ex: '마지막 버스를 놓쳤어요.' },
-        { ko: '결심하다', uz: 'Qat’iy qaror qilmoq', ex: '올해는 꼭 금연하기로 결심했어요.' },
-        { ko: '사과하다', uz: 'Uzr so‘ramoq', ex: '늦어서 정말 죄송하다고 사과했어요.' }
-      ],
-      dialogue: [
-        { sp: '지민', ko: '오늘 아침에 왜 그렇게 급하게 뛰어왔어요?', uz: 'Bugun ertalab nega bunchalik shoshib yugurib keldingiz?' },
-        { sp: '토히르벡', ko: '알람을 못 들어서 지각할 뻔했거든요!', uz: 'Budilnikni eshitmay qolib, darsga kech qolishimga sal qoldi-da!' }
-      ],
-      quizzes: [
-        { q: "‘Avtobusga kech qolishimga sal qoldi’ iborasi qaysi?", opts: ['버스를 놓칠 뻔했어요', '버스를 놓치기로 했어요', '버스를 놓친 적이 있어요', '버스를 놓칠 수 있어요'], ans: '버스를 놓칠 뻔했어요', exp: "Biror salbiy holatga sal qolish ‘-(으)ㄹ 뻔하다’ bilan ifodalanadi." },
-        { q: "‘Har kuni koreyscha o‘qishga qaror qildim’ — to‘g‘ri javob:", opts: ['매일 한국어를 공부하기로 했어요', '매일 한국어를 공부할 뻔했어요', '매일 한국어를 공부하거든요', '매일 한국어를 공부한 셈이에요'], ans: '매일 한국어를 공부하기로 했어요', exp: "Qaror qabul qilish: ‘V-기로 하다’." }
+      nodes: [
+        {
+          id: '3b-1', title: '1-dars: Qaror va Sal Qolish', subtitle: '-기로 하다 • -(으)ㄹ 뻔하다', xp: 70,
+          grammar: { pattern: 'V-(으)ㄹ 뻔하다 & V-기로 하다', desc: 'Sal qolish (-ishiga sal qoldi) va qaror (-ishga qaror qildim).', ex: '늦잠을 자서 비행기를 놓칠 뻔했어요.' },
+          vocab: [
+            { ko: '놓치다', uz: 'O‘tkazib yubormoq', ex: '마지막 버스를 놓쳤어요.' },
+            { ko: '결심하다', uz: 'Qat’iy qaror qilmoq', ex: '매일 운동하기로 결심했어요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Avtobusga kech qolishimga sal qoldi’:", opts: ['버스를 놓칠 뻔했어요', '버스를 놓치기로 했어요', '버스를 놓친 적이 있어요', '버스를 놓칠 수 있어요'], ans: '버스를 놓칠 뻔했어요', exp: "Sal qolish holati ‘-(으)ㄹ 뻔하다’ bilan yasaladi." }
+          ]
+        }
       ]
     },
     {
-      id: '4a',
-      code: '4A',
-      title: '서울대 한국어 4A',
-      level: 'Yuqori-o‘rta 1 • TOPIK 4',
+      id: '4a', code: '4A', title: '서울대 한국어 4A', topixTarget: 'TOPIK 4-daraja', estHours: '28 soat',
       color: 'from-rose-500 to-red-700',
-      topics: 'Ijtimoiy mavzular, Passiv fe’llar va Qiyosiy tahlil',
-      grammar: [
-        { pattern: 'V-는 반면에', desc: 'Ikki qarama-qarshi jihatni solishtirish (-bir tomondan ... ikkinchi tomondan).', ex: '도시 생활은 편리한 반면에 스트레스가 많아요. (Shahar hayoti qulay bo‘lgani holda, stress ko‘p.)' },
-        { pattern: 'A/V-(으)ㄹ 뿐만 아니라', desc: 'Nafaqat ..., balki ... ham.', ex: '그는 한국어뿐만 아니라 영어도 유창하게 해요. (U nafaqat koreys, balki ingliz tilida ham ravon gapiradi.)' },
-        { pattern: '피동사 (-이/히/리/기-)', desc: 'Majhul nisbat (Passiv fe’llar: 보이다, 들리다, 열리다, 잠기다).', ex: '창문이 바람에 저절로 닫혔어요. (Deraza shamoldan o‘z-o‘zidan yopildi.)' }
-      ],
-      vocab: [
-        { ko: '유창하다', uz: 'Ravon (tilda)', ex: '외국어를 유창하게 구사해요.' },
-        { ko: '편리하다', uz: 'Qulay', ex: '한국은 대중교통이 매우 편리해요.' },
-        { ko: '환경오염', uz: 'Atrof-muhit ifloslanishi', ex: '환경오염 문제를 해결해야 합니다.' }
-      ],
-      dialogue: [
-        { sp: '교수님', ko: '온라인 수업의 장단점은 무엇이라고 생각합니까?', uz: 'Onlayn darslarning yutuq va kamchiliklari nimada deb o‘ylaysiz?' },
-        { sp: '토히르벡', ko: '시간과 장소를 절약할 수 있는 반면에 집중력이 떨어질 수 있습니다.', uz: 'Vaqt va joyni tejash mumkin bo‘lgani holda, diqqat susayishi mumkin.' }
-      ],
-      quizzes: [
-        { q: "‘Nafaqat koreys tili, balki ingliz tilini ham biladi’ — to‘g‘ri qo‘shimcha:", opts: ['뿐만 아니라', '는 길에', 'ㄹ 뻔하다', '거든요'], ans: '뿐만 아니라', exp: "‘N-(으)ㄹ 뿐만 아니라’ — nafaqat ..., balki ... ham." },
-        { q: "‘Eshik ochildi’ (Majhul nisbat) qaysi fe’l?", opts: ['문이 열렸어요', '문을 열었어요', '문을 열게 했어요', '문을 열고 있어요'], ans: '문이 열렸어요', exp: "‘열다’ (ochmoq) -> ‘열리다’ (ochilmoq)." }
+      nodes: [
+        {
+          id: '4a-1', title: '1-dars: Qiyosiy Tahlil', subtitle: '-는 반면에 • -(으)ㄹ 뿐만 아니라', xp: 80,
+          grammar: { pattern: 'V-는 반면에 & -(으)ㄹ 뿐만 아니라', desc: 'Ikki tomonni solishtirish va qo‘shimcha ma’lumot berish.', ex: '그는 한국어뿐만 아니라 영어도 유창해요.' },
+          vocab: [
+            { ko: '유창하다', uz: 'Ravon (tilda)', ex: '한국어를 유창하게 구사해요.' },
+            { ko: '편리하다', uz: 'Qulay', ex: '대중교통이 매우 편리해요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Nafaqat koreys, balki ingliz tilini ham biladi’:", opts: ['뿐만 아니라', '는 길에', 'ㄹ 뻔하다', '거든요'], ans: '뿐만 아니라', exp: "‘N-(으)ㄹ 뿐만 아니라’ — nafaqat ..., balki ... ham." }
+          ]
+        }
       ]
     },
     {
-      id: '4b',
-      code: '4B',
-      title: '서울대 한국어 4B',
-      level: 'Yuqori-o‘rta 2 • TOPIK 4–5',
+      id: '4b', code: '4B', title: '서울대 한국어 4B', topixTarget: 'TOPIK 4–5', estHours: '28 soat',
       color: 'from-red-600 to-rose-900',
-      topics: 'Madaniyat, Texnologiya taraqqiyoti va Sabab-oqibat tahlili',
-      grammar: [
-        { pattern: 'N 덕분에 / N 탓에', desc: 'Ijobiy sabab (-sharofati bilan) vs Salbiy sabab (-aybi/tufayli).', ex: '선생님 덕분에 장학금을 받게 되었어요. (Ustozim sharofati bilan stipendiya oladigan bo‘ldim.)' },
-        { pattern: 'V-는 바람에', desc: 'Kutilmagan salbiy sabab (-sababli / -kasriga).', ex: '갑자기 정전이 되는 바람에 파일을 저장 못 했어요. (To‘satdan chiroq o‘chgani sababli faylni saqlay olmadim.)' }
-      ],
-      vocab: [
-        { ko: '장학금', uz: 'Stipendiya', ex: '성적이 우수해서 장학금을 받았어요.' },
-        { ko: '정전', uz: 'Elektr uzilishi', ex: '태풍 때문에 정전이 되었습니다.' },
-        { ko: '발전하다', uz: 'Rivojlanmoq', ex: '인공지능 기술이 빠르게 발전하고 있어요.' }
-      ],
-      dialogue: [
-        { sp: '동기', ko: '축하해요! 이번에 성적 우수 장학금을 받았다면서요?', uz: 'Tabriklayman! Bu safar a’lochi stipendiyasini olgan ekansiz-a?' },
-        { sp: '토히르벡', ko: '고마워요. 모두 열심히 도와준 친구들 덕분이에요.', uz: 'Rahmat. Barchasi astoydil yordam bergan do‘stlarim sharofati bilan.' }
-      ],
-      quizzes: [
-        { q: "Ijobiy natija uchun minnatdorchilik bildirishda qaysi so‘z ishlatiladi?", opts: ['덕분에', '탓에', '바람에', '불구하고'], ans: '덕분에', exp: "‘덕분에’ — sharofati bilan (ijobiy natijada)." }
+      nodes: [
+        {
+          id: '4b-1', title: '1-dars: Ijobiy va Salbiy Sabab', subtitle: 'N 덕분에 • N 탓에 • -는 바람에', xp: 80,
+          grammar: { pattern: 'N 덕분에 vs N 탓에', desc: 'Ijobiy sabab (-sharofati bilan) va salbiy sabab (-aybi tufayli).', ex: '선생님 덕분에 장학금을 받게 되었어요.' },
+          vocab: [
+            { ko: '장학금', uz: 'Stipendiya', ex: '성적 우수 장학금을 받았어요.' },
+            { ko: '발전하다', uz: 'Rivojlanmoq', ex: 'AI 기술이 빠르게 발전하고 있어요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "Ijobiy natija uchun minnatdorchilik bildirishda:", opts: ['덕분에', '탓에', '바람에', '불구하고'], ans: '덕분에', exp: "‘덕분에’ — sharofati bilan (ijobiy natijada)." }
+          ]
+        }
       ]
     },
     {
-      id: '5a',
-      code: '5A',
-      title: '서울대 한국어 5A',
-      level: 'Oliy 1 • TOPIK 5',
+      id: '5a', code: '5A', title: '서울대 한국어 5A', topixTarget: 'TOPIK 5-daraja', estHours: '30 soat',
       color: 'from-amber-500 to-orange-700',
-      topics: 'Iqtisodiyot, OAV, Jamiyat va Rasmiy nutq',
-      grammar: [
-        { pattern: 'V-는 데 반해', desc: 'Rasmiy yozma nutqda keskin qarama-qarshilik.', ex: '수출이 증가한 데 반해 내수 시장은 위축되었다. (Eksport oshgan bir paytda ichki bozor qisqardi.)' },
-        { pattern: 'A/V-(으)ㄴ/는 셈이다', desc: 'Xulosa qilish (-hisoblanadi / -degani).', ex: '이 정도면 성공한 셈이에요. (Bu daraja bo‘lsa muvaffaqiyatga erishilgan hisoblanadi.)' }
-      ],
-      vocab: [
-        { ko: '경제 성장', uz: 'Iqtisodiy o‘sish', ex: '지속 가능한 경제 성장이 중요합니다.' },
-        { ko: '인공지능', uz: 'Sun’iy intellekt (AI)', ex: '인공지능이 산업 구조를 바꾸고 있다.' },
-        { ko: '해결책', uz: 'Yechim yo‘li', ex: '근본적인 해결책을 모색해야 한다.' }
-      ],
-      dialogue: [
-        { sp: '기자', ko: '이번 정책이 청년 일자리 창출에 효과가 있을까요?', uz: 'Ushbu siyosat yoshlar ish o‘rinlarini yaratishda samara beradimi?' },
-        { sp: '전문가', ko: '단기적으로는 효과가 있겠으나 장기적인 대책이 필요합니다.', uz: 'Qisqa muddatda samara bersa-da, uzoq muddatli chora-tadbirlar zarur.' }
-      ],
-      quizzes: [
-        { q: "‘Bu daraja bo‘lsa deyarli tugatgan hisoblanamiz’ — to‘g‘ri grammatika:", opts: ['다 끝낸 셈이에요', '다 끝낼 뻔했어요', '다 끝내는 길이에요', '다 끝내거든요'], ans: '다 끝낸 셈이에요', exp: "Umumiy xulosa chiqarish uchun ‘-(으)ㄴ/는 셈이다’ ishlatiladi." }
+      nodes: [
+        {
+          id: '5a-1', title: '1-dars: Iqtisod va Rasmiy Nutq', subtitle: '-는 데 반해 • -(으)ㄴ/는 셈이다', xp: 90,
+          grammar: { pattern: 'A/V-(으)ㄴ/는 셈이다', desc: 'Umumiy xulosa chiqarish (-hisoblanadi / -degani).', ex: '이 정도면 성공한 셈이에요.' },
+          vocab: [
+            { ko: '경제 성장', uz: 'Iqtisodiy o‘sish', ex: '지속 가능한 경제 성장이 중요합니다.' },
+            { ko: '해결책', uz: 'Yechim yo‘li', ex: '근본적인 해결책을 찾아야 해요.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Deyarli tugatgan hisoblanamiz’ — to‘g‘ri shakl:", opts: ['다 끝낸 셈이에요', '다 끝낼 뻔했어요', '다 끝내는 길이에요', '다 끝내거든요'], ans: '다 끝낸 셈이에요', exp: "Xulosa qilish uchun ‘-(으)ㄴ/는 셈이다’ ishlatiladi." }
+          ]
+        }
       ]
     },
     {
-      id: '5b',
-      code: '5B',
-      title: '서울대 한국어 5B',
-      level: 'Oliy 2 • TOPIK 5',
+      id: '5b', code: '5B', title: '서울대 한국어 5B', topixTarget: 'TOPIK 5 Master', estHours: '30 soat',
       color: 'from-orange-600 to-amber-900',
-      topics: 'Psixologiya, Ekologiya, Maqollar (속담) va Idiomalar',
-      grammar: [
-        { pattern: 'N에 불과하다', desc: 'Biror narsaning kichik yoki cheklangan ekanligini ta’kidlash (-dan iborat xolos).', ex: '그것은 시작에 불과합니다. (Bu faqat boshlanishi xolos.)' },
-        { pattern: 'V-기 마련이다', desc: 'Tabiiy qonuniyat (-ishi tabiiy / muqarrar).', ex: '노력하면 좋은 결과가 따르기 마련이다. (Harakat qilsangiz, yaxshi natija kelishi tabiiy.)' }
-      ],
-      vocab: [
-        { ko: '불과하다', uz: 'Xolos / Bor-yo‘g‘i', ex: '빙산의 일각에 불과하다.' },
-        { ko: '속담', uz: 'Maqol', ex: '‘가는 말이 고와야 오는 말이 곱다’는 한국 속담이다.' },
-        { ko: '필연적', uz: 'Muqarrar / Qonuniy', ex: '변화는 필연적인 과정이다.' }
-      ],
-      dialogue: [
-        { sp: '선배', ko: '처음부터 완벽할 수는 없으니 너무 조급해하지 마.', uz: 'Boshidan mukammal bo‘lish mumkin emas, shuning uchun shoshilma.' },
-        { sp: '토히르벡', ko: '맞아요, 천 리 길도 한 걸음부터라고 하잖아요.', uz: 'To‘g‘ri, ming chaqirimlik yo‘l ham bir qadamdan boshlanadi deyishadi-ku.' }
-      ],
-      quizzes: [
-        { q: "‘가는 말이 고와야 오는 말이 곱다’ maqolining ma’nosi nima?", opts: ['Yaxshi gapirsang, yaxshi javob olasan', 'Vaqt — oliy hakam', 'Mehnatning tagi rohat', 'Ko‘z qo‘rqoq, qo‘l botir'], ans: 'Yaxshi gapirsang, yaxshi javob olasan', exp: "So‘zma-so‘z: ‘Ketayotgan so‘z chiroyli bo‘lsa, kelayotgan so‘z ham chiroyli bo‘ladi’." }
+      nodes: [
+        {
+          id: '5b-1', title: '1-dars: Maqollar va Tabiiy Qonun', subtitle: '-기 마련이다 • 속담', xp: 90,
+          grammar: { pattern: 'V-기 마련이다', desc: 'Tabiiy qonuniyat (-ishi tabiiy / muqarrar).', ex: '노력하면 좋은 결과가 따르기 마련이다.' },
+          vocab: [
+            { ko: '속담', uz: 'Maqol', ex: '가는 말이 고와야 오는 말이 곱다.' },
+            { ko: '불과하다', uz: 'Xolos / Bor-yo‘g‘i', ex: '그것은 시작에 불과합니다.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘가는 말이 고와야 오는 말이 곱다’ maqolining ma’nosi:", opts: ['Yaxshi gapirsang, yaxshi javob olasan', 'Vaqt — oliy hakam', 'Mehnatning tagi rohat', 'Ko‘z qo‘rqoq, qo‘l botir'], ans: 'Yaxshi gapirsang, yaxshi javob olasan', exp: "Yaxshi so‘zga yaxshi javob qaytadi." }
+          ]
+        }
       ]
     },
     {
-      id: '6a',
-      code: '6A',
-      title: '서울대 한국어 6A',
-      level: 'Akademik Oliy 1 • TOPIK 6',
+      id: '6a', code: '6A', title: '서울대 한국어 6A', topixTarget: 'TOPIK 6-daraja', estHours: '35 soat',
       color: 'from-violet-600 to-indigo-950',
-      topics: 'Falsafa, Ilmiy tadqiqotlar, Siyosat va Huquq',
-      grammar: [
-        { pattern: 'V-는 바이다', desc: 'Rasmiy bayonot va akademik xulosa (-moqdamiz / -hisoblanadi).', ex: '본 연구는 새로운 가능성을 제시하는 바이다. (Ushbu tadqiqot yangi imkoniyatni ko‘rsatib bermoqda.)' },
-        { pattern: 'N을/를 막론하고', desc: 'Qat’i nazar (-dan qat’i nazar).', ex: '남녀노소를 막론하고 누구나 참여할 수 있다. (Yoshu qaridan qat’i nazar hamma qatnasha oladi.)' }
-      ],
-      vocab: [
-        { ko: '막론하다', uz: 'Qat’i nazar / Inobatga olmasdan', ex: '이유를 막론하고 약속은 지켜야 한다.' },
-        { ko: '패러다임', uz: 'Paradigma (Ilmiy model)', ex: '시대의 패러다임이 전환되고 있다.' },
-        { ko: '고찰하다', uz: 'Chuqur tadqiq va tahlil qilmoq', ex: '역사적 배경을 심층적으로 고찰하였다.' }
-      ],
-      dialogue: [
-        { sp: '심사위원', ko: '논문의 핵심 주장을 한 문장으로 요약해 주시겠습니까?', uz: 'Dissertatsiyaning asosiy g‘oyasini bir jumla bilan xulosalab berasizmi?' },
-        { sp: '토히르벡', ko: '본 논문은 AI 기반 교육 시스템의 효율성을 실증적으로 규명한 바입니다.', uz: 'Ushbu maqola AI asosidagi ta’lim tizimining samaradorligini amaliy isbotlab berdi.' }
-      ],
-      quizzes: [
-        { q: "‘Yoshu qaridan qat’i nazar’ iborasining TOPIK 6 darajasidagi shakli:", opts: ['남녀노소를 막론하고', '남녀노소 덕분에', '남녀노소 탓에', '남녀노소뿐만 아니라'], ans: '남녀노소를 막론하고', exp: "‘N을/를 막론하고’ — ...-dan qat’i nazar." }
+      nodes: [
+        {
+          id: '6a-1', title: '1-dars: Akademik Bayonot', subtitle: '-는 바이다 • -을/를 막론하고', xp: 100,
+          grammar: { pattern: 'N을/를 막론하고', desc: 'Qat’i nazar (-dan qat’i nazar).', ex: '남녀노소를 막론하고 누구나 참여할 수 있다.' },
+          vocab: [
+            { ko: '막론하다', uz: 'Qat’i nazar', ex: '이유를 막론하고 약속을 지켜야 한다.' },
+            { ko: '고찰하다', uz: 'Chuqur tahlil qilmoq', ex: '역사적 배경을 심층적으로 고찰하였다.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Yoshu qaridan qat’i nazar’ — TOPIK 6 shakli:", opts: ['남녀노소를 막론하고', '남녀노소 덕분에', '남녀노소 탓에', '남녀노소뿐만 아니라'], ans: '남녀노소를 막론하고', exp: "‘N을/를 막론하고’ — ...-dan qat’i nazar." }
+          ]
+        }
       ]
     },
     {
-      id: '6b',
-      code: '6B',
-      title: '서울대 한국어 6B',
-      level: 'Akademik Oliy 2 • TOPIK 6 Master',
+      id: '6b', code: '6B', title: '서울대 한국어 6B', topixTarget: 'TOPIK 6 Oliy', estHours: '35 soat',
       color: 'from-fuchsia-700 to-slate-950',
-      topics: 'Adabiyot, Tarixiy tahlil, Notiqlik va TOPIK 6 Yakuniy',
-      grammar: [
-        { pattern: 'V-(으)ㄹ 따름이다', desc: 'Boshqa chora yoki qo‘shimcha fikr yo‘qligi (-xolos / -dan boshqa iloj yo‘q).', ex: '최선을 다한 후 결과를 기다릴 따름이다. (Bor kuchni sarflagach, natijani kutish qoldi xolos.)' },
-        { pattern: 'A/V-다시피 하다', desc: 'Deyarli ... qilmoq (-gandek bo‘lmoq).', ex: '시험 기간에는 도서관에서 살다시피 했어요. (Imtihon paytida kutubxonada yashagandek bo‘ldim.)' }
-      ],
-      vocab: [
-        { ko: '규명하다', uz: 'Aniqlamoq / Ochib bermoq', ex: '사건의 진상을 철저히 규명했다.' },
-        { ko: '비약적', uz: 'Sakrashsimon / Juda tez', ex: '비약적인 발전을 이루었다.' },
-        { ko: '귀감', uz: 'Ibrati / Namuna', ex: '사회적 귀감이 되는 인물이다.' }
-      ],
-      dialogue: [
-        { sp: '원장님', ko: '서울대 한국어 1A부터 6B까지 모든 과정을 마친 것을 축하합니다!', uz: 'Seul Milliy Universiteti 1A dan 6B gacha barcha bosqichni tugatganingiz bilan tabriklayman!' },
-        { sp: '토히르벡', ko: '감사합니다! 이제 한국어로 어떤 전문 분야든 자신 있게 소통할 수 있습니다.', uz: 'Rahmat! Endi koreys tilida har qanday sohada ishonch bilan muloqot qila olaman.' }
-      ],
-      quizzes: [
-        { q: "‘Imtihon paytida kutubxonada yashagandek bo‘ldim’ — eng tabiiy TOPIK 6 iborasi:", opts: ['도서관에서 살다시피 했어요', '도서관에서 살 뻔했어요', '도서관에서 사는 길이에요', '도서관에서 살기 마련이에요'], ans: '도서관에서 살다시피 했어요', exp: "‘-다시피 하다’ — deyarli shunday qilmoq." }
+      nodes: [
+        {
+          id: '6b-1', title: '1-dars: Oliy Notiqlik', subtitle: '-(으)ㄹ 따름이다 • -다시피 하다', xp: 100,
+          grammar: { pattern: 'A/V-다시피 하다', desc: 'Deyarli ... qilmoq (-gandek bo‘lmoq).', ex: '시험 기간에는 도서관에서 살다시피 했어요.' },
+          vocab: [
+            { ko: '규명하다', uz: 'Aniqlamoq / Ochib bermoq', ex: '사건의 진상을 철저히 규명했다.' },
+            { ko: '귀감', uz: 'Ibrat / Namuna', ex: '사회적 귀감이 되는 인물이다.' }
+          ],
+          exercises: [
+            { type: 'choice', q: "‘Imtihon paytida kutubxonada yashagandek bo‘ldim’:", opts: ['도서관에서 살다시피 했어요', '도서관에서 살 뻔했어요', '도서관에서 사는 길이에요', '도서관에서 살기 마련이에요'], ans: '도서관에서 살다시피 했어요', exp: "‘-다시피 하다’ — deyarli shunday qilmoq." }
+          ]
+        }
       ]
     }
   ];
 
-  const openBookStudy = (book, initialSection = 'grammar') => {
-    setSelectedBook(book);
-    setStudySection(initialSection);
-    const randomized = shuffleArray(book.quizzes).map(q => ({
+  // Barcha dars tugunlari (nodes) ro‘yxati
+  const allNodes = snuCurriculum.flatMap(b => b.nodes.map(n => ({ ...n, bookId: b.id, bookCode: b.code, bookTitle: b.title })));
+  const allVocabList = allNodes.flatMap(n => n.vocab.map(v => ({ ...v, bookCode: n.bookCode })));
+  const allExercisesPool = allNodes.flatMap(n => n.exercises);
+
+  // Hozir davom ettirilayotgan (keyingi ochiq) darsni topish
+  const currentActiveNode = allNodes.find(n => !stats.completedNodes.includes(n.id)) || allNodes[0];
+
+  // --- 5. INTERAKTIV DARS PLAYER HOLATLARI ---
+  const [activeNode, setActiveNode] = useState(null);
+  const [playerStage, setPlayerStage] = useState('intro'); // 'intro' | 'exercise' | 'complete'
+  const [sessionExercises, setSessionExercises] = useState([]);
+  const [exIdx, setExIdx] = useState(0);
+  const [userChoice, setUserChoice] = useState(null);
+  const [builtWords, setBuiltWords] = useState([]);
+  const [isChecked, setIsChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+
+  const startLessonNode = (node) => {
+    if (stats.hearts <= 0 && !stats.isPro) {
+      alert("Yuraklaringiz tugadi! Takrorlash bo‘limidan mashq qilib yurak to‘plang yoki PRO ni yoqing.");
+      return;
+    }
+    setActiveNode(node);
+    setPlayerStage('intro');
+    // Savollar va variantlarni har safar yangidan aralashtirish
+    const randomized = shuffleArray(node.exercises).map(ex => ({
+      ...ex,
+      opts: ex.opts ? shuffleArray(ex.opts) : undefined,
+      shuffledWords: ex.words ? shuffleArray(ex.words) : undefined
+    }));
+    setSessionExercises(randomized);
+    setExIdx(0);
+    setUserChoice(null);
+    setBuiltWords([]);
+    setIsChecked(false);
+    setActiveTab('lesson_player');
+  };
+
+  // --- 6. TAKRORLASH (복습) BO‘LIMI HOLATLARI ---
+  const [reviewSubTab, setReviewSubTab] = useState('vocab'); // 'vocab' | 'listening' | 'speaking' | 'mock'
+  const [flashIdx, setFlashIdx] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+
+  // Listening state
+  const [listenIdx, setListenIdx] = useState(0);
+  const [listenChoice, setListenChoice] = useState(null);
+
+  // Speaking (Mikrofon) state
+  const [speakIdx, setSpeakIdx] = useState(0);
+  const [isListeningMic, setIsListeningMic] = useState(false);
+  const [spokenResult, setSpokenResult] = useState('');
+  const [speakFeedback, setSpeakFeedback] = useState(null);
+
+  // TOPIK Mock Test state
+  const [mockStarted, setMockStarted] = useState(false);
+  const [mockQuestions, setMockQuestions] = useState([]);
+  const [mockIdx, setMockIdx] = useState(0);
+  const [mockAnswers, setMockAnswers] = useState({});
+  const [mockTimeLeft, setMockTimeLeft] = useState(300); // 5 daqiqa
+  const [mockFinished, setMockFinished] = useState(false);
+
+  useEffect(() => {
+    if (!mockStarted || mockFinished) return;
+    const timer = setInterval(() => {
+      setMockTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timer);
+          setMockFinished(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [mockStarted, mockFinished]);
+
+  const startTopikMock = () => {
+    const choiceOnly = allExercisesPool.filter(e => e.type === 'choice');
+    const qList = shuffleArray(choiceOnly).slice(0, 8).map(q => ({
       ...q,
       opts: shuffleArray(q.opts)
     }));
-    setShuffledQuizzes(randomized);
-    setQuizIdx(0);
-    setSelectedOption(null);
-    setQuizScore(0);
-    setQuizFinished(false);
-    setActiveTab('book_study');
+    setMockQuestions(qList);
+    setMockIdx(0);
+    setMockAnswers({});
+    setMockTimeLeft(300);
+    setMockFinished(false);
+    setMockStarted(true);
   };
 
-  const allKoreanWords = snuBooks.flatMap(b => b.vocab.map(v => ({ ...v, book: b.code })));
+  // Mikrofon orqali talaffuzni tekshirish
+  const startSpeechCheck = (targetWord) => {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      setSpokenResult("Brauzeringiz mikrofonni qo‘llab-quvvatlamaydi (Safari/Chrome da sinab ko‘ring).");
+      return;
+    }
+    try {
+      const rec = new SpeechRec();
+      rec.lang = 'ko-KR';
+      rec.interimResults = false;
+      setIsListeningMic(true);
+      setSpokenResult('');
+      setSpeakFeedback(null);
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.replace(/\s+/g, '');
+        const cleanTarget = targetWord.replace(/[\?\!\.\s]+/g, '');
+        setSpokenResult(event.results[0][0].transcript);
+        if (transcript.includes(cleanTarget) || cleanTarget.includes(transcript)) {
+          setSpeakFeedback({ ok: true, msg: "Ajoyib talaffuz! 100% to‘g‘ri! 🎉 (+15 XP)" });
+          setStats(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
+        } else {
+          setSpeakFeedback({ ok: false, msg: `Eshitildi: "${event.results[0][0].transcript}". Yana bir bor aniqroq talaffuz qiling!` });
+        }
+        setIsListeningMic(false);
+      };
+      rec.onerror = () => {
+        setIsListeningMic(false);
+        setSpokenResult("Ovoz eshitilmadi. Mikrofonga ruxsat bering va qayta urinib ko‘ring.");
+      };
+      rec.start();
+    } catch (e) {
+      setIsListeningMic(false);
+    }
+  };
+
+  const toggleSaveWord = (wordKo) => {
+    setStats(prev => {
+      const exists = prev.savedWords.includes(wordKo);
+      return {
+        ...prev,
+        savedWords: exists ? prev.savedWords.filter(w => w !== wordKo) : [...prev.savedWords, wordKo]
+      };
+    });
+  };
 
   const theme = {
     bg: isDarkMode ? 'bg-[#080c16] text-slate-100' : 'bg-[#f4f6fb] text-slate-900',
@@ -550,17 +573,18 @@ export default function App() {
     inputBg: isDarkMode ? 'bg-[#161f33] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
   };
 
+  // =========================================================================
+  // 0. KIRISH EKRANI
+  // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${theme.bg} flex flex-col justify-between p-6 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-500 border-b-4 border-indigo-900 flex items-center justify-center text-white font-black text-lg">
-              한
-            </div>
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600 border-b-4 border-indigo-900 flex items-center justify-center text-white font-black text-lg">한</div>
             <div>
               <span className={`font-black text-base block leading-none ${theme.textMain}`}>서울대 한국어</span>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">1A — 6B Akademiya</span>
+              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Duolingo Style EdTech</span>
             </div>
           </div>
           <button onClick={toggleTheme} className={`p-2.5 rounded-2xl ${theme.subCard} border`}>
@@ -568,41 +592,33 @@ export default function App() {
           </button>
         </div>
 
-        <div className="max-w-md w-full mx-auto my-auto py-6">
+        <div className="max-w-md w-full mx-auto my-auto py-6 text-center space-y-6">
           {authMode === 'welcome' ? (
-            <div className="text-center space-y-6">
+            <>
               <div className="w-28 h-28 mx-auto rounded-[32px] bg-gradient-to-br from-indigo-600 to-emerald-500 border-b-8 border-indigo-950 flex flex-col items-center justify-center text-white shadow-2xl">
                 <span className="text-4xl font-black">가나다</span>
                 <span className="text-[10px] font-black tracking-widest mt-1">1A ~ 6B</span>
               </div>
               <div className="space-y-2">
-                <h1 className={`text-2xl font-black ${theme.textMain}`}>
-                  Koreys tilini Hangul alifbosidan TOPIK 6 gacha o‘rganing!
-                </h1>
-                <p className={`text-xs ${theme.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                  Seul Milliy Universitetining (서울대 한국어 1A–6B) barcha 12 ta kitobi, grammatikasi, audiolari va dinamik testlari bitta ilovada.
+                <h1 className={`text-2xl font-black ${theme.textMain}`}>Koreys tilini tizimli va interaktiv o‘rganing!</h1>
+                <p className={`text-xs ${theme.textMuted} max-w-xs mx-auto`}>
+                  서울대 한국어 1A–6B kitoblari, ketma-ket dars yo‘lagi, Listening, Speaking va TOPIK Mock testlari.
                 </p>
               </div>
               <div className="space-y-3 pt-2">
-                <button
-                  onClick={handleGuestLogin}
-                  className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 border-b-4 border-emerald-700 text-white font-black text-sm uppercase shadow-xl"
-                >
+                <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 border-b-4 border-emerald-700 text-white font-black text-sm uppercase shadow-xl">
                   Akkauntsiz Boshlash (Tezkor kirish)
                 </button>
-                <button
-                  onClick={handleGoogleLogin}
-                  className={`w-full py-4 rounded-2xl ${theme.card} border-2 border-b-4 font-black text-sm ${theme.textMain} flex items-center justify-center gap-2`}
-                >
-                  <span>Google bilan davom etish</span>
+                <button onClick={handleGoogleLogin} className={`w-full py-4 rounded-2xl ${theme.card} border-2 border-b-4 font-black text-sm ${theme.textMain}`}>
+                  Google bilan davom etish
                 </button>
                 <button onClick={() => setAuthMode('login')} className="text-xs font-bold text-indigo-400">
                   Email va Parol orqali kirish
                 </button>
               </div>
-            </div>
+            </>
           ) : (
-            <div className={`${theme.card} border-2 rounded-3xl p-6 space-y-4`}>
+            <div className={`${theme.card} border-2 rounded-3xl p-6 space-y-4 text-left`}>
               <div className="flex items-center justify-between">
                 <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${theme.subCard}`}><ArrowLeft size={18} /></button>
                 <h2 className={`font-black text-base ${theme.textMain}`}>{authMode === 'login' ? 'Kirish' : 'Ro‘yxatdan o‘tish'}</h2>
@@ -619,345 +635,671 @@ export default function App() {
                   {authLoading ? 'Yuklanmoqda...' : 'Davom etish'}
                 </button>
               </form>
-              <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="w-full text-xs font-bold text-indigo-400">
+              <button onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')} className="w-full text-center text-xs font-bold text-indigo-400">
                 {authMode === 'login' ? "Akkaunt yaratish" : "Tizimga kirish"}
               </button>
             </div>
           )}
         </div>
-        <div className="text-center text-[11px] text-slate-500">서울대 한국어 1A–6B • Koreys Tili Akademiyasi</div>
+        <div className="text-center text-[11px] text-slate-500">서울대 한국어 1A–6B • Premium EdTech</div>
       </div>
     );
   }
 
-  const renderBooksLibrary = () => (
-    <div className="space-y-5 pb-24">
-      <div 
-        onClick={() => setActiveTab('hangul')}
-        className="rounded-3xl p-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white border-b-4 border-emerald-950 shadow-xl cursor-pointer active:scale-98 transition"
-      >
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">
-              0-BOSQICH • ASOSIY ALIFBO
-            </span>
-            <h2 className="text-xl font-black">한글 (Hangul Alifbosi)</h2>
-            <p className="text-xs text-white/85">14 ta undosh, 10 ta unli va audio talaffuz jadvali</p>
-          </div>
-          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-black">
-            가나다
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between px-1">
-        <div>
-          <h3 className={`text-base font-black ${theme.textMain}`}>서울대 한국어 (1A — 6B)</h3>
-          <p className={`text-[11px] ${theme.textMuted}`}>Seul Milliy Universitetining 12 jildlik to‘liq dasturi</p>
-        </div>
-        <span className="text-xs font-black text-indigo-400">
-          {userProfile.completedBooks.length} / {snuBooks.length + 1}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        {snuBooks.map((book) => {
-          const isDone = userProfile.completedBooks.includes(book.id);
-          return (
-            <div
-              key={book.id}
-              onClick={() => openBookStudy(book, 'grammar')}
-              className={`${theme.card} border-2 hover:border-indigo-500 rounded-3xl p-4 flex flex-col justify-between cursor-pointer transition active:scale-95 relative overflow-hidden`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`px-3 py-1 rounded-xl bg-gradient-to-r ${book.color} text-white font-black text-xs shadow`}>
-                    {book.code}
-                  </span>
-                  {isDone && <CheckCircle2 size={18} className="text-emerald-500" />}
-                </div>
-                <h4 className={`font-black text-sm ${theme.textMain}`}>{book.title}</h4>
-                <div className="text-[10px] font-bold text-indigo-400 mt-0.5">{book.level}</div>
-                <p className={`text-[10px] ${theme.textMuted} mt-2 line-clamp-2 leading-relaxed`}>
-                  {book.topics}
-                </p>
-              </div>
-
-              <div className="mt-4 pt-2.5 border-t border-slate-800/30 flex items-center justify-between text-[10px] font-black text-emerald-500">
-                <span>{book.grammar.length} grammatika • {book.quizzes.length} test</span>
-                <ArrowRight size={13} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderHangul = () => (
-    <div className="space-y-5 pb-24">
-      <div className="flex items-center justify-between">
-        <button onClick={() => setActiveTab('books')} className={`flex items-center gap-1.5 text-xs font-black text-indigo-400 ${theme.subCard} border px-3 py-2 rounded-xl`}>
-          <ArrowLeft size={16} /> Kitoblarga qaytish
-        </button>
-        <span className="text-xs font-black text-emerald-500">Harf ustiga bosing 🔊</span>
-      </div>
-
-      <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
-        <h3 className={`font-black text-sm ${theme.textMain}`}>1. Asosiy Undoshlar (자음 - 14 ta)</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {hangulConsonants.map(c => (
-            <button
-              key={c.char}
-              onClick={() => speakKo(c.ex.split(' ')[0])}
-              className={`${theme.subCard} border hover:border-emerald-500 rounded-2xl p-3 flex items-center justify-between text-left transition active:scale-95`}
-            >
-              <div>
-                <div className="text-2xl font-black text-emerald-400">{c.char}</div>
-                <div className={`text-[11px] font-bold ${theme.textMain}`}>{c.name}</div>
-                <div className="text-[10px] text-slate-400">{c.ex}</div>
-              </div>
-              <Volume2 size={16} className="text-indigo-400 shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
-        <h3 className={`font-black text-sm ${theme.textMain}`}>2. Asosiy Unlilar (모음 - 10 ta)</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {hangulVowels.map(v => (
-            <button
-              key={v.char}
-              onClick={() => speakKo(v.ex.split(' ')[0])}
-              className={`${theme.subCard} border hover:border-indigo-500 rounded-2xl p-3 flex items-center justify-between text-left transition active:scale-95`}
-            >
-              <div>
-                <div className="text-2xl font-black text-indigo-400">{v.char}</div>
-                <div className={`text-[11px] font-bold ${theme.textMain}`}>{v.name}</div>
-                <div className="text-[10px] text-slate-400">{v.ex}</div>
-              </div>
-              <Volume2 size={16} className="text-emerald-400 shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button
-        onClick={() => {
-          setUserProfile(prev => ({
-            ...prev,
-            xp: prev.xp + 50,
-            completedBooks: [...new Set([...prev.completedBooks, 'hangul'])]
-          }));
-          setActiveTab('books');
-        }}
-        className="w-full py-4 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase"
-      >
-        Hangul Alifbosini Yakunlash (+50 XP)
-      </button>
-    </div>
-  );
-
-  const renderBookStudy = () => {
-    if (!selectedBook) return null;
-    const currentQ = shuffledQuizzes[quizIdx];
+  // =========================================================================
+  // 1. 홈 — IDEAL BOSH SAHIFA (DASHBOARD)
+  // =========================================================================
+  const renderHome = () => {
+    const dailyPercent = Math.min(100, Math.round((stats.dailyXp / 100) * 100));
+    const leaderboard = [
+      { name: 'Kim Min-ji 🇰🇷', xp: 1890 },
+      { name: `${stats.name} (Siz)`, xp: stats.xp, isMe: true },
+      { name: 'Sardorbek 🇺🇿', xp: 1210 },
+      { name: 'Fariza 🎓', xp: 980 }
+    ].sort((a, b) => b.xp - a.xp);
 
     return (
-      <div className="space-y-4 pb-24">
-        <div className="flex items-center justify-between">
-          <button onClick={() => setActiveTab('books')} className={`flex items-center gap-1.5 text-xs font-black text-indigo-400 ${theme.subCard} border px-3 py-2 rounded-xl`}>
-            <ArrowLeft size={16} /> Kitoblar
-          </button>
-          <span className={`px-3 py-1 rounded-xl bg-gradient-to-r ${selectedBook.color} text-white font-black text-xs`}>
-            {selectedBook.title}
-          </span>
+      <div className="space-y-5 pb-24">
+        {/* 1. KUNLIK MAQSAD BAJARILISHI */}
+        <div className={`${theme.card} border rounded-3xl p-4 space-y-2.5`}>
+          <div className="flex items-center justify-between text-xs font-black">
+            <div className="flex items-center gap-2">
+              <Target size={17} className="text-amber-500" />
+              <span className={theme.textMain}>Kunlik Maqsad (15 daqiqa)</span>
+            </div>
+            <span className="text-amber-500">{stats.dailyXp} / 100 XP ({dailyPercent}%)</span>
+          </div>
+          <div className="w-full h-3 bg-slate-800/40 rounded-full overflow-hidden p-0.5">
+            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500" style={{ width: `${dailyPercent}%` }} />
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-1.5 text-[11px] font-black">
-          {[
-            { id: 'grammar', label: 'Grammatika' },
-            { id: 'vocab', label: `Lug‘at (${selectedBook.vocab.length})` },
-            { id: 'dialogue', label: 'Dialog' },
-            { id: 'quiz', label: `Test (${shuffledQuizzes.length})` }
-          ].map(tab => (
+        {/* 2. HOZIR DAVOM ETTIRILAYOTGAN DARS — KATTA CONTINUE LEARNING */}
+        <div className="rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-blue-700 to-slate-900 text-white border-b-4 border-indigo-950 shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="px-3 py-1 rounded-full bg-white/15 text-[10px] font-black uppercase tracking-wider">
+              {currentActiveNode.bookTitle} • Joriy dars
+            </span>
+            <span className="text-xs font-black text-amber-300">+{currentActiveNode.xp} XP</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-black">{currentActiveNode.title}</h2>
+            <p className="text-xs text-white/80 mt-0.5">{currentActiveNode.subtitle}</p>
+          </div>
+          <button
+            onClick={() => startLessonNode(currentActiveNode)}
+            className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 border-b-4 border-emerald-700 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:translate-y-0.5 transition"
+          >
+            <Play size={16} className="fill-white" /> Continue Learning (Darsni boshlash)
+          </button>
+        </div>
+
+        {/* 3. BUGUNGI VAZIFALAR (IXCHAM VA FOYDALI) */}
+        <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
+          <div className="flex items-center justify-between">
+            <span className={`text-xs font-black uppercase tracking-wider ${theme.textMain}`}>Bugungi Vazifalar</span>
+            <button onClick={() => setActiveTab('hangul')} className="text-[11px] font-black text-emerald-400 flex items-center gap-1">
+              <Grid size={13} /> Alifbo (한글)
+            </button>
+          </div>
+          <div className="space-y-2">
+            <div onClick={() => { setActiveTab('review'); setReviewSubTab('vocab'); }} className={`p-3 rounded-2xl ${theme.subCard} border flex items-center justify-between cursor-pointer`}>
+              <div className="flex items-center gap-2.5 text-xs font-bold">
+                <span className="text-base">📚</span>
+                <span className={theme.textMain}>5 ta yangi so‘zni takrorlash</span>
+              </div>
+              <span className="text-[11px] font-black text-indigo-400">+20 XP →</span>
+            </div>
+            <div onClick={() => { setSelectedBookId(currentActiveNode.bookId); setActiveTab('learn'); }} className={`p-3 rounded-2xl ${theme.subCard} border flex items-center justify-between cursor-pointer`}>
+              <div className="flex items-center gap-2.5 text-xs font-bold">
+                <span className="text-base">✍️</span>
+                <span className={theme.textMain}>3 ta grammatika va gap tuzish mashqi</span>
+              </div>
+              <span className="text-[11px] font-black text-emerald-400">+40 XP →</span>
+            </div>
+            <div onClick={() => { setActiveTab('review'); setReviewSubTab('listening'); }} className={`p-3 rounded-2xl ${theme.subCard} border flex items-center justify-between cursor-pointer`}>
+              <div className="flex items-center gap-2.5 text-xs font-bold">
+                <span className="text-base">🎧</span>
+                <span className={theme.textMain}>1 ta tinglab tushunish (Listening)</span>
+              </div>
+              <span className="text-[11px] font-black text-amber-400">+15 XP →</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. KURSLAR VA DARAJALAR (BATAFSIL METRIKALAR BILAN) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className={`text-sm font-black ${theme.textMain}`}>서울대 한국어 Kurslari (1A — 6B)</h3>
+            <span className="text-[11px] font-bold text-indigo-400">12 jild</span>
+          </div>
+          <div className="grid grid-cols-1 gap-3">
+            {snuCurriculum.map(book => {
+              const doneCount = book.nodes.filter(n => stats.completedNodes.includes(n.id)).length;
+              const percent = Math.round((doneCount / book.nodes.length) * 100);
+              return (
+                <div
+                  key={book.id}
+                  onClick={() => { setSelectedBookId(book.id); setActiveTab('learn'); }}
+                  className={`${theme.card} border-2 hover:border-indigo-500 rounded-3xl p-4 cursor-pointer transition active:scale-98 space-y-3`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${book.color} text-white font-black text-sm flex items-center justify-center shadow`}>
+                        {book.code}
+                      </span>
+                      <div>
+                        <h4 className={`font-black text-sm ${theme.textMain}`}>{book.title}</h4>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 mt-0.5">
+                          <span>🎯 {book.topixTarget}</span>
+                          <span>•</span>
+                          <span>⏱ {book.estHours}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-xs font-black text-emerald-500">{percent}%</span>
+                  </div>
+
+                  {/* Progress bar & darslar soni */}
+                  <div className="space-y-1.5">
+                    <div className="w-full h-2 bg-slate-800/40 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percent}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                      <span>O‘tilgan darslar: {doneCount} / {book.nodes.length}</span>
+                      <span className="text-indigo-400">Yo‘lakni ochish →</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 5. HAFTALIK REYTING */}
+        <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
+          <div className="flex items-center gap-2 text-xs font-black text-amber-500">
+            <Trophy size={16} /> <span>Haftalik Olmos Ligasi</span>
+          </div>
+          <div className="space-y-2">
+            {leaderboard.map((p, idx) => (
+              <div key={p.name} className={`p-2.5 rounded-2xl flex items-center justify-between text-xs ${p.isMe ? 'bg-indigo-500/15 border border-indigo-500/30 font-black' : ''}`}>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 font-black text-slate-400">{idx + 1}.</span>
+                  <span className={theme.textMain}>{p.name}</span>
+                </div>
+                <span className="font-black text-amber-500">{p.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // 2. 학습 — KETMA-KET OCHILADIGAN DUOLINGO DARS YO‘LAGI (S-PATH)
+  // =========================================================================
+  const renderLearnPath = () => {
+    const book = snuCurriculum.find(b => b.id === selectedBookId) || snuCurriculum[0];
+    const offsets = ['translate-x-0', '-translate-x-8', 'translate-x-8', 'translate-x-0'];
+
+    return (
+      <div className="space-y-5 pb-24">
+        {/* Kitob tanlash gorizontal lenta */}
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {snuCurriculum.map(b => (
             <button
-              key={tab.id}
-              onClick={() => setStudySection(tab.id)}
-              className={`py-2.5 rounded-xl transition ${
-                studySection === tab.id ? 'bg-indigo-600 text-white shadow' : `${theme.subCard} ${theme.textMuted}`
+              key={b.id}
+              onClick={() => setSelectedBookId(b.id)}
+              className={`shrink-0 px-3.5 py-2 rounded-2xl text-xs font-black transition ${
+                b.id === book.id ? `bg-gradient-to-r ${b.color} text-white shadow-lg` : `${theme.card} border ${theme.textMuted}`
               }`}
             >
-              {tab.label}
+              {b.code}
             </button>
           ))}
         </div>
 
-        {studySection === 'grammar' && (
-          <div className="space-y-3">
-            {selectedBook.grammar.map((g, i) => (
-              <div key={i} className={`${theme.card} border rounded-3xl p-4 space-y-2`}>
-                <div className="text-sm font-black text-emerald-400">{g.pattern}</div>
-                <p className={`text-xs ${theme.textMain} leading-relaxed`}>{g.desc}</p>
-                <div
-                  onClick={() => speakKo(g.ex.split('(')[0])}
-                  className={`p-3 rounded-2xl ${theme.subCard} border text-xs flex items-center justify-between cursor-pointer`}
+        {/* Tanlangan bosqich sarlavhasi */}
+        <div className={`rounded-3xl p-5 bg-gradient-to-r ${book.color} text-white border-b-4 border-black/30 shadow-xl`}>
+          <div className="text-[10px] font-black uppercase tracking-widest opacity-85">{book.topixTarget} • {book.estHours}</div>
+          <h2 className="text-xl font-black mt-0.5">{book.title}</h2>
+          <p className="text-xs opacity-90 mt-1">Darslar ketma-ket ochiladi. Keyingi darsni ochish uchun joriy darsni yakunlang!</p>
+        </div>
+
+        {/* Ketma-ket ochiluvchi S-yo‘lak */}
+        <div className={`${theme.card} border rounded-3xl p-6 flex flex-col items-center space-y-10`}>
+          {book.nodes.map((node, idx) => {
+            const isCompleted = stats.completedNodes.includes(node.id);
+            const prevNode = idx > 0 ? book.nodes[idx - 1] : null;
+            const isUnlocked = idx === 0 || isCompleted || (prevNode && stats.completedNodes.includes(prevNode.id));
+            const isCurrent = isUnlocked && !isCompleted;
+
+            return (
+              <div key={node.id} className={`flex flex-col items-center ${offsets[idx % offsets.length]}`}>
+                {isCurrent && (
+                  <div className="mb-2 px-3.5 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-lg animate-bounce">
+                    Boshlash!
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    if (!isUnlocked) {
+                      alert("Avval oldingi darsni yakunlang!");
+                      return;
+                    }
+                    startLessonNode(node);
+                  }}
+                  className={`w-20 h-20 rounded-full border-b-8 flex items-center justify-center text-2xl font-black shadow-2xl transition-all active:translate-y-1 active:border-b-2 ${
+                    isCompleted
+                      ? 'bg-emerald-500 border-emerald-800 text-white'
+                      : isCurrent
+                        ? 'bg-indigo-600 border-indigo-900 text-white ring-4 ring-indigo-500/30'
+                        : 'bg-slate-800 border-slate-950 text-slate-500'
+                  }`}
                 >
-                  <span className="font-bold text-indigo-300">{g.ex}</span>
-                  <Volume2 size={16} className="text-indigo-400 shrink-0 ml-2" />
+                  {isCompleted ? <CheckCircle2 size={32} /> : isCurrent ? <Play size={30} className="fill-white ml-1" /> : <Lock size={26} />}
+                </button>
+
+                <div className="mt-2.5 text-center max-w-[190px]">
+                  <div className={`text-xs font-black ${theme.textMain}`}>{node.title}</div>
+                  <div className="text-[10px] text-indigo-400 font-bold mt-0.5">{node.subtitle} • +{node.xp} XP</div>
                 </div>
               </div>
-            ))}
-            <button onClick={() => setStudySection('vocab')} className="w-full py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase">
-              Lug‘atga o‘tish →
-            </button>
-          </div>
-        )}
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
-        {studySection === 'vocab' && (
-          <div className="space-y-2.5">
-            {selectedBook.vocab.map((v, i) => (
-              <div
-                key={i}
-                onClick={() => speakKo(v.ko)}
-                className={`${theme.card} border rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:border-indigo-500`}
-              >
-                <div>
-                  <div className={`text-base font-black ${theme.textMain}`}>{v.ko}</div>
-                  <div className="text-xs text-emerald-400 font-bold">{v.uz}</div>
-                  <div className={`text-[11px] ${theme.textMuted} mt-1`}>{v.ex}</div>
-                </div>
-                <Volume2 size={20} className="text-indigo-400" />
-              </div>
-            ))}
-            <button onClick={() => setStudySection('dialogue')} className="w-full py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase">
-              Dialogga o‘tish →
-            </button>
-          </div>
-        )}
+  // =========================================================================
+  // INTERAKTIV DARS PLAYER (GRAMMATIKA + GAP TUZISH + LISTENING + TEST)
+  // =========================================================================
+  const renderLessonPlayer = () => {
+    if (!activeNode) return null;
+    const currentEx = sessionExercises[exIdx];
 
-        {studySection === 'dialogue' && (
-          <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
-            {selectedBook.dialogue.map((d, i) => (
-              <div
-                key={i}
-                onClick={() => speakKo(d.ko)}
-                className={`p-3.5 rounded-2xl ${theme.subCard} border space-y-1 cursor-pointer`}
-              >
-                <div className="flex justify-between text-xs font-black text-indigo-400">
-                  <span>{d.sp}</span>
-                  <Volume2 size={15} />
-                </div>
-                <div className={`text-sm font-bold ${theme.textMain}`}>{d.ko}</div>
-                <div className={`text-[11px] ${theme.textMuted}`}>{d.uz}</div>
-              </div>
-            ))}
-            <button onClick={() => setStudySection('quiz')} className="w-full py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase">
-              Testlarni boshlash →
-            </button>
-          </div>
-        )}
+    const handleCheckAnswer = () => {
+      if (!currentEx) return;
+      let ok = false;
+      if (currentEx.type === 'choice' || currentEx.type === 'listen') {
+        ok = userChoice === currentEx.ans;
+      } else if (currentEx.type === 'build') {
+        ok = builtWords.join(' ') === currentEx.ans;
+      }
+      setIsCorrect(ok);
+      setIsChecked(true);
+      if (!ok && !stats.isPro) {
+        setStats(p => ({ ...p, hearts: Math.max(0, p.hearts - 1) }));
+      }
+    };
 
-        {studySection === 'quiz' && (
-          <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
-            <div className="flex items-center justify-between text-xs font-black">
-              <span className="text-indigo-400 flex items-center gap-1">
-                <Shuffle size={14} /> Aralash Test: {quizIdx + 1} / {shuffledQuizzes.length}
+    const handleNextStep = () => {
+      if (exIdx + 1 < sessionExercises.length) {
+        setExIdx(exIdx + 1);
+        setUserChoice(null);
+        setBuiltWords([]);
+        setIsChecked(false);
+      } else {
+        setPlayerStage('complete');
+        setStats(p => ({
+          ...p,
+          xp: p.xp + activeNode.xp,
+          dailyXp: p.dailyXp + activeNode.xp,
+          studyMinutes: p.studyMinutes + 10,
+          completedNodes: [...new Set([...p.completedNodes, activeNode.id])]
+        }));
+      }
+    };
+
+    return (
+      <div className="space-y-5 pb-24">
+        {/* Progress bar */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setActiveTab('learn')} className={`p-2 rounded-xl ${theme.subCard} border`}>
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex-1 h-3 bg-slate-800/40 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-300"
+              style={{ width: `${playerStage === 'intro' ? 15 : playerStage === 'complete' ? 100 : Math.round(((exIdx + 1) / sessionExercises.length) * 85)}%` }}
+            />
+          </div>
+          <div className="flex items-center gap-1 text-rose-500 font-black text-xs">
+            <Heart size={16} className="fill-rose-500" /> {stats.isPro ? '∞' : stats.hearts}
+          </div>
+        </div>
+
+        {/* 1-BOSQICH: GRAMMATIKA VA YANGI SO‘ZLAR */}
+        {playerStage === 'intro' && (
+          <div className="space-y-4">
+            <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-3`}>
+              <span className="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-400 text-[10px] font-black uppercase">
+                Grammar Academy
               </span>
-              <button
-                onClick={() => openBookStudy(selectedBook, 'quiz')}
-                className="text-[11px] text-emerald-400 underline"
-              >
-                Savollarni qayta aralashtirish
-              </button>
+              <h3 className={`text-lg font-black ${theme.textMain}`}>{activeNode.grammar.pattern}</h3>
+              <p className={`text-xs ${theme.textMuted} leading-relaxed`}>{activeNode.grammar.desc}</p>
+              <div onClick={() => speakKo(activeNode.grammar.ex)} className={`p-3.5 rounded-2xl ${theme.subCard} border flex items-center justify-between cursor-pointer`}>
+                <span className="text-xs font-black text-emerald-400">{activeNode.grammar.ex}</span>
+                <Volume2 size={18} className="text-indigo-400" />
+              </div>
             </div>
 
-            {!quizFinished && currentQ ? (
-              <>
-                <h4 className={`font-black text-base leading-snug ${theme.textMain}`}>{currentQ.q}</h4>
-                <div className="space-y-2">
-                  {currentQ.opts.map((opt) => {
-                    const isPicked = selectedOption === opt;
-                    const isRight = opt === currentQ.ans;
+            <div className={`${theme.card} border rounded-3xl p-4 space-y-2.5`}>
+              <div className={`text-xs font-black ${theme.textMain}`}>Dars lug‘ati (Saqlash uchun ★ bosing)</div>
+              {activeNode.vocab.map(v => {
+                const isSaved = stats.savedWords.includes(v.ko);
+                return (
+                  <div key={v.ko} className={`p-3 rounded-2xl ${theme.subCard} border flex items-center justify-between`}>
+                    <div onClick={() => speakKo(v.ko)} className="cursor-pointer flex-1">
+                      <div className={`text-sm font-black ${theme.textMain}`}>{v.ko} <span className="text-xs font-normal text-slate-400">— {v.uz}</span></div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => speakKo(v.ko)} className="p-1.5 text-indigo-400"><Volume2 size={16} /></button>
+                      <button onClick={() => toggleSaveWord(v.ko)} className={`p-1.5 ${isSaved ? 'text-amber-400' : 'text-slate-500'}`}>
+                        <Star size={16} className={isSaved ? 'fill-amber-400' : ''} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button onClick={() => setPlayerStage('exercise')} className="w-full py-4 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase">
+              Interaktiv Mashqlarni Boshlash →
+            </button>
+          </div>
+        )}
+
+        {/* 2-BOSQICH: INTERAKTIV MASHQLAR (CHOICE, WORD BUILDER, LISTENING) */}
+        {playerStage === 'exercise' && currentEx && (
+          <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-5`}>
+            <div className="flex items-center justify-between text-[11px] font-black text-indigo-400 uppercase">
+              <span>Mashq {exIdx + 1} / {sessionExercises.length}</span>
+              <span>{currentEx.type === 'build' ? 'Gap tuzish' : currentEx.type === 'listen' ? 'Listening' : 'Test'}</span>
+            </div>
+
+            <h3 className={`text-base font-black ${theme.textMain}`}>{currentEx.q}</h3>
+
+            {/* LISTENING AUDIO TUGMASI */}
+            {currentEx.type === 'listen' && (
+              <button
+                onClick={() => speakKo(currentEx.audio)}
+                className="w-full py-5 rounded-2xl bg-indigo-600/20 border-2 border-indigo-500 text-indigo-400 font-black text-sm flex items-center justify-center gap-2"
+              >
+                <Volume2 size={24} /> Audioni tinglash (Bosing)
+              </button>
+            )}
+
+            {/* VARIANT TANLASH (CHOICE & LISTEN) */}
+            {(currentEx.type === 'choice' || currentEx.type === 'listen') && (
+              <div className="space-y-2.5">
+                {currentEx.opts.map(opt => (
+                  <button
+                    key={opt}
+                    disabled={isChecked}
+                    onClick={() => { setUserChoice(opt); speakKo(opt); }}
+                    className={`w-full py-3.5 px-4 rounded-2xl text-left border-2 text-xs font-bold transition ${
+                      userChoice === opt ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400' : `${theme.subCard} ${theme.textMain}`
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* SO‘ZLARDAN GAP TUZISH (WORD BUILDER) */}
+            {currentEx.type === 'build' && (
+              <div className="space-y-4">
+                <div className={`min-h-[56px] p-3 rounded-2xl ${theme.subCard} border-2 border-dashed border-indigo-500/40 flex flex-wrap gap-2`}>
+                  {builtWords.map((w, i) => (
+                    <button
+                      key={i}
+                      disabled={isChecked}
+                      onClick={() => setBuiltWords(builtWords.filter((_, idx) => idx !== i))}
+                      className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-black"
+                    >
+                      {w}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentEx.shuffledWords.map((w, i) => {
+                    const used = builtWords.includes(w);
                     return (
                       <button
-                        key={opt}
-                        disabled={selectedOption !== null}
-                        onClick={() => {
-                          setSelectedOption(opt);
-                          if (isRight) {
-                            setQuizScore(s => s + 1);
-                          } else if (!userProfile.isPro) {
-                            setUserProfile(prev => ({ ...prev, hearts: Math.max(0, prev.hearts - 1) }));
-                          }
-                        }}
-                        className={`w-full py-3.5 px-4 rounded-2xl text-left border-2 text-xs font-bold transition ${
-                          selectedOption !== null
-                            ? isRight
-                              ? 'bg-emerald-500 text-white border-emerald-700'
-                              : isPicked
-                                ? 'bg-rose-500 text-white border-rose-700'
-                                : `${theme.subCard} opacity-60`
-                            : `${theme.subCard} ${theme.textMain} hover:border-indigo-500`
+                        key={i}
+                        disabled={used || isChecked}
+                        onClick={() => { setBuiltWords([...builtWords, w]); speakKo(w); }}
+                        className={`px-3.5 py-2 rounded-xl border-2 text-xs font-black transition ${
+                          used ? 'opacity-30' : `${theme.card} ${theme.textMain} hover:border-emerald-500`
                         }`}
                       >
-                        {opt}
+                        {w}
                       </button>
                     );
                   })}
                 </div>
+              </div>
+            )}
 
-                {selectedOption && (
-                  <div className={`p-3.5 rounded-2xl text-xs ${selectedOption === currentQ.ans ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`}>
-                    <div className="font-black">{selectedOption === currentQ.ans ? "To‘g‘ri! 🎉" : `Xato! To‘g‘ri javob: ${currentQ.ans}`}</div>
-                    <p className={`mt-1 ${theme.textMuted}`}>{currentQ.exp}</p>
-                  </div>
-                )}
+            {/* NATIJA VA AI IZOH */}
+            {isChecked && (
+              <div className={`p-4 rounded-2xl text-xs space-y-1 ${isCorrect ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`}>
+                <div className="font-black">{isCorrect ? "To‘g‘ri javob! 🎉" : `Xato! To‘g‘ri javob: ${currentEx.ans}`}</div>
+                <p className={theme.textMuted}>{currentEx.exp}</p>
+              </div>
+            )}
 
-                {selectedOption && (
-                  <button
-                    onClick={() => {
-                      if (quizIdx + 1 < shuffledQuizzes.length) {
-                        setQuizIdx(quizIdx + 1);
-                        setSelectedOption(null);
-                      } else {
-                        setQuizFinished(true);
-                        setUserProfile(prev => ({
-                          ...prev,
-                          xp: prev.xp + quizScore * 20 + 30,
-                          completedBooks: [...new Set([...prev.completedBooks, selectedBook.id])]
-                        }));
-                      }
-                    }}
-                    className="w-full py-3.5 rounded-2xl bg-indigo-600 border-b-4 border-indigo-800 text-white font-black text-xs uppercase"
-                  >
-                    {quizIdx + 1 < shuffledQuizzes.length ? 'Keyingi savol →' : 'Natijani ko‘rish'}
-                  </button>
-                )}
-              </>
+            {!isChecked ? (
+              <button
+                onClick={handleCheckAnswer}
+                disabled={!userChoice && builtWords.length === 0}
+                className="w-full py-3.5 rounded-2xl bg-indigo-600 border-b-4 border-indigo-800 text-white font-black text-xs uppercase disabled:opacity-40"
+              >
+                Javobni tekshirish
+              </button>
             ) : (
-              <div className="text-center py-6 space-y-4">
-                <div className="text-5xl">🏆</div>
+              <button
+                onClick={handleNextStep}
+                className="w-full py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase"
+              >
+                Davom etish →
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 3-BOSQICH: DARS YAKUNI */}
+        {playerStage === 'complete' && (
+          <div className={`${theme.card} border-2 rounded-3xl p-8 text-center space-y-4`}>
+            <div className="text-6xl">🏆</div>
+            <h2 className={`text-2xl font-black ${theme.textMain}`}>Dars Muvaffaqiyatli Yakunlandi!</h2>
+            <p className="text-sm font-black text-emerald-400">+{activeNode.xp} XP qo‘shildi va keyingi dars ochildi!</p>
+            <button onClick={() => setActiveTab('learn')} className="w-full py-4 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase">
+              Keyingi darsga o‘tish →
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // 3. 복습 — TAKRORLASH (SMART VOCABULARY, LISTENING, SPEAKING, TOPIK MOCK)
+  // =========================================================================
+  const renderReview = () => {
+    const vocabSource = stats.savedWords.length > 0
+      ? allVocabList.filter(v => stats.savedWords.includes(v.ko))
+      : allVocabList;
+    const currentCard = vocabSource[flashIdx % vocabSource.length] || allVocabList[0];
+    const currentListen = allVocabList[listenIdx % allVocabList.length];
+    const currentSpeak = allVocabList[speakIdx % allVocabList.length];
+
+    return (
+      <div className="space-y-5 pb-24">
+        {/* 4 ta aqlli takrorlash rejimi */}
+        <div className="grid grid-cols-4 gap-1.5 text-[10px] font-black">
+          {[
+            { id: 'vocab', label: 'Smart Lug‘at', icon: Star },
+            { id: 'listening', label: 'Listening', icon: Headphones },
+            { id: 'speaking', label: 'Speaking', icon: Mic },
+            { id: 'mock', label: 'TOPIK Test', icon: Clock }
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setReviewSubTab(t.id)}
+              className={`py-2.5 px-1 rounded-2xl flex flex-col items-center gap-1 transition ${
+                reviewSubTab === t.id ? 'bg-indigo-600 text-white shadow-lg' : `${theme.card} border ${theme.textMuted}`
+              }`}
+            >
+              <t.icon size={16} />
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* 1. SMART VOCABULARY */}
+        {reviewSubTab === 'vocab' && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-xs font-black">
+              <span className={theme.textMain}>Saqlangan so‘zlar ({vocabSource.length} ta)</span>
+              <span className="text-amber-400">Kartochkani bosing</span>
+            </div>
+            <div
+              onClick={() => { setFlashFlipped(!flashFlipped); speakKo(currentCard.ko); }}
+              className={`${theme.card} border-2 border-b-8 rounded-3xl p-8 min-h-[240px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
+            >
+              <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 text-[10px] font-black">
+                서울대 {currentCard.bookCode}
+              </span>
+              {!flashFlipped ? (
+                <>
+                  <div className={`text-4xl font-black ${theme.textMain}`}>{currentCard.ko}</div>
+                  <Volume2 size={24} className="text-emerald-400" />
+                </>
+              ) : (
+                <>
+                  <div className="text-2xl font-black text-emerald-400">{currentCard.uz}</div>
+                  <p className={`text-xs ${theme.textMuted}`}>"{currentCard.ex}"</p>
+                </>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                setFlashFlipped(false);
+                setFlashIdx(i => i + 1);
+                setStats(p => ({ ...p, xp: p.xp + 5, dailyXp: p.dailyXp + 5 }));
+              }}
+              className="w-full py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs uppercase"
+            >
+              Keyingi so‘z (+5 XP) →
+            </button>
+          </div>
+        )}
+
+        {/* 2. LISTENING (TINGLAB TUSHUNISH) */}
+        {reviewSubTab === 'listening' && (
+          <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
+            <h3 className={`font-black text-base ${theme.textMain}`}>Tinglab Tushunish Mashqi</h3>
+            <button
+              onClick={() => speakKo(currentListen.ko)}
+              className="w-full py-6 rounded-2xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Volume2 size={26} /> Audioni Eshitish
+            </button>
+            <div className="grid grid-cols-2 gap-2.5">
+              {shuffleArray([
+                currentListen.uz,
+                allVocabList[(listenIdx + 2) % allVocabList.length].uz,
+                allVocabList[(listenIdx + 4) % allVocabList.length].uz,
+                allVocabList[(listenIdx + 6) % allVocabList.length].uz
+              ]).map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setListenChoice(opt);
+                    if (opt === currentListen.uz) {
+                      setStats(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
+                    }
+                  }}
+                  className={`p-3.5 rounded-2xl border-2 text-xs font-bold ${
+                    listenChoice === opt
+                      ? opt === currentListen.uz ? 'bg-emerald-500 text-white border-emerald-700' : 'bg-rose-500 text-white border-rose-700'
+                      : `${theme.subCard} ${theme.textMain}`
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { setListenChoice(null); setListenIdx(i => i + 1); }}
+              className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs"
+            >
+              Keyingi audio →
+            </button>
+          </div>
+        )}
+
+        {/* 3. SPEAKING (MIKROFON ORQALI TALAFFUZ TEKSHIRUVI) */}
+        {reviewSubTab === 'speaking' && (
+          <div className={`${theme.card} border-2 rounded-3xl p-6 text-center space-y-4`}>
+            <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-[10px] font-black uppercase">
+              AI Pronunciation Check
+            </span>
+            <h3 className={`text-3xl font-black ${theme.textMain}`}>{currentSpeak.ko}</h3>
+            <p className={`text-xs ${theme.textMuted}`}>{currentSpeak.uz}</p>
+
+            <div className="flex justify-center gap-3 pt-2">
+              <button onClick={() => speakKo(currentSpeak.ko)} className={`px-4 py-3 rounded-2xl ${theme.subCard} border font-black text-xs flex items-center gap-1.5`}>
+                <Volume2 size={16} /> Namuna
+              </button>
+              <button
+                onClick={() => startSpeechCheck(currentSpeak.ko)}
+                className={`px-5 py-3 rounded-2xl font-black text-xs text-white flex items-center gap-2 ${isListeningMic ? 'bg-rose-600 animate-pulse' : 'bg-emerald-500 border-b-4 border-emerald-700'}`}
+              >
+                <Mic size={16} /> {isListeningMic ? 'Eshitilmoqda...' : 'Gapirish (Mikrofon)'}
+              </button>
+            </div>
+
+            {spokenResult && <div className="text-xs font-bold text-indigo-400">Siz aytdingiz: "{spokenResult}"</div>}
+            {speakFeedback && (
+              <div className={`p-3 rounded-2xl text-xs font-black ${speakFeedback.ok ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                {speakFeedback.msg}
+              </div>
+            )}
+
+            <button onClick={() => { setSpokenResult(''); setSpeakFeedback(null); setSpeakIdx(i => i + 1); }} className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs">
+              Keyingi so‘z →
+            </button>
+          </div>
+        )}
+
+        {/* 4. TOPIK MOCK TEST (VAQT CHEGARALI IMTIHON) */}
+        {reviewSubTab === 'mock' && (
+          <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
+            {!mockStarted ? (
+              <div className="text-center py-4 space-y-4">
+                <div className="text-5xl">📝</div>
+                <h3 className={`text-lg font-black ${theme.textMain}`}>TOPIK I & II Mock Test</h3>
+                <p className={`text-xs ${theme.textMuted}`}>
+                  8 ta aralash savol • 05:00 daqiqa vaqt chegarasi • Imtihon yakunida batafsil ball tahlili.
+                </p>
+                <button onClick={startTopikMock} className="w-full py-4 rounded-2xl bg-indigo-600 border-b-4 border-indigo-800 text-white font-black text-xs uppercase">
+                  Imtihonni Boshlash
+                </button>
+              </div>
+            ) : !mockFinished ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xs font-black">
+                  <span className="text-indigo-400">Savol {mockIdx + 1} / {mockQuestions.length}</span>
+                  <span className="text-rose-500 flex items-center gap-1">
+                    <Clock size={14} /> {Math.floor(mockTimeLeft / 60)}:{String(mockTimeLeft % 60).padStart(2, '0')}
+                  </span>
+                </div>
+                <h4 className={`font-black text-sm ${theme.textMain}`}>{mockQuestions[mockIdx]?.q}</h4>
+                <div className="space-y-2">
+                  {mockQuestions[mockIdx]?.opts.map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => setMockAnswers({ ...mockAnswers, [mockIdx]: opt })}
+                      className={`w-full p-3.5 rounded-2xl text-left border-2 text-xs font-bold ${
+                        mockAnswers[mockIdx] === opt ? 'border-indigo-500 bg-indigo-500/15 text-indigo-400' : `${theme.subCard} ${theme.textMain}`
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {mockIdx + 1 < mockQuestions.length ? (
+                    <button onClick={() => setMockIdx(i => i + 1)} className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs">
+                      Keyingi savol →
+                    </button>
+                  ) : (
+                    <button onClick={() => setMockFinished(true)} className="w-full py-3 rounded-2xl bg-emerald-500 text-white font-black text-xs">
+                      Imtihonni Yakunlash
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 space-y-3">
+                <div className="text-5xl">🎓</div>
                 <h3 className={`text-xl font-black ${theme.textMain}`}>
-                  Natija: {quizScore} / {shuffledQuizzes.length}
+                  TOPIK Mock Natijasi: {mockQuestions.filter((q, i) => mockAnswers[i] === q.ans).length} / {mockQuestions.length}
                 </h3>
                 <p className="text-xs text-emerald-400 font-bold">
-                  +{quizScore * 20 + 30} XP qo‘shildi!
+                  Taxminiy daraja: {mockQuestions.filter((q, i) => mockAnswers[i] === q.ans).length >= 6 ? 'TOPIK 3–4급 (A’lo!)' : 'TOPIK 1–2급'}
                 </p>
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => openBookStudy(selectedBook, 'quiz')}
-                    className={`flex-1 py-3 rounded-2xl ${theme.subCard} border font-black text-xs`}
-                  >
-                    Qayta yechish (Yangi tartib)
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('books')}
-                    className="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-black text-xs"
-                  >
-                    Kitoblarga qaytish
-                  </button>
-                </div>
+                <button onClick={startTopikMock} className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-black text-xs">
+                  Yangi Mock Test Yechish
+                </button>
               </div>
             )}
           </div>
@@ -966,49 +1308,69 @@ export default function App() {
     );
   };
 
-  const renderFlashcards = () => {
-    const card = allKoreanWords[cardIdx % allKoreanWords.length];
-    return (
-      <div className="space-y-5 pb-24">
-        <div className="flex items-center justify-between">
-          <h2 className={`text-base font-black ${theme.textMain}`}>1A–6B Lug‘at Kartochkalari</h2>
-          <span className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-black">
-            서울대 {card.book}
-          </span>
+  // =========================================================================
+  // 4. 프로필 — PROFIL VA STATISTIKA
+  // =========================================================================
+  const renderProfile = () => (
+    <div className="space-y-5 pb-24">
+      <div className={`${theme.card} border rounded-3xl p-5 flex items-center justify-between`}>
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white font-black text-xl flex items-center justify-center">
+            {stats.name.charAt(0)}
+          </div>
+          <div>
+            <h2 className={`font-black text-base ${theme.textMain}`}>{stats.name}</h2>
+            <p className="text-xs text-slate-400">{currentUser.email}</p>
+            <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[10px] font-black">
+              {stats.isPro ? 'SUPER PRO A’ZO' : 'STANDART REJA'}
+            </span>
+          </div>
         </div>
+        <button onClick={handleLogout} className="p-2.5 rounded-2xl bg-rose-500/15 text-rose-500">
+          <LogOut size={18} />
+        </button>
+      </div>
 
-        <div
-          onClick={() => { setIsFlipped(!isFlipped); speakKo(card.ko); }}
-          className={`${theme.card} border-2 border-b-8 rounded-3xl p-8 min-h-[260px] flex flex-col items-center justify-center text-center cursor-pointer space-y-4`}
-        >
-          <span className="text-[10px] font-black uppercase text-indigo-400">
-            {isFlipped ? 'O‘zbekcha tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
-          </span>
-          {!isFlipped ? (
-            <>
-              <div className={`text-4xl font-black ${theme.textMain}`}>{card.ko}</div>
-              <Volume2 size={24} className="text-emerald-400" />
-            </>
-          ) : (
-            <>
-              <div className="text-2xl font-black text-emerald-400">{card.uz}</div>
-              <p className={`text-xs ${theme.textMuted}`}>"{card.ex}"</p>
-            </>
-          )}
+      {/* STATISTIKA KARTALARI */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`${theme.card} border rounded-3xl p-4`}>
+          <div className="text-xs text-slate-400 font-bold">Jami XP</div>
+          <div className="text-2xl font-black text-sky-400 mt-1">⚡ {stats.xp}</div>
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => { setIsFlipped(false); setCardIdx(Math.floor(Math.random() * allKoreanWords.length)); }} className={`py-3.5 rounded-2xl ${theme.card} border font-black text-xs flex items-center justify-center gap-1.5`}>
-            <Shuffle size={15} /> Tasodifiy so‘z
-          </button>
-          <button onClick={() => { setIsFlipped(false); setCardIdx(c => c + 1); setUserProfile(p => ({ ...p, xp: p.xp + 5 })); }} className="py-3.5 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 text-white font-black text-xs">
-            Keyingi (+5 XP) →
-          </button>
+        <div className={`${theme.card} border rounded-3xl p-4`}>
+          <div className="text-xs text-slate-400 font-bold">Ketma-ket kun</div>
+          <div className="text-2xl font-black text-amber-500 mt-1">🔥 {stats.streak} kun</div>
+        </div>
+        <div className={`${theme.card} border rounded-3xl p-4`}>
+          <div className="text-xs text-slate-400 font-bold">O‘tilgan darslar</div>
+          <div className="text-2xl font-black text-emerald-400 mt-1">✅ {stats.completedNodes.length} / {allNodes.length}</div>
+        </div>
+        <div className={`${theme.card} border rounded-3xl p-4`}>
+          <div className="text-xs text-slate-400 font-bold">O‘qish vaqti</div>
+          <div className="text-2xl font-black text-indigo-400 mt-1">⏱ {stats.studyMinutes} daq</div>
         </div>
       </div>
-    );
-  };
 
+      {!stats.isPro && (
+        <div className="rounded-3xl p-5 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 space-y-3 shadow-xl">
+          <div className="font-black text-base flex items-center gap-2">
+            <Award size={20} /> Super ZiyoPrep PRO
+          </div>
+          <p className="text-xs font-bold opacity-90">Cheksiz yuraklar (∞), barcha 1A–6B darslari va cheklovsiz TOPIK Mock testlari!</p>
+          <button
+            onClick={() => setStats(p => ({ ...p, isPro: true, hearts: 5 }))}
+            className="w-full py-3 rounded-2xl bg-slate-950 text-white font-black text-xs uppercase"
+          >
+            PRO ni Faollashtirish
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  // =========================================================================
+  // ASOSIY SHELL (TOP BAR + CONTENT + 4 TA KOREYSCHA NAVIGATSIYA)
+  // =========================================================================
   return (
     <div className={`min-h-screen w-full ${theme.bg} flex flex-col font-sans select-none transition-colors`}>
       <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 backdrop-blur-xl`}>
@@ -1018,71 +1380,64 @@ export default function App() {
             <span className={`font-black text-sm ${theme.textMain}`}>서울대 한국어</span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-black">
-            <div className="flex items-center gap-1 text-amber-500"><Flame size={17} className="fill-amber-500" />{userProfile.streak}</div>
-            <div className="flex items-center gap-1 text-sky-400"><Zap size={17} className="fill-sky-400" />{userProfile.xp}</div>
-            <div className="flex items-center gap-1 text-rose-500"><Heart size={17} className="fill-rose-500" />{userProfile.isPro ? '∞' : userProfile.hearts}</div>
+          <div className="flex items-center gap-3.5 text-xs font-black">
+            <div className="flex items-center gap-1 text-amber-500"><Flame size={17} className="fill-amber-500" />{stats.streak}</div>
+            <div className="flex items-center gap-1 text-sky-400"><Zap size={17} className="fill-sky-400" />{stats.xp}</div>
+            <div className="flex items-center gap-1 text-rose-500"><Heart size={17} className="fill-rose-500" />{stats.isPro ? '∞' : stats.hearts}</div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button onClick={toggleTheme} className={`p-2 rounded-xl ${theme.subCard} border`}>
-              {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-600" />}
-            </button>
-            <button onClick={handleLogout} className="p-2 rounded-xl bg-rose-500/15 text-rose-500">
-              <LogOut size={16} />
-            </button>
-          </div>
+          <button onClick={toggleTheme} className={`p-2 rounded-xl ${theme.subCard} border`}>
+            {isDarkMode ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-indigo-600" />}
+          </button>
         </div>
       </header>
 
       <main className="flex-1 w-full max-w-md mx-auto p-4">
-        {activeTab === 'books' && renderBooksLibrary()}
-        {activeTab === 'hangul' && renderHangul()}
-        {activeTab === 'book_study' && renderBookStudy()}
-        {activeTab === 'flashcards' && renderFlashcards()}
+        {activeTab === 'home' && renderHome()}
+        {activeTab === 'learn' && renderLearnPath()}
+        {activeTab === 'lesson_player' && renderLessonPlayer()}
+        {activeTab === 'review' && renderReview()}
+        {activeTab === 'profile' && renderProfile()}
+        {activeTab === 'hangul' && (
+          <div className="space-y-4 pb-24">
+            <button onClick={() => setActiveTab('home')} className={`flex items-center gap-1.5 text-xs font-black text-indigo-400 ${theme.subCard} border px-3 py-2 rounded-xl`}>
+              <ArrowLeft size={16} /> Bosh sahifaga
+            </button>
+            <div className={`${theme.card} border rounded-3xl p-4 grid grid-cols-3 gap-2`}>
+              {['가 (ga)', '나 (na)', '다 (da)', '라 (ra)', '마 (ma)', '바 (ba)', '사 (sa)', '아 (a)', '자 (ja)', '차 (cha)', '카 (kha)', '타 (tha)', '파 (pha)', '하 (ha)', '한글'].map(s => (
+                <button key={s} onClick={() => speakKo(s.split(' ')[0])} className={`${theme.subCard} border p-3 rounded-2xl text-center font-black text-sm hover:border-emerald-500`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
 
+      {/* PASTKI 4 TA KOREYSCHA NAVIGATSIYA: 홈 • 학습 • 복습 • 프로필 */}
       <nav className={`fixed bottom-0 inset-x-0 z-40 ${theme.navBg} px-2 py-2.5 backdrop-blur-xl`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
-          <button onClick={() => setActiveTab('books')} className={`flex flex-col items-center ${activeTab === 'books' || activeTab === 'book_study' ? 'text-indigo-400' : theme.textMuted}`}>
+          <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center ${activeTab === 'home' ? 'text-indigo-400' : theme.textMuted}`}>
+            <Home size={22} />
+            <span className="text-[10px] font-black mt-1">홈 • Bosh sahifa</span>
+          </button>
+
+          <button onClick={() => setActiveTab('learn')} className={`flex flex-col items-center ${activeTab === 'learn' || activeTab === 'lesson_player' ? 'text-emerald-400' : theme.textMuted}`}>
             <BookOpen size={22} />
-            <span className="text-[10px] font-black mt-1">1A–6B Kitoblar</span>
+            <span className="text-[10px] font-black mt-1">학습 • Darslar</span>
           </button>
 
-          <button onClick={() => setActiveTab('hangul')} className={`flex flex-col items-center ${activeTab === 'hangul' ? 'text-emerald-400' : theme.textMuted}`}>
-            <Grid size={22} />
-            <span className="text-[10px] font-black mt-1">Alifbo (한글)</span>
+          <button onClick={() => setActiveTab('review')} className={`flex flex-col items-center ${activeTab === 'review' ? 'text-amber-400' : theme.textMuted}`}>
+            <RotateCcw size={22} />
+            <span className="text-[10px] font-black mt-1">복습 • Takrorlash</span>
           </button>
 
-          <button onClick={() => setActiveTab('flashcards')} className={`flex flex-col items-center ${activeTab === 'flashcards' ? 'text-amber-400' : theme.textMuted}`}>
-            <Layers size={22} />
-            <span className="text-[10px] font-black mt-1">Lug‘at (1A–6B)</span>
-          </button>
-
-          <button onClick={() => { setEditForm(userProfile); setIsEditingProfile(true); }} className={`flex flex-col items-center ${theme.textMuted}`}>
+          <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center ${activeTab === 'profile' ? 'text-rose-400' : theme.textMuted}`}>
             <User size={22} />
-            <span className="text-[10px] font-black mt-1">Profil</span>
+            <span className="text-[10px] font-black mt-1">프로필 • Profil</span>
           </button>
         </div>
       </nav>
-
-      {isEditingProfile && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`${theme.card} border-2 rounded-3xl p-6 w-full max-w-sm space-y-4`}>
-            <h3 className={`font-black text-base ${theme.textMain}`}>Talaba Profili</h3>
-            <input
-              type="text"
-              value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              className={`w-full ${theme.inputBg} border-2 rounded-xl px-3.5 py-2.5 text-xs font-bold`}
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setIsEditingProfile(false)} className={`flex-1 py-2.5 ${theme.subCard} rounded-xl text-xs font-bold`}>Yopish</button>
-              <button onClick={() => { setUserProfile(editForm); setIsEditingProfile(false); }} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-black">Saqlash</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
