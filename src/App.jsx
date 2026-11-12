@@ -69,8 +69,16 @@ export default function App() {
         localStorage.setItem('fariza_auth_user', JSON.stringify(demoGoogleUser));
         setUserProfile(prev => ({ ...prev, name: demoGoogleUser.name }));
       }
-    } catch (err) {
-      setAuthError("Google orqali kirishda xatolik: " + err.message);
+    }     } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! Pastdan 'Tizimga kiring' tugmasini bosing.");
+      } else if (err.code === 'auth/weak-password') {
+        setAuthError("Parol kamida 6 ta belgidan iborat bo‘lishi kerak.");
+      } else {
+        setAuthError("Xatolik: " + (err.code || err.message));
+      }
+    }
+
     } finally {
       setAuthLoading(false);
     }
