@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Compass, Bot, User, Volume2, ChevronRight, ArrowLeft, 
-  Sun, Moon, ArrowRight, Upload, Menu, GraduationCap, 
-  Lock, Star, X, Crown, Copy, Flame, MessageCircle, 
-  Heart, Zap, Mail, KeyRound, LogOut, CheckCircle2, Sparkles, Award
+  Compass, Bot, User, Volume2, ArrowLeft, 
+  Sun, Moon, ArrowRight, Menu, GraduationCap, 
+  X, Crown, Flame, Heart, Zap, Mail, KeyRound, 
+  LogOut, Upload, Award, Sparkles
 } from 'lucide-react';
 import { 
   signInWithPopup, 
@@ -26,7 +26,7 @@ export default function App() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Firebase Auth kuzatuvchisi
+  // Firebase Auth holatini kuzatish
   useEffect(() => {
     if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -57,28 +57,25 @@ export default function App() {
       if (auth && googleProvider) {
         await signInWithPopup(auth, googleProvider);
       } else {
-        // Firebase kalitlari kiritilmagan bo'lsa, Demo Google kirish ishlaydi
-        await new Promise(r => setTimeout(r, 600));
-        const demoGoogleUser = {
-          uid: 'google_demo_123',
+        await new Promise(r => setTimeout(r, 500));
+        const demoUser = {
+          uid: 'google_demo_user',
           name: 'Tokhirbek Yuldashev',
           email: 'tokhirbek@gmail.com',
           photoURL: ''
         };
-        setCurrentUser(demoGoogleUser);
-        localStorage.setItem('fariza_auth_user', JSON.stringify(demoGoogleUser));
-        setUserProfile(prev => ({ ...prev, name: demoGoogleUser.name }));
+        setCurrentUser(demoUser);
+        localStorage.setItem('fariza_auth_user', JSON.stringify(demoUser));
+        setUserProfile(prev => ({ ...prev, name: demoUser.name }));
       }
-        } catch (err) {
-      if (err.code === 'auth/email-already-in-use') {
-        setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! Pastdan 'Tizimga kiring' tugmasini bosing.");
-      } else if (err.code === 'auth/weak-password') {
-        setAuthError("Parol kamida 6 ta belgidan iborat bo‘lishi kerak.");
+    } catch (err) {
+      if (err.code === 'auth/unauthorized-domain') {
+        setAuthError("Domen ruxsat etilmagan! Firebase Console -> Authentication -> Settings -> Authorized domains bo‘limiga ziyoprep-sepia.vercel.app ni qo‘shing.");
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setAuthError("Google oynasi yopildi. Qaytadan urinib ko‘ring.");
       } else {
-        setAuthError("Xatolik: " + (err.code || err.message));
+        setAuthError("Google xatoligi: " + (err.code || err.message));
       }
-    }
-
     } finally {
       setAuthLoading(false);
     }
@@ -88,7 +85,8 @@ export default function App() {
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setAuthError('');
-    if (!authForm.email || !authForm.password) {
+
+    if (!authForm.email.trim() || !authForm.password.trim()) {
       setAuthError("Email va parolni to‘liq kiriting!");
       return;
     }
@@ -101,18 +99,26 @@ export default function App() {
     try {
       if (auth) {
         if (authMode === 'register') {
-          const res = await createUserWithEmailAndPassword(auth, authForm.email, authForm.password);
-          await updateProfile(res.user, { displayName: authForm.name });
+          const res = await createUserWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
+          await updateProfile(res.user, { displayName: authForm.name.trim() });
+          const userObj = {
+            uid: res.user.uid,
+            name: authForm.name.trim(),
+            email: res.user.email,
+            photoURL: ''
+          };
+          setCurrentUser(userObj);
+          localStorage.setItem('fariza_auth_user', JSON.stringify(userObj));
+          setUserProfile(prev => ({ ...prev, name: authForm.name.trim() }));
         } else {
-          await signInWithEmailAndPassword(auth, authForm.email, authForm.password);
+          await signInWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
         }
       } else {
-        // Lokal Demo Auth (Firebase ulanmaguncha to'liq ishlaydi)
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 400));
         const localUser = {
           uid: 'local_' + Date.now(),
-          name: authMode === 'register' ? authForm.name : authForm.email.split('@')[0],
-          email: authForm.email,
+          name: authMode === 'register' ? authForm.name.trim() : authForm.email.split('@')[0],
+          email: authForm.email.trim(),
           photoURL: ''
         };
         setCurrentUser(localUser);
@@ -120,15 +126,27 @@ export default function App() {
         setUserProfile(prev => ({ ...prev, name: localUser.name }));
       }
     } catch (err) {
-      setAuthError("Xatolik: Email yoki parol noto‘g‘ri.");
+      if (err.code === 'auth/email-already-in-use') {
+        setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! Pastdan 'Tizimga kiring' tugmasini bosing.");
+      } else if (err.code === 'auth/weak-password') {
+        setAuthError("Parol kamida 6 ta belgidan iborat bo‘lishi kerak.");
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        setAuthError("Email yoki parol noto‘g‘ri. Qaytadan tekshiring.");
+      } else {
+        setAuthError("Xatolik: " + (err.code || err.message));
+      }
     } finally {
       setAuthLoading(false);
     }
   };
 
-  // Chiqish (Logout)
+  // Tizimdan chiqish
   const handleLogout = async () => {
-    if (auth) await signOut(auth);
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+    }
     localStorage.removeItem('fariza_auth_user');
     setCurrentUser(null);
     setAuthMode('welcome');
@@ -157,7 +175,7 @@ export default function App() {
     });
   };
 
-  // --- 3. FOYDALANUVCHI PROFILI & DUOLINGO GAMIFICATION ---
+  // --- 3. FOYDALANUVCHI PROFILI & GAMIFICATION ---
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('fariza_user');
     if (saved) {
@@ -189,12 +207,9 @@ export default function App() {
     localStorage.setItem('fariza_user', JSON.stringify(userProfile));
   }, [userProfile]);
 
-  // Navigatsiya va Dars holatlari
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('select');
-  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonStep, setLessonStep] = useState('theory');
   const [quizAnswer, setQuizAnswer] = useState(null);
@@ -213,6 +228,20 @@ export default function App() {
       ut.rate = 0.85;
       window.speechSynthesis.speak(ut);
     } catch (e) {}
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Rasm hajmi 3MB dan oshmasligi kerak.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditForm(prev => ({ ...prev, photoBase64: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   // --- 5. DARSLIKLAR BAZASI ---
@@ -344,6 +373,30 @@ export default function App() {
           correct: 1,
           explanation: "'Detrimental' is the precise academic term."
         }
+      },
+      {
+        id: 102,
+        unit: "UNIT 1 • IELTS 7.5+",
+        title: "Lesson 2: Band 8.0 Cohesion",
+        subtitle: "Linking devices & complex structures",
+        isPro: false,
+        icon: "⭐",
+        color: "bg-indigo-500 border-indigo-700",
+        theory: `Use sophisticated discourse markers such as 'Notwithstanding', 'Conversely', and 'Consequently' instead of overusing 'However' and 'So'.`,
+        words: [
+          { word: "Notwithstanding", meaning: "Shunga qaramasdan", sound: "Notwithstanding", ex: "Notwithstanding the challenges, the project succeeded." },
+          { word: "Mitigate", meaning: "Yumshatmoq / Kamaytirmoq", sound: "Mitigate", ex: "Governments must mitigate climate change." }
+        ],
+        dialogue: [
+          { speaker: "Examiner", text: "Can cities reduce traffic congestion?", trans: "Shaharlar tirbandlikni kamaytira oladimi?" },
+          { speaker: "Candidate", text: "Expanding public transit can significantly mitigate urban congestion.", trans: "Jamoat transportini kengaytirish tirbandlikni sezilarli kamaytiradi." }
+        ],
+        quiz: {
+          question: "Which verb means 'to make less severe or harmful'?",
+          options: ["① Exacerbate", "② Mitigate", "③ Proliferate", "④ Stagnate"],
+          correct: 1,
+          explanation: "'Mitigate' means to reduce the severity of a problem."
+        }
       }
     ]
   };
@@ -363,7 +416,6 @@ export default function App() {
       return;
     }
     if (lesson.isPro && !userProfile.isPro) {
-      setPaymentStep('select');
       setIsPaywallOpen(true);
       return;
     }
@@ -385,12 +437,11 @@ export default function App() {
   };
 
   // =========================================================================
-  // 0. DUOLINGO USLUBIDAGI KIRISH VA RO‘YXATDAN O‘TISH EKRANI (AUTH SCREEN)
+  // 0. DUOLINGO KIRISH VA RO‘YXATDAN O‘TISH EKRANI
   // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${theme.bg} flex flex-col justify-between p-6 font-sans`}>
-        {/* Yuqori tema tugmasi */}
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-2xl bg-emerald-500 border-b-4 border-emerald-700 flex items-center justify-center text-white font-black text-lg">
@@ -403,11 +454,9 @@ export default function App() {
           </button>
         </div>
 
-        {/* Markaziy Auth konteyneri */}
         <div className="max-w-md w-full mx-auto my-auto py-6">
           {authMode === 'welcome' ? (
-            <div className="text-center space-y-8 animate-fadeIn">
-              {/* Maskot / Illyustratsiya */}
+            <div className="text-center space-y-8">
               <div className="relative w-32 h-32 mx-auto">
                 <div className="w-full h-full rounded-[36px] bg-gradient-to-tr from-emerald-500 to-teal-400 border-b-8 border-emerald-700 flex items-center justify-center shadow-2xl">
                   <span className="text-6xl">🦉</span>
@@ -443,7 +492,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <div className={`${theme.card} border-2 rounded-3xl p-6 space-y-5 shadow-xl animate-fadeIn`}>
+            <div className={`${theme.card} border-2 rounded-3xl p-6 space-y-5 shadow-xl`}>
               <div className="flex items-center justify-between">
                 <button 
                   onClick={() => setAuthMode('welcome')}
@@ -458,7 +507,7 @@ export default function App() {
               </div>
 
               {authError && (
-                <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-500 text-xs font-bold text-center">
+                <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-500 text-xs font-bold text-center leading-relaxed">
                   {authError}
                 </div>
               )}
@@ -514,7 +563,6 @@ export default function App() {
                 <div className="flex-grow border-t border-slate-700/40"></div>
               </div>
 
-              {/* GOOGLE BILAN KIRISH TUGMASI */}
               <button
                 type="button"
                 onClick={handleGoogleLogin}
@@ -533,7 +581,7 @@ export default function App() {
               <div className="text-center pt-1">
                 <button
                   type="button"
-                  onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+                  onClick={() => { setAuthError(''); setAuthMode(authMode === 'login' ? 'register' : 'login'); }}
                   className="text-xs font-bold text-indigo-500 hover:underline"
                 >
                   {authMode === 'login' ? "Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
@@ -556,17 +604,15 @@ export default function App() {
   const renderHome = () => {
     const isKr = selectedLanguage === 'kr';
     const nextLesson = currentRoadmap.find((l, i) => getLessonStatus(l, i) === 'current') || currentRoadmap[0];
-
-    // S-shaklidagi burilish koordinatalari (Duolingo path)
     const offsets = ['translate-x-0', '-translate-x-10', '-translate-x-14', '-translate-x-6', 'translate-x-8', 'translate-x-12'];
 
     return (
-      <div className="space-y-6 animate-fadeIn pb-16">
-        {/* DUOLINGO UNIT BANNER */}
+      <div className="space-y-6 pb-16">
+        {/* UNIT BANNER */}
         <div className={`rounded-3xl p-5 text-white border-b-4 shadow-lg ${
           isKr ? 'bg-rose-600 border-rose-800' : 'bg-indigo-600 border-indigo-800'
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <span className="text-[11px] font-black uppercase tracking-widest opacity-85">
                 {isKr ? 'KOREYS TILI • TOPIK & EPS' : 'INGLIZ TILI • IELTS 7.5+'}
@@ -577,7 +623,7 @@ export default function App() {
             </div>
             <button
               onClick={() => handleOpenLesson(nextLesson)}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-3.5 py-2 rounded-2xl text-xs font-black flex items-center gap-1.5 border border-white/25 transition active:scale-95"
+              className="shrink-0 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-3.5 py-2.5 rounded-2xl text-xs font-black flex items-center gap-1.5 border border-white/25 transition active:scale-95"
             >
               <span>Davom etish</span>
               <ArrowRight size={15} />
@@ -585,7 +631,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* TIL ALMASHTIRISH */}
+        {/* TIL TANLASH */}
         <div className={`grid grid-cols-2 gap-2 p-1.5 rounded-2xl ${theme.subCard} border`}>
           <button 
             onClick={() => switchLanguage('kr')}
@@ -605,7 +651,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* DUOLINGO S-SHAKLIDAGI INTERAKTIV DARS YO‘LAGI */}
+        {/* S-SHAKLIDAGI DUOLINGO YO‘LAGI */}
         <div className="relative py-6 flex flex-col items-center space-y-10">
           {currentRoadmap.map((lesson, idx) => {
             const status = getLessonStatus(lesson, idx);
@@ -614,15 +660,12 @@ export default function App() {
 
             return (
               <div key={lesson.id} className={`relative flex flex-col items-center ${offsetClass} transition-transform`}>
-                
-                {/* Joriy dars tepasidagi sakrab turuvchi "BOSHLASH" pufakchasi */}
                 {status === 'current' && (
                   <div className="mb-2 px-3.5 py-1.5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-black text-[11px] uppercase tracking-wider shadow-lg animate-bounce">
                     Boshlash!
                   </div>
                 )}
 
-                {/* 3D Duolingo Tugmasi */}
                 <button
                   onClick={() => handleOpenLesson(lesson)}
                   className={`w-20 h-20 rounded-full border-b-8 flex items-center justify-center text-3xl shadow-xl transition-all active:translate-y-1 active:border-b-2 relative ${
@@ -640,8 +683,7 @@ export default function App() {
                   )}
                 </button>
 
-                {/* Dars nomi */}
-                <div className="mt-2.5 text-center max-w-[170px]">
+                <div className="mt-2.5 text-center max-w-[175px]">
                   <div className={`text-xs font-black leading-tight ${theme.textMain}`}>
                     {lesson.title}
                   </div>
@@ -664,7 +706,7 @@ export default function App() {
     if (!activeLesson) return null;
 
     return (
-      <div className="space-y-5 animate-fadeIn pb-16">
+      <div className="space-y-5 pb-16">
         <div className="flex items-center justify-between pb-3 border-b border-slate-700/30">
           <button 
             onClick={() => setActiveTab('home')}
@@ -677,7 +719,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 4 Bosqich */}
         <div className="grid grid-cols-4 gap-1.5 text-xs font-black">
           {['theory', 'vocab', 'dialogue', 'quiz'].map((step, i) => {
             const labels = ['Nazariya', `Lug‘at (${activeLesson.words.length})`, 'Dialog', 'Test'];
@@ -823,7 +864,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // ASOSIY ILOVA INTERFEYSI (DUOLINGO TOP BAR + PATH + BOTTOM NAV)
+  // ASOSIY ILOVA INTERFEYSI
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${theme.bg} flex flex-col font-sans select-none transition-colors`}>
@@ -835,7 +876,6 @@ export default function App() {
             <Menu size={19} />
           </button>
 
-          {/* Streak, XP va Hearts */}
           <div className="flex items-center gap-3 text-xs font-black">
             <div className="flex items-center gap-1 text-amber-500">
               <Flame size={18} className="fill-amber-500" />
@@ -961,6 +1001,19 @@ export default function App() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border-2 rounded-3xl p-6 w-full max-w-sm space-y-4`}>
             <h3 className={`font-black text-base ${theme.textMain}`}>Profil</h3>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+            <div className="flex items-center gap-3">
+              {editForm.photoBase64 ? (
+                <img src={editForm.photoBase64} alt="Avatar" className="w-14 h-14 rounded-full object-cover border-2 border-indigo-500" />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-indigo-600/20 flex items-center justify-center font-black text-indigo-500">
+                  {editForm.name?.charAt(0) || 'T'}
+                </div>
+              )}
+              <button onClick={() => fileInputRef.current?.click()} className="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+                <Upload size={14} /> Rasm tanlash
+              </button>
+            </div>
             <input
               type="text"
               value={editForm.name}
