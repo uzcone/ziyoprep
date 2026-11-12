@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen, Volume2, ArrowLeft, Sun, Moon, ArrowRight, 
-  Menu, GraduationCap, X, Crown, Flame, Heart, Zap, 
-  LogOut, Trophy, Layers, Shuffle, CheckCircle2, 
-  Sparkles, Grid, User, Upload, Award
+  X, Flame, Heart, Zap, 
+  LogOut, Layers, Shuffle, CheckCircle2, 
+  Grid, User
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
@@ -12,7 +12,6 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 
-// Savollar va variantlarni har kirganda aralashtiruvchi funksiya (Fisher-Yates Shuffle)
 function shuffleArray(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -23,7 +22,6 @@ function shuffleArray(array) {
 }
 
 export default function App() {
-  // --- 1. AUTENTIFIKATSIYA ---
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('snu_auth_user');
     return saved ? JSON.parse(saved) : null;
@@ -99,7 +97,6 @@ export default function App() {
     setAuthMode('welcome');
   };
 
-  // --- 2. MAVZU VA FOYDALANUVCHI PROFILI ---
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('snu_theme');
     return saved !== null ? saved === 'dark' : true;
@@ -144,10 +141,9 @@ export default function App() {
     localStorage.setItem('snu_profile', JSON.stringify(userProfile));
   }, [userProfile]);
 
-  // --- 3. NAVIGATSIYA HOLATLARI ---
-  const [activeTab, setActiveTab] = useState('books'); // 'books' | 'hangul' | 'flashcards' | 'book_study'
+  const [activeTab, setActiveTab] = useState('books');
   const [selectedBook, setSelectedBook] = useState(null);
-  const [studySection, setStudySection] = useState('grammar'); // 'grammar' | 'vocab' | 'dialogue' | 'quiz'
+  const [studySection, setStudySection] = useState('grammar');
   const [shuffledQuizzes, setShuffledQuizzes] = useState([]);
   const [quizIdx, setQuizIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -156,12 +152,9 @@ export default function App() {
 
   const [cardIdx, setCardIdx] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState(userProfile);
-  const fileInputRef = useRef(null);
 
-  // Koreyscha Audio Talaffuz (ko-KR)
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -174,38 +167,36 @@ export default function App() {
     } catch (e) {}
   };
 
-  // --- 4. HANGUL ALIFBOSI MA'LUMOTLARI ---
   const hangulConsonants = [
-    { char: 'ㄱ', name: '기역 (Giyok)', sound: 'g / k', ex: '가방 (Sumka)' },
-    { char: 'ㄴ', name: '니은 (Niin)', sound: 'n', ex: '나무 (Daraxt)' },
-    { char: 'ㄷ', name: '디귿 (Digid)', sound: 'd / t', ex: '다리 (Oyoq / Ko‘prik)' },
-    { char: 'ㄹ', name: '리을 (Riil)', sound: 'r / l', ex: '라디오 (Radio)' },
-    { char: 'ㅁ', name: '미음 (Miim)', sound: 'm', ex: '모자 (Shapka)' },
-    { char: 'ㅂ', name: '비읍 (Biip)', sound: 'b / p', ex: '바다 (Dengiz)' },
-    { char: 'ㅅ', name: '시옷 (Siot)', sound: 's', ex: '사과 (Olma)' },
-    { char: 'ㅇ', name: '이응 (Iing)', sound: 'jim / ng', ex: '아이 (Bola)' },
-    { char: 'ㅈ', name: '지읒 (Jiit)', sound: 'j', ex: '지도 (Xarita)' },
-    { char: 'ㅊ', name: '치읓 (Chiit)', sound: 'ch', ex: '차 (Choy / Mashina)' },
-    { char: 'ㅋ', name: '키읔 (Khiik)', sound: 'kh', ex: '코 (Burun)' },
-    { char: 'ㅌ', name: '티읕 (Thiit)', sound: 'th', ex: '타조 (Tuyaqush)' },
-    { char: 'ㅍ', name: '피읖 (Phiip)', sound: 'ph', ex: '포도 (Uzum)' },
-    { char: 'ㅎ', name: '히읗 (Hiih)', sound: 'h', ex: '하늘 (Osmon)' }
+    { char: 'ㄱ', name: '기역 (Giyok)', ex: '가방 (Sumka)' },
+    { char: 'ㄴ', name: '니은 (Niin)', ex: '나무 (Daraxt)' },
+    { char: 'ㄷ', name: '디귿 (Digid)', ex: '다리 (Oyoq / Ko‘prik)' },
+    { char: 'ㄹ', name: '리을 (Riil)', ex: '라디오 (Radio)' },
+    { char: 'ㅁ', name: '미음 (Miim)', ex: '모자 (Shapka)' },
+    { char: 'ㅂ', name: '비읍 (Biip)', ex: '바다 (Dengiz)' },
+    { char: 'ㅅ', name: '시옷 (Siot)', ex: '사과 (Olma)' },
+    { char: 'ㅇ', name: '이응 (Iing)', ex: '아이 (Bola)' },
+    { char: 'ㅈ', name: '지읒 (Jiit)', ex: '지도 (Xarita)' },
+    { char: 'ㅊ', name: '치읓 (Chiit)', ex: '차 (Choy / Mashina)' },
+    { char: 'ㅋ', name: '키읔 (Khiik)', ex: '코 (Burun)' },
+    { char: 'ㅌ', name: '티읕 (Thiit)', ex: '타조 (Tuyaqush)' },
+    { char: 'ㅍ', name: '피읖 (Phiip)', ex: '포도 (Uzum)' },
+    { char: 'ㅎ', name: '히읗 (Hiih)', ex: '하늘 (Osmon)' }
   ];
 
   const hangulVowels = [
-    { char: 'ㅏ', name: '아 (A)', sound: 'a', ex: '아버지 (Ota)' },
-    { char: 'ㅑ', name: '야 (Ya)', sound: 'ya', ex: '야구 (Beysbol)' },
-    { char: 'ㅓ', name: '어 (Eo)', sound: 'o‘ / eo', ex: '어머니 (Ona)' },
-    { char: 'ㅕ', name: '여 (Yeo)', sound: 'yo‘ / yeo', ex: '여자 (Ayol)' },
-    { char: 'ㅗ', name: '오 (O)', sound: 'o', ex: '오이 (Bodring)' },
-    { char: 'ㅛ', name: '요 (Yo)', sound: 'yo', ex: '요리 (Taom)' },
-    { char: 'ㅜ', name: '우 (U)', sound: 'u', ex: '우유 (Sut)' },
-    { char: 'ㅠ', name: '유 (Yu)', sound: 'yu', ex: '유리 (Shisha)' },
-    { char: 'ㅡ', name: '으 (Eu)', sound: 'i (qattiq)', ex: '으뜸 (Eng yaxshi)' },
-    { char: 'ㅣ', name: '이 (I)', sound: 'i', ex: '이름 (Ism)' }
+    { char: 'ㅏ', name: '아 (A)', ex: '아버지 (Ota)' },
+    { char: 'ㅑ', name: '야 (Ya)', ex: '야구 (Beysbol)' },
+    { char: 'ㅓ', name: '어 (Eo)', ex: '어머니 (Ona)' },
+    { char: 'ㅕ', name: '여 (Yeo)', ex: '여자 (Ayol)' },
+    { char: 'ㅗ', name: '오 (O)', ex: '오이 (Bodring)' },
+    { char: 'ㅛ', name: '요 (Yo)', ex: '요리 (Taom)' },
+    { char: 'ㅜ', name: '우 (U)', ex: '우유 (Sut)' },
+    { char: 'ㅠ', name: '유 (Yu)', ex: '유리 (Shisha)' },
+    { char: 'ㅡ', name: '으 (Eu)', ex: '으뜸 (Eng yaxshi)' },
+    { char: 'ㅣ', name: '이 (I)', ex: '이름 (Ism)' }
   ];
 
-  // --- 5. 서울대 한국어 1A ~ 6B TO‘LIQ 12 JILDLIK AKADEMIK BAZA ---
   const snuBooks = [
     {
       id: '1a',
@@ -235,11 +226,11 @@ export default function App() {
         { sp: '토히르벡', ko: '컴퓨터공학을 공부해요. 한국어 수업도 들어요.', uz: 'Kompyuter injiniringini o‘rganyapman. Koreys tili darsiga ham qatnashaman.' }
       ],
       quizzes: [
-        { q: "'저는 학생___.' Bo‘sh joyga to‘g‘ri qo‘shimchani tanlang:", opts: ['이에요', '예요', '을', '에서'], ans: '이에요', exp: "'학생' undosh (ㅇ) bilan tugagani uchun '-이에요' qo‘shiladi." },
-        { q: "'공부하다' fe'lining hozirgi zamon shakli qaysi?", opts: ['공부해요', '공부하아요', '공부허요', '공부았어요'], ans: '공부해요', exp: "'하다' fe'llari doim '해요' shaklida tuslanadi." },
-        { q: "Do‘konda narx so‘rash iborasi qaysi?", opts: ['얼마예요?', '어디예요?', '누구예요?', '몇 시예요?'], ans: '얼마예요?', exp: "'얼마예요?' — Necha pul? degan ma'noni bildiradi." },
-        { q: "Qayerda harakat bajarilganini bildiruvchi qo‘shimcha qaysi? (도서관___ 책을 읽어요)", opts: ['에서', '에', '을', '와'], ans: '에서', exp: "Harakat sodir bo‘lgan joy uchun '-에서' ishlatiladi." },
-        { q: "'우유' so‘zining tarjimasi nima?", opts: ['Sut', 'Suv', 'Non', 'Olma'], ans: 'Sut', exp: "'우유' — sut." }
+        { q: "‘저는 학생___.’ Bo‘sh joyga to‘g‘ri qo‘shimchani tanlang:", opts: ['이에요', '예요', '을', '에서'], ans: '이에요', exp: "‘학생’ undosh (ㅇ) bilan tugagani uchun ‘-이에요’ qo‘shiladi." },
+        { q: "‘공부하다’ fe’lining hozirgi zamon shakli qaysi?", opts: ['공부해요', '공부하아요', '공부허요', '공부았어요'], ans: '공부해요', exp: "‘하다’ fe’llari doim ‘해요’ shaklida tuslanadi." },
+        { q: "Do‘konda narx so‘rash iborasi qaysi?", opts: ['얼마예요?', '어디예요?', '누구예요?', '몇 시예요?'], ans: '얼마예요?', exp: "‘얼마예요?’ — Necha pul? degan ma’noni bildiradi." },
+        { q: "Qayerda harakat bajarilganini bildiruvchi qo‘shimcha qaysi? (도서관___ 책을 읽어요)", opts: ['에서', '에', '을', '와'], ans: '에서', exp: "Harakat sodir bo‘lgan joy uchun ‘-에서’ ishlatiladi." },
+        { q: "‘우유’ so‘zining tarjimasi nima?", opts: ['Sut', 'Suv', 'Non', 'Olma'], ans: 'Sut', exp: "‘우유’ — sut." }
       ]
     },
     {
@@ -268,10 +259,10 @@ export default function App() {
         { sp: '수진', ko: '저는 백화점에 가서 부모님 선물을 샀어요.', uz: 'Men univermagga borib ota-onamga sovg‘a oldim.' }
       ],
       quizzes: [
-        { q: "'보다' (ko‘rmoq) fe'lining o‘tgan zamon shakli qaysi?", opts: ['봤어요', '보었어요', '보았어요', '볼 거예요'], ans: '봤어요', exp: "'보 + 았어요' qisqarib '봤어요' bo‘ladi." },
-        { q: "'Ertaga kutubxonaga bormoqchiman' gapini to‘g‘ri toping:", opts: ['내일 도서관에 갈 거예요', '내일 도서관에 갔어요', '어제 도서관에 갈 거예요', '내일 도서관에 가세요'], ans: '내일 도서관에 갈 거예요', exp: "Kelajak reja uchun '-(으)ㄹ 거예요' ishlatiladi." },
-        { q: "'Ovqat qimmat, lekin mazali' — to‘g‘ri bog‘lovchini tanlang:", opts: ['음식이 비싸지만 맛있어요', '음식이 비싸서 맛있어요', '음식이 비싸고 맛있어요', '음식이 비싸면 맛있어요'], ans: '음식이 비싸지만 맛있어요', exp: "Zidlov ma'nosi uchun '-지만' ishlatiladi." },
-        { q: "'지하철' nima?", opts: ['Metro', 'Avtobus', 'Taksi', 'Samolyot'], ans: 'Metro', exp: "'지하철' — yer osti metrosi." }
+        { q: "‘보다’ (ko‘rmoq) fe’lining o‘tgan zamon shakli qaysi?", opts: ['봤어요', '보었어요', '보았어요', '볼 거예요'], ans: '봤어요', exp: "‘보 + 았어요’ qisqarib ‘봤어요’ bo‘ladi." },
+        { q: "‘Ertaga kutubxonaga bormoqchiman’ gapini to‘g‘ri toping:", opts: ['내일 도서관에 갈 거예요', '내일 도서관에 갔어요', '어제 도서관에 갈 거예요', '내일 도서관에 가세요'], ans: '내일 도서관에 갈 거예요', exp: "Kelajak reja uchun ‘-(으)ㄹ 거예요’ ishlatiladi." },
+        { q: "‘Ovqat qimmat, lekin mazali’ — to‘g‘ri bog‘lovchini tanlang:", opts: ['음식이 비싸지만 맛있어요', '음식이 비싸서 맛있어요', '음식이 비싸고 맛있어요', '음식이 비싸면 맛있어요'], ans: '음식이 비싸지만 맛있어요', exp: "Zidlov ma’nosi uchun ‘-지만’ ishlatiladi." },
+        { q: "‘지하철’ nima?", opts: ['Metro', 'Avtobus', 'Taksi', 'Samolyot'], ans: 'Metro', exp: "‘지하철’ — yer osti metrosi." }
       ]
     },
     {
@@ -298,9 +289,9 @@ export default function App() {
         { sp: '토히르벡', ko: '네, 김치볶음밥을 만들어 본 적이 있어요. 생각보다 쉬웠어요.', uz: 'Ha, kimchili qovurma guruch tayyorlab ko‘rganman. O‘ylaganimdan oson edi.' }
       ],
       quizzes: [
-        { q: "Qaysi gap grammatik jihatdan TO‘G‘RI?", opts: ['배가 아파서 병원에 갔어요', '배가 아파서 병원에 가세요', '배가 아파서 병원에 갑시다', '배가 아팠어서 병원에 갔어요'], ans: '배가 아파서 병원에 갔어요', exp: "'-아서/어서' oldidan o‘tgan zamon qo‘shilmaydi va buyruq gap bilan kelmaydi." },
-        { q: "'Koreys tilida gapira olaman' tarjimasi qaysi?", opts: ['한국어를 말할 수 있어요', '한국어를 말한 적이 있어요', '한국어를 말하면 안 돼요', '한국어를 말하려고 해요'], ans: '한국어를 말할 수 있어요', exp: "Qobiliyat uchun '-(으)ㄹ 수 있다' ishlatiladi." },
-        { q: "'Muzeyda rasmga olish mumkin emas' qanday aytiladi?", opts: ['박물관에서 사진을 찍으면 안 돼요', '박물관에서 사진을 찍어도 돼요', '박물관에서 사진을 찍어야 돼요', '박물관에서 사진을 찍을 거예요'], ans: '박물관에서 사진을 찍으면 안 돼요', exp: "Taqiq shakli: '-(으)면 안 되다'." }
+        { q: "Qaysi gap grammatik jihatdan TO‘G‘RI?", opts: ['배가 아파서 병원에 갔어요', '배가 아파서 병원에 가세요', '배가 아파서 병원에 갑시다', '배가 아팠어서 병원에 갔어요'], ans: '배가 아파서 병원에 갔어요', exp: "‘-아서/어서’ oldidan o‘tgan zamon qo‘shilmaydi va buyruq gap bilan kelmaydi." },
+        { q: "‘Koreys tilida gapira olaman’ tarjimasi qaysi?", opts: ['한국어를 말할 수 있어요', '한국어를 말한 적이 있어요', '한국어를 말하면 안 돼요', '한국어를 말하려고 해요'], ans: '한국어를 말할 수 있어요', exp: "Qobiliyat uchun ‘-(으)ㄹ 수 있다’ ishlatiladi." },
+        { q: "‘Muzeyda rasmga olish mumkin emas’ qanday aytiladi?", opts: ['박물관에서 사진을 찍으면 안 돼요', '박물관에서 사진을 찍어도 돼요', '박물관에서 사진을 찍어야 돼요', '박물관에서 사진을 찍을 거예요'], ans: '박물관에서 사진을 찍으면 안 돼요', exp: "Taqiq shakli: ‘-(으)면 안 되다’." }
       ]
     },
     {
@@ -326,8 +317,8 @@ export default function App() {
         { sp: '토히르벡', ko: '한국 IT 회사에 프론트엔드 개발자로 취직하려고 해요.', uz: 'Koreya IT kompaniyasiga frontend dasturchi bo‘lib ishga kirmoqchiman.' }
       ],
       quizzes: [
-        { q: "Buyruq gap ('Issiq kiyim kiying') bilan qaysi sabab qo‘shimchasi ishlatiladi?", opts: ['추우니까', '추워서', '춥지만', '춥고'], ans: '추우니까', exp: "Buyruq va taklif gaplarda '-아서/어서' emas, '-(으)니까' ishlatiladi." },
-        { q: "'Yaxshilandi / yaxshi bo‘lib qoldi' qaysi so‘z?", opts: ['좋아졌어요', '좋았어요', '좋겠어요', '좋아요'], ans: '좋아졌어요', exp: "Holat o‘zgarishi '-아/어지다' bilan yasaladi." }
+        { q: "Buyruq gap (‘Issiq kiyim kiying’) bilan qaysi sabab qo‘shimchasi ishlatiladi?", opts: ['추우니까', '추워서', '춥지만', '춥고'], ans: '추우니까', exp: "Buyruq va taklif gaplarda ‘-아서/어서’ emas, ‘-(으)니까’ ishlatiladi." },
+        { q: "‘Yaxshilandi / yaxshi bo‘lib qoldi’ qaysi so‘z?", opts: ['좋아졌어요', '좋았어요', '좋겠어요', '좋아요'], ans: '좋아졌어요', exp: "Holat o‘zgarishi ‘-아/어지다’ bilan yasaladi." }
       ]
     },
     {
@@ -353,8 +344,8 @@ export default function App() {
         { sp: '토히르벡', ko: '아니요, 아까 전화했는데 시험 때문에 못 온다고 했어요.', uz: 'Yo‘q, boya qo‘ng‘iroq qilgandi, imtihon sababli kela olmayman deb aytdi.' }
       ],
       quizzes: [
-        { q: "'Do‘stim ertaga kelaman deb aytdi' — to‘g‘ri bilvosita nutq shakli:", opts: ['친구가 내일 온다고 했어요', '친구가 내일 오라고 했어요', '친구가 내일 오자고 했어요', '친구가 내일 오냐고 했어요'], ans: '친구가 내일 온다고 했어요', exp: "Darak gapni yetkazishda fe'lga '-ㄴ/는다고 하다' qo‘shiladi." },
-        { q: "'Yomg‘ir yog‘ayotganga o‘xshaydi' qanday tarjima qilinadi?", opts: ['비가 오는 것 같아요', '비가 온 것 같아요', '비가 올 것 같아요', '비가 오기 때문이에요'], ans: '비가 오는 것 같아요', exp: "Hozirgi zamon taxmini: '-는 것 같다'." }
+        { q: "‘Do‘stim ertaga kelaman deb aytdi’ — to‘g‘ri bilvosita nutq shakli:", opts: ['친구가 내일 온다고 했어요', '친구가 내일 오라고 했어요', '친구가 내일 오자고 했어요', '친구가 내일 오냐고 했어요'], ans: '친구가 내일 온다고 했어요', exp: "Darak gapni yetkazishda fe’lga ‘-ㄴ/는다고 하다’ qo‘shiladi." },
+        { q: "‘Yomg‘ir yog‘ayotganga o‘xshaydi’ qanday tarjima qilinadi?", opts: ['비가 오는 것 같아요', '비가 온 것 같아요', '비가 올 것 같아요', '비가 오기 때문이에요'], ans: '비가 오는 것 같아요', exp: "Hozirgi zamon taxmini: ‘-는 것 같다’." }
       ]
     },
     {
@@ -379,8 +370,8 @@ export default function App() {
         { sp: '토히르벡', ko: '알람을 못 들어서 지각할 뻔했거든요!', uz: 'Budilnikni eshitmay qolib, darsga kech qolishimga sal qoldi-da!' }
       ],
       quizzes: [
-        { q: "'Avtobusga kech qolishimga sal qoldi' iborasi qaysi?", opts: ['버스를 놓칠 뻔했어요', '버스를 놓치기로 했어요', '버스를 놓친 적이 있어요', '버스를 놓칠 수 있어요'], ans: '버스를 놓칠 뻔했어요', exp: "Biror salbiy holatga sal qolish '-(으)ㄹ 뻔하다' bilan ifodalanadi." },
-        { q: "'Har kuni koreyscha o‘qishga qaror qildim' — to‘g‘ri javob:", opts: ['매일 한국어를 공부하기로 했어요', '매일 한국어를 공부할 뻔했어요', '매일 한국어를 공부하거든요', '매일 한국어를 공부한 셈이에요'], ans: '매일 한국어를 공부하기로 했어요', exp: "Qaror qabul qilish: 'V-기로 하다'." }
+        { q: "‘Avtobusga kech qolishimga sal qoldi’ iborasi qaysi?", opts: ['버스를 놓칠 뻔했어요', '버스를 놓치기로 했어요', '버스를 놓친 적이 있어요', '버스를 놓칠 수 있어요'], ans: '버스를 놓칠 뻔했어요', exp: "Biror salbiy holatga sal qolish ‘-(으)ㄹ 뻔하다’ bilan ifodalanadi." },
+        { q: "‘Har kuni koreyscha o‘qishga qaror qildim’ — to‘g‘ri javob:", opts: ['매일 한국어를 공부하기로 했어요', '매일 한국어를 공부할 뻔했어요', '매일 한국어를 공부하거든요', '매일 한국어를 공부한 셈이에요'], ans: '매일 한국어를 공부하기로 했어요', exp: "Qaror qabul qilish: ‘V-기로 하다’." }
       ]
     },
     {
@@ -405,8 +396,8 @@ export default function App() {
         { sp: '토히르벡', ko: '시간과 장소를 절약할 수 있는 반면에 집중력이 떨어질 수 있습니다.', uz: 'Vaqt va joyni tejash mumkin bo‘lgani holda, diqqat susayishi mumkin.' }
       ],
       quizzes: [
-        { q: "'Nafaqat koreys tili, balki ingliz tilini ham biladi' — to‘g‘ri qo‘shimcha:", opts: ['뿐만 아니라', '는 길에', 'ㄹ 뻔하다', '거든요'], ans: '뿐만 아니라', exp: "'N-(으)ㄹ 뿐만 아니라' — nafaqat ..., balki ... ham." },
-        { q: "'Eshik ochildi' (Majhul nisbat) qaysi fe'l?", opts: ['문이 열렸어요', '문을 열었어요', '문을 열게 했어요', '문을 열고 있어요'], ans: '문이 열렸어요', exp: "'열다' (ochmoq) -> '열리다' (ochilmoq)." }
+        { q: "‘Nafaqat koreys tili, balki ingliz tilini ham biladi’ — to‘g‘ri qo‘shimcha:", opts: ['뿐만 아니라', '는 길에', 'ㄹ 뻔하다', '거든요'], ans: '뿐만 아니라', exp: "‘N-(으)ㄹ 뿐만 아니라’ — nafaqat ..., balki ... ham." },
+        { q: "‘Eshik ochildi’ (Majhul nisbat) qaysi fe’l?", opts: ['문이 열렸어요', '문을 열었어요', '문을 열게 했어요', '문을 열고 있어요'], ans: '문이 열렸어요', exp: "‘열다’ (ochmoq) -> ‘열리다’ (ochilmoq)." }
       ]
     },
     {
@@ -426,11 +417,11 @@ export default function App() {
         { ko: '발전하다', uz: 'Rivojlanmoq', ex: '인공지능 기술이 빠르게 발전하고 있어요.' }
       ],
       dialogue: [
-        { sp: '동기', ko: '축하해요! 이번에 성적 우수 장학금을 받았다면서요?', uz: 'Tabriklayman! Bu safar a'lochi stipendiyasini olgan ekansiz-a?' },
+        { sp: '동기', ko: '축하해요! 이번에 성적 우수 장학금을 받았다면서요?', uz: 'Tabriklayman! Bu safar a’lochi stipendiyasini olgan ekansiz-a?' },
         { sp: '토히르벡', ko: '고마워요. 모두 열심히 도와준 친구들 덕분이에요.', uz: 'Rahmat. Barchasi astoydil yordam bergan do‘stlarim sharofati bilan.' }
       ],
       quizzes: [
-        { q: "Ijobiy natija uchun minnatdorchilik bildirishda qaysi so‘z ishlatiladi?", opts: ['덕분에', '탓에', '바람에', '불구하고'], ans: '덕분에', exp: "'덕분에' — sharofati bilan (ijobiy natijada)." }
+        { q: "Ijobiy natija uchun minnatdorchilik bildirishda qaysi so‘z ishlatiladi?", opts: ['덕분에', '탓에', '바람에', '불구하고'], ans: '덕분에', exp: "‘덕분에’ — sharofati bilan (ijobiy natijada)." }
       ]
     },
     {
@@ -454,7 +445,7 @@ export default function App() {
         { sp: '전문가', ko: '단기적으로는 효과가 있겠으나 장기적인 대책이 필요합니다.', uz: 'Qisqa muddatda samara bersa-da, uzoq muddatli chora-tadbirlar zarur.' }
       ],
       quizzes: [
-        { q: "'Bu daraja bo‘lsa deyarli tugatgan hisoblanamiz' — to‘g‘ri grammatika:", opts: ['다 끝낸 셈이에요', '다 끝낼 뻔했어요', '다 끝내는 길이에요', '다 끝내거든요'], ans: '다 끝낸 셈이에요', exp: "Umumiy xulosa chiqarish uchun '-(으)ㄴ/는 셈이다' ishlatiladi." }
+        { q: "‘Bu daraja bo‘lsa deyarli tugatgan hisoblanamiz’ — to‘g‘ri grammatika:", opts: ['다 끝낸 셈이에요', '다 끝낼 뻔했어요', '다 끝내는 길이에요', '다 끝내거든요'], ans: '다 끝낸 셈이에요', exp: "Umumiy xulosa chiqarish uchun ‘-(으)ㄴ/는 셈이다’ ishlatiladi." }
       ]
     },
     {
@@ -478,7 +469,7 @@ export default function App() {
         { sp: '토히르벡', ko: '맞아요, 천 리 길도 한 걸음부터라고 하잖아요.', uz: 'To‘g‘ri, ming chaqirimlik yo‘l ham bir qadamdan boshlanadi deyishadi-ku.' }
       ],
       quizzes: [
-        { q: "'가는 말이 고와야 오는 말이 곱다' maqolining ma'nosi nima?", opts: ['Yaxshi gapirsang, yaxshi javob olasan', 'Vaqt — oliy hakam', 'Mehnatning tagi rohat', 'Ko‘z qo‘rqoq, qo‘l botir'], ans: 'Yaxshi gapirsang, yaxshi javob olasan', exp: "So‘zma-so‘z: 'Ketayotgan so‘z chiroyli bo‘lsa, kelayotgan so‘z ham chiroyli bo‘ladi'." }
+        { q: "‘가는 말이 고와야 오는 말이 곱다’ maqolining ma’nosi nima?", opts: ['Yaxshi gapirsang, yaxshi javob olasan', 'Vaqt — oliy hakam', 'Mehnatning tagi rohat', 'Ko‘z qo‘rqoq, qo‘l botir'], ans: 'Yaxshi gapirsang, yaxshi javob olasan', exp: "So‘zma-so‘z: ‘Ketayotgan so‘z chiroyli bo‘lsa, kelayotgan so‘z ham chiroyli bo‘ladi’." }
       ]
     },
     {
@@ -502,7 +493,7 @@ export default function App() {
         { sp: '토히르벡', ko: '본 논문은 AI 기반 교육 시스템의 효율성을 실증적으로 규명한 바입니다.', uz: 'Ushbu maqola AI asosidagi ta’lim tizimining samaradorligini amaliy isbotlab berdi.' }
       ],
       quizzes: [
-        { q: "'Yoshu qaridan qat’i nazar' iborasining TOPIK 6 darajasidagi shakli:", opts: ['남녀노소를 막론하고', '남녀노소 덕분에', '남녀노소 탓에', '남녀노소뿐만 아니라'], ans: '남녀노소를 막론하고', exp: "'N을/를 막론하고' — ...-dan qat'i nazar." }
+        { q: "‘Yoshu qaridan qat’i nazar’ iborasining TOPIK 6 darajasidagi shakli:", opts: ['남녀노소를 막론하고', '남녀노소 덕분에', '남녀노소 탓에', '남녀노소뿐만 아니라'], ans: '남녀노소를 막론하고', exp: "‘N을/를 막론하고’ — ...-dan qat’i nazar." }
       ]
     },
     {
@@ -526,16 +517,14 @@ export default function App() {
         { sp: '토히르벡', ko: '감사합니다! 이제 한국어로 어떤 전문 분야든 자신 있게 소통할 수 있습니다.', uz: 'Rahmat! Endi koreys tilida har qanday sohada ishonch bilan muloqot qila olaman.' }
       ],
       quizzes: [
-        { q: "'Imtihon paytida kutubxonada yashagandek bo‘ldim' — eng tabiiy TOPIK 6 iborasi:", opts: ['도서관에서 살다시피 했어요', '도서관에서 살 뻔했어요', '도서관에서 사는 길이에요', '도서관에서 살기 마련이에요'], ans: '도서관에서 살다시피 했어요', exp: "'-다시피 하다' — deyarli shunday qilmoq." }
+        { q: "‘Imtihon paytida kutubxonada yashagandek bo‘ldim’ — eng tabiiy TOPIK 6 iborasi:", opts: ['도서관에서 살다시피 했어요', '도서관에서 살 뻔했어요', '도서관에서 사는 길이에요', '도서관에서 살기 마련이에요'], ans: '도서관에서 살다시피 했어요', exp: "‘-다시피 하다’ — deyarli shunday qilmoq." }
       ]
     }
   ];
 
-  // Kitobni ochish va savollarni har safar yangidan aralashtirish
   const openBookStudy = (book, initialSection = 'grammar') => {
     setSelectedBook(book);
     setStudySection(initialSection);
-    // Har kirganda ham savollar tartibi, ham variantlar tartibi aralashtiriladi!
     const randomized = shuffleArray(book.quizzes).map(q => ({
       ...q,
       opts: shuffleArray(q.opts)
@@ -548,7 +537,6 @@ export default function App() {
     setActiveTab('book_study');
   };
 
-  // Barcha kitoblardan umumiy lug‘at (Flashcards uchun)
   const allKoreanWords = snuBooks.flatMap(b => b.vocab.map(v => ({ ...v, book: b.code })));
 
   const theme = {
@@ -562,9 +550,6 @@ export default function App() {
     inputBg: isDarkMode ? 'bg-[#161f33] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
   };
 
-  // =========================================================================
-  // 0. KIRISH EKRANI
-  // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${theme.bg} flex flex-col justify-between p-6 font-sans`}>
@@ -645,12 +630,8 @@ export default function App() {
     );
   }
 
-  // =========================================================================
-  // 1. ASOSIY SAHIFA: HANGUL + 서울대 한국어 1A–6B KUTUBXONASI
-  // =========================================================================
   const renderBooksLibrary = () => (
     <div className="space-y-5 pb-24">
-      {/* 0-BOSQICH: HANGUL ALIFBOSI KARTASI */}
       <div 
         onClick={() => setActiveTab('hangul')}
         className="rounded-3xl p-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white border-b-4 border-emerald-950 shadow-xl cursor-pointer active:scale-98 transition"
@@ -669,7 +650,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* KITOBLAR SARLAVHASI */}
       <div className="flex items-center justify-between px-1">
         <div>
           <h3 className={`text-base font-black ${theme.textMain}`}>서울대 한국어 (1A — 6B)</h3>
@@ -680,7 +660,6 @@ export default function App() {
         </span>
       </div>
 
-      {/* 12 TA KITOB GRID (1A dan 6B gacha) */}
       <div className="grid grid-cols-2 gap-3">
         {snuBooks.map((book) => {
           const isDone = userProfile.completedBooks.includes(book.id);
@@ -715,9 +694,6 @@ export default function App() {
     </div>
   );
 
-  // =========================================================================
-  // 2. HANGUL ALIFBOSI INTERAKTIV DARSI
-  // =========================================================================
   const renderHangul = () => (
     <div className="space-y-5 pb-24">
       <div className="flex items-center justify-between">
@@ -783,16 +759,12 @@ export default function App() {
     </div>
   );
 
-  // =========================================================================
-  // 3. TANLANGAN KITOB ICHIDA O‘QISH (GRAMMATIKA, LUG‘AT, DIALOG, RANDOM TEST)
-  // =========================================================================
   const renderBookStudy = () => {
     if (!selectedBook) return null;
     const currentQ = shuffledQuizzes[quizIdx];
 
     return (
       <div className="space-y-4 pb-24">
-        {/* Top bar */}
         <div className="flex items-center justify-between">
           <button onClick={() => setActiveTab('books')} className={`flex items-center gap-1.5 text-xs font-black text-indigo-400 ${theme.subCard} border px-3 py-2 rounded-xl`}>
             <ArrowLeft size={16} /> Kitoblar
@@ -802,7 +774,6 @@ export default function App() {
           </span>
         </div>
 
-        {/* 4 ta bo‘lim */}
         <div className="grid grid-cols-4 gap-1.5 text-[11px] font-black">
           {[
             { id: 'grammar', label: 'Grammatika' },
@@ -822,7 +793,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* GRAMMATIKA */}
         {studySection === 'grammar' && (
           <div className="space-y-3">
             {selectedBook.grammar.map((g, i) => (
@@ -844,7 +814,6 @@ export default function App() {
           </div>
         )}
 
-        {/* LUG‘AT */}
         {studySection === 'vocab' && (
           <div className="space-y-2.5">
             {selectedBook.vocab.map((v, i) => (
@@ -867,7 +836,6 @@ export default function App() {
           </div>
         )}
 
-        {/* DIALOG */}
         {studySection === 'dialogue' && (
           <div className={`${theme.card} border rounded-3xl p-4 space-y-3`}>
             {selectedBook.dialogue.map((d, i) => (
@@ -890,7 +858,6 @@ export default function App() {
           </div>
         )}
 
-        {/* DINAMIK ARALASH TESTLAR (HAR KIRGANDA YANGILANADI) */}
         {studySection === 'quiz' && (
           <div className={`${theme.card} border-2 rounded-3xl p-5 space-y-4`}>
             <div className="flex items-center justify-between text-xs font-black">
@@ -999,9 +966,6 @@ export default function App() {
     );
   };
 
-  // =========================================================================
-  // 4. BARCHA KITOBLAR LUG‘ATI (FLASHCARDS)
-  // =========================================================================
   const renderFlashcards = () => {
     const card = allKoreanWords[cardIdx % allKoreanWords.length];
     return (
@@ -1045,12 +1009,8 @@ export default function App() {
     );
   };
 
-  // =========================================================================
-  // ASOSIY SHELL
-  // =========================================================================
   return (
     <div className={`min-h-screen w-full ${theme.bg} flex flex-col font-sans select-none transition-colors`}>
-      {/* TOP BAR */}
       <header className={`sticky top-0 z-40 ${theme.header} px-4 py-3 backdrop-blur-xl`}>
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -1075,7 +1035,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 w-full max-w-md mx-auto p-4">
         {activeTab === 'books' && renderBooksLibrary()}
         {activeTab === 'hangul' && renderHangul()}
@@ -1083,7 +1042,6 @@ export default function App() {
         {activeTab === 'flashcards' && renderFlashcards()}
       </main>
 
-      {/* BOTTOM NAVIGATION */}
       <nav className={`fixed bottom-0 inset-x-0 z-40 ${theme.navBg} px-2 py-2.5 backdrop-blur-xl`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
           <button onClick={() => setActiveTab('books')} className={`flex flex-col items-center ${activeTab === 'books' || activeTab === 'book_study' ? 'text-indigo-400' : theme.textMuted}`}>
@@ -1108,7 +1066,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* PROFIL MODAL */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className={`${theme.card} border-2 rounded-3xl p-6 w-full max-w-sm space-y-4`}>
