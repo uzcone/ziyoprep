@@ -29,3 +29,25 @@ try {
 }
 
 export { auth, googleProvider, db };
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAIWyXal_We9nITuvdWjUfG0KJ7ET-xij8",
+  authDomain: "ziyoprep.firebaseapp.com",
+  projectId: "ziyoprep",
+  storageBucket: "ziyoprep.firebasestorage.app",
+  messagingSenderId: "427182718066",
+  appId: "1:427182718066:web:0b68aae20359979b4a56eb",
+  measurementId: "G-NCBDRXVRFD"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
