@@ -3,12 +3,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "O'ZINGIZNING_API_KEY",
-  authDomain: "O'ZINGIZNING_AUTH_DOMAIN",
-  projectId: "O'ZINGIZNING_PROJECT_ID",
-  storageBucket: "O'ZINGIZNING_STORAGE_BUCKET",
-  messagingSenderId: "O'ZINGIZNING_SENDER_ID",
-  appId: "O'ZINGIZNING_APP_ID"
+  apiKey: "AIzaSyAIWyXal_We9nITuvdWjUfG0KJ7ET-xij8",
+  authDomain: "ziyoprep.firebaseapp.com",
+  projectId: "ziyoprep",
+  storageBucket: "ziyoprep.firebasestorage.app",
+  messagingSenderId: "427182718066",
+  appId: "1:427182718066:web:0b68aae20359979b4a56eb",
+  measurementId: "G-NCBDRXVRFD"
 };
 
 const app = initializeApp(firebaseConfig);
