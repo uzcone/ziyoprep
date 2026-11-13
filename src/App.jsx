@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
-  ChevronUp, ChevronDown, Edit3, Shuffle, Play, Sparkles
+  ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
+  BookOpen, Sparkles, Bot, RotateCcw, User, 
+  Flame, Zap, Heart, Send, Sun, Moon, Trophy, Award
 } from 'lucide-react';
 
 // Unicode Hangul Bo'g'in Yig'uvchi Formula
@@ -32,11 +34,29 @@ function shuffleArray(arr) {
 
 export default function App() {
   // --- ASOSIY HOLATLAR ---
-  const [screen, setScreen] = useState('home'); // 'home' | 'builder' | 'lesson'
+  const [screen, setScreen] = useState('home'); // 'home' | 'builder' | 'lesson' | 'ai' | 'review' | 'profile'
   const [uiLang, setUiLang] = useState('uz'); // 'uz' | 'ko'
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
   const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
+
+  // Foydalanuvchi Profili va Gamification
+  const [profile, setProfile] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('hs_profile'));
+      return {
+        name: saved?.name || 'Tokhirbek',
+        xp: saved?.xp ?? 1450,
+        streak: saved?.streak ?? 12,
+        hearts: saved?.hearts ?? 5
+      };
+    } catch {
+      return { name: 'Tokhirbek', xp: 1450, streak: 12, hearts: 5 };
+    }
+  });
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(profile.name);
 
   const [completedIds, setCompletedIds] = useState(() => {
     try {
@@ -56,12 +76,24 @@ export default function App() {
   });
 
   useEffect(() => {
+    localStorage.setItem('hs_profile', JSON.stringify(profile));
+  }, [profile]);
+
+  useEffect(() => {
     localStorage.setItem('hs_completed', JSON.stringify(completedIds));
   }, [completedIds]);
 
   useEffect(() => {
     localStorage.setItem('hs_memos', JSON.stringify(memos));
   }, [memos]);
+
+  const toggleDark = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      localStorage.setItem('hs_dark', String(next));
+      return next;
+    });
+  };
 
   // Koreyscha Native Audio
   const speakKo = (text) => {
@@ -76,8 +108,56 @@ export default function App() {
     } catch {}
   };
 
+  // --- AI USTOZ HOLATLARI ---
+  const [aiMessages, setAiMessages] = useState([
+    {
+      role: 'ai',
+      ko: '안녕하세요! 저는 한글 스튜디오 AI 튜터예요.',
+      uz: 'Salom! Men Hangul Studio AI ustozingizman. Qaysi grammatika yoki mavzuni birga mashq qilamiz?'
+    }
+  ]);
+  const [aiInput, setAiInput] = useState('');
+
+  const handleAiSend = (preset) => {
+    const text = (preset || aiInput).trim();
+    if (!text) return;
+    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
+    setAiInput('');
+
+    setTimeout(() => {
+      let reply = {
+        ko: '아주 잘했어요! 한국어 문장을 자연스럽게 만드셨네요.',
+        uz: "Juda yaxshi! Koreyscha gapni tabiiy tuzdingiz. Yana misol: '저는 매일 한국어를 공부해요' (Men har kuni koreys tilini o‘rganaman)."
+      };
+
+      if (text.includes('예요') || text.includes('이에요')) {
+        reply = {
+          ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 써요!',
+          uz: "Qoida: Undosh (받침) bilan tugasa '이에요' (학생이에요), unli bilan tugasa '예요' (가수예요) ishlatiladi!"
+        };
+      } else if (text.includes('을') || text.includes('를')) {
+        reply = {
+          ko: '받침이 있으면 "을" (음악을), 없으면 "를" (노래를) 사용해요.',
+          uz: "Tushum kelishigi: Undoshdan keyin '을' (음악을), unlidan keyin '를' (노래를) qo‘yiladi."
+        };
+      } else if (text.includes('Kafe') || text.includes('카페')) {
+        reply = {
+          ko: '카페에서: "아이스 아메리카노 한 잔 주세요."',
+          uz: "Kafeda buyurtma: 'Bitta muzli amerikano bering.' Javob: '네, 알겠습니다. 영수증 드릴까요?' (Xo‘p, chek beraymi?)"
+        };
+      }
+
+      setAiMessages(prev => [...prev, { role: 'ai', ...reply }]);
+      speakKo(reply.ko);
+    }, 350);
+  };
+
+  // --- TAKRORLASH (FLASHCARDS) HOLATLARI ---
+  const [flashIdx, setFlashIdx] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+
   // --- 글자 조립 (BO'G'IN YIG'ISH) HOLATLARI ---
-  const [builderTab, setBuilderTab] = useState('no_batchim'); // 'no_batchim' | 'with_batchim' | 'word' | 'pronounce'
+  const [builderTab, setBuilderTab] = useState('no_batchim');
   const [cho, setCho] = useState('ㄱ');
   const [jung, setJung] = useState('ㅏ');
   const [jong, setJong] = useState('ㄴ');
@@ -103,6 +183,7 @@ export default function App() {
     const b = Math.random() > 0.45 ? batchims[Math.floor(Math.random() * batchims.length)] : '';
     setRandomChar(composeHangul(c, v, b));
     setPracticeCount(p => p + 1);
+    setProfile(p => ({ ...p, xp: p.xp + 2 }));
   };
 
   // --- DARS ICHIDAGI HOLATLAR ---
@@ -112,7 +193,6 @@ export default function App() {
   const [editingMemo, setEditingMemo] = useState(false);
   const [memoInput, setMemoInput] = useState('');
 
-  // Har kirganda aralashadigan test holati
   const [quizList, setQuizList] = useState([]);
   const [qIdx, setQIdx] = useState(0);
   const [qAnswer, setQAnswer] = useState(null);
@@ -367,33 +447,6 @@ export default function App() {
           quizzes: [
             { q: "‘Borib ko‘rganman’ — to‘g‘ri shakl:", opts: ['가 본 적이 있어요', '갈 거예요', '가고 싶어요', '가야 돼요'], ans: '가 본 적이 있어요', exp: "Tajriba: ‘-(으)ㄴ 적이 있다’." }
           ]
-        },
-        {
-          id: '1b-3', num: 9, week: '5주차 · DAY 9', emoji: '🚀', title: '앞으로 뭐 할 거예요?',
-          heroKo: '내년에 한국에 갈 거예요', heroUz: 'Kelasi yili Koreyaga bormoqchiman',
-          pinkTitle: '동사 + (으)ㄹ 거예요', pinkSub: 'Kelajak zamon rejalari',
-          pinkGroups: [
-            {
-              cond: 'Reja va niyat → (으)ㄹ 거예요',
-              items: [
-                { ko: '내년에 한국에 갈 거예요.', uz: 'Kelasi yili Koreyaga bormoqchiman.' },
-                { ko: '주말에 친구를 만날 거예요.', uz: 'Dam olish kuni do‘stim bilan uchrashaman.' }
-              ]
-            }
-          ],
-          greenTitle: '문장 구조', greenFormula: '시간 + 에 + 동사 + (으)ㄹ 거예요',
-          greenRows: [
-            { parts: ['내년에', '한국에', '갈 거예요'], res: '내년에 한국에 갈 거예요.', uz: 'Kelasi yili Koreyaga bormoqchiman.' }
-          ],
-          words: [
-            { ko: '내년', uz: 'Kelasi yil' },
-            { ko: '계획', uz: 'Reja' },
-            { ko: '만나다', uz: 'Uchrashmoq' },
-            { ko: '취직하다', uz: 'Ishga kirmoq' }
-          ],
-          quizzes: [
-            { q: "‘Ertaga kutubxonaga boraman’ — kelajak zamon:", opts: ['내일 도서관에 갈 거예요', '어제 도서관에 갔어요', '도서관에 가세요', '도서관에 가지만'], ans: '내일 도서관에 갈 거예요', exp: "Kelajak reja: ‘-(으)ㄹ 거예요’." }
-          ]
         }
       ]
     },
@@ -403,7 +456,7 @@ export default function App() {
       range: '1–12주차 · O‘rta-boshlang‘ich 1',
       lessons: [
         {
-          id: '2a-1', num: 10, week: '6주차 · DAY 10', emoji: '☔', title: '왜 좋아요? (-아서/어서)',
+          id: '2a-1', num: 9, week: '6주차 · DAY 9', emoji: '☔', title: '왜 좋아요? (-아서/어서)',
           heroKo: '비가 와서 집에 있었어요', heroUz: 'Yomg‘ir yog‘gani uchun uyda bo‘ldim',
           pinkTitle: 'A/V + 아서 / 어서', pinkSub: 'Sabab va natijani bog‘lash',
           pinkGroups: [
@@ -437,7 +490,7 @@ export default function App() {
       range: '1–12주차 · O‘rta-boshlang‘ich 2',
       lessons: [
         {
-          id: '2b-1', num: 11, week: '7주차 · DAY 11', emoji: '🆘', title: '도와주세요! (-(으)니까)',
+          id: '2b-1', num: 10, week: '7주차 · DAY 10', emoji: '🆘', title: '도와주세요! (-(으)니까)',
           heroKo: '날씨가 추우니까 따뜻한 옷을 입으세요', heroUz: 'Havo sovuq bo‘lgani uchun issiq kiyim kiying',
           pinkTitle: 'A/V + (으)니까', pinkSub: 'Buyruq va taklif bilan keluvchi sabab',
           pinkGroups: [
@@ -471,7 +524,7 @@ export default function App() {
       range: 'TOPIK 3–6 · O‘rta va Oliy Bosqich',
       lessons: [
         {
-          id: '3a-6b-1', num: 12, week: '12주차 · MASTER', emoji: '🎓', title: '한국어로 하루를 살아봐요',
+          id: '3a-6b-1', num: 11, week: '12주차 · MASTER', emoji: '🎓', title: '한국어로 하루를 살아봐요',
           heroKo: '남녀노소를 막론하고 유창하게 말할 수 있어요', heroUz: 'Yoshu qaridan qat’i nazar ravon gapira olamiz',
           pinkTitle: '-다고 하다 / -뿐만 아니라 / -을 막론하고', pinkSub: 'TOPIK 3–6 darajadagi oliy grammatika',
           pinkGroups: [
@@ -504,6 +557,7 @@ export default function App() {
 
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons);
+  const allWords = allLessons.flatMap(l => l.words);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
   const startLesson = (lesson) => {
@@ -523,27 +577,41 @@ export default function App() {
     setScreen('lesson');
   };
 
+  // --- SOFT PASTEL & DARK THEME ---
+  const t = {
+    bg: isDark ? 'bg-[#0b0f19] text-slate-100' : 'bg-[#faf8f9] text-[#1e1e1e]',
+    card: isDark ? 'bg-[#141a29] border-slate-800' : 'bg-white border-slate-200/90 shadow-2xs',
+    sub: isDark ? 'bg-[#1c2438] border-slate-700' : 'bg-[#fafafa] border-slate-200',
+    nav: isDark ? 'bg-[#0f1524]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200/90',
+    textMain: isDark ? 'text-white' : 'text-[#1e1e1e]',
+    textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
+  };
+
   // =========================================================================
-  // 1. ASOSIY EKRAN — "한글 스튜디오" (3-RASM BILAN 100% BIR XIL)
+  // 1. ASOSIY EKRAN — "한글 스튜디오"
   // =========================================================================
   const renderHome = () => (
-    <div className="space-y-4 pb-10">
-      {/* Top Bar: 한글 스튜디오 + 🌐 한국어 / O'zbekcha */}
+    <div className="space-y-4 pb-24">
       <div className="flex items-center justify-between pt-2">
-        <h1 className="text-[22px] font-black tracking-tight text-[#1e1e1e]">한글 스튜디오</h1>
-        <button
-          onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
-          className="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-600 flex items-center gap-1.5 shadow-2xs"
-        >
-          <Globe size={14} className="text-sky-500" />
-          <span>{uiLang === 'uz' ? "O'zbekcha" : '한국어'}</span>
-        </button>
+        <h1 className={`text-[22px] font-black tracking-tight ${t.textMain}`}>한글 스튜디오</h1>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
+            className={`px-3 py-1.5 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1.5`}
+          >
+            <Globe size={14} className="text-sky-500" />
+            <span>{uiLang === 'uz' ? "O'zbekcha" : '한국어'}</span>
+          </button>
+          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
+            {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
+          </button>
+        </div>
       </div>
 
       {/* ▶ 1주차 이어서 공부하기 */}
       <button
         onClick={() => startLesson(nextLesson)}
-        className="w-full py-3.5 px-4 rounded-2xl bg-white border border-slate-200 hover:border-rose-300 text-xs font-black text-slate-800 flex items-center justify-center gap-2 shadow-2xs active:scale-99 transition"
+        className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-rose-300 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
       >
         <Play size={13} className="text-[#e11d48] fill-[#e11d48]" />
         <span>
@@ -553,20 +621,20 @@ export default function App() {
         </span>
       </button>
 
-      {/* Yashil Karta: 글자 조립 (자음·모음을 눌러 글자 만들고 발음 듣기) */}
+      {/* Yashil Karta: 글자 조립 */}
       <div
         onClick={() => setScreen('builder')}
-        className="rounded-2xl bg-[#eef6ee] border border-[#d6ead6] p-4 flex items-center justify-between cursor-pointer active:scale-99 transition"
+        className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
       >
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center shadow-xs">
             abc
           </div>
           <div>
-            <div className="font-black text-sm text-[#1e293b]">
-              글자 조립 {uiLang === 'uz' && <span className="text-xs font-bold text-emerald-700">(Harf yig‘ish)</span>}
+            <div className={`font-black text-sm ${t.textMain}`}>
+              글자 조립 {uiLang === 'uz' && <span className="text-xs font-bold text-emerald-600">(Harf yig‘ish)</span>}
             </div>
-            <div className="text-[11px] text-slate-500 mt-0.5">
+            <div className={`text-[11px] ${t.textMuted} mt-0.5`}>
               {uiLang === 'uz'
                 ? 'Undosh va unlini bosib bo‘g‘in yasang va talaffuzini eshiting'
                 : '자음·모음을 눌러 글자 만들고 발음 듣기'}
@@ -576,7 +644,7 @@ export default function App() {
         <span className="text-slate-400 font-bold text-lg">›</span>
       </div>
 
-      {/* LEVEL / 서울대 한국어 1A ~ 6B Tablari */}
+      {/* 서울대 한국어 1A ~ 6B Tablari */}
       <div className="space-y-1 pt-1">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0">서울대</span>
@@ -588,8 +656,8 @@ export default function App() {
                 onClick={() => setSelectedBookCode(b.code)}
                 className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 transition ${
                   active
-                    ? 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e] shadow-2xs'
-                    : 'bg-[#f8dce2] text-[#7f2d3f]'
+                    ? isDark ? 'bg-slate-800 border-2 border-rose-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
+                    : isDark ? 'bg-rose-950/60 text-rose-200' : 'bg-[#f8dce2] text-[#7f2d3f]'
                 }`}
               >
                 {b.code}
@@ -603,7 +671,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Ketma-ket Darslar Ro'yxati (1, 2, 3...) */}
+      {/* Darslar Ro'yxati */}
       <div className="space-y-2.5">
         {currentBook.lessons.map((lesson, idx) => {
           const isDone = completedIds.includes(lesson.id);
@@ -620,8 +688,8 @@ export default function App() {
                 }
                 startLesson(lesson);
               }}
-              className={`rounded-2xl bg-white border border-slate-200/90 p-3.5 flex items-center justify-between cursor-pointer transition ${
-                isOpen ? 'hover:border-rose-300 shadow-2xs' : 'opacity-65'
+              className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer transition ${
+                isOpen ? 'hover:border-rose-300' : 'opacity-65'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -636,7 +704,7 @@ export default function App() {
                 </span>
                 <span className="text-base">{lesson.emoji}</span>
                 <div>
-                  <div className="text-xs font-black text-[#1e1e1e]">{lesson.title}</div>
+                  <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
                   {uiLang === 'uz' && <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>}
                 </div>
               </div>
@@ -655,7 +723,6 @@ export default function App() {
         })}
       </div>
 
-      {/* Pastki qizil tugma: 전체 코스 열기 */}
       {!isUnlockedAll && (
         <button
           onClick={() => {
@@ -671,53 +738,49 @@ export default function App() {
   );
 
   // =========================================================================
-  // 2. "글자 조립" — 자음·모음으로 글자 만들기 (1-RASM BILAN 100% BIR XIL)
+  // 2. "글자 조립" — 자음·모음으로 글자 만들기
   // =========================================================================
   const renderBuilder = () => (
-    <div className="space-y-3.5 pb-10">
-      {/* Header */}
+    <div className="space-y-3.5 pb-24">
       <div className="flex items-center justify-between pt-2">
-        <button onClick={() => setScreen('home')} className="flex items-center gap-1.5 text-sm font-black text-slate-800">
+        <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
           <ArrowLeft size={16} /> <span>글자 조립</span>
         </button>
         <button
           onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
-          className="px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-600 flex items-center gap-1"
+          className={`px-3 py-1 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1`}
         >
           <Globe size={13} className="text-sky-500" /> {uiLang === 'uz' ? "O'zbekcha" : '한국어'}
         </button>
       </div>
 
-      {/* 4 ta Yuqori Rejim Kartasi */}
       <div className="grid grid-cols-4 gap-1.5">
         {[
           { id: 'no_batchim', icon: '가', label: '받침 없는 글자' },
           { id: 'with_batchim', icon: '난', label: '받침 있는 글자' },
           { id: 'word', icon: '🥗', label: '단어 조립' },
           { id: 'pronounce', icon: '🔊', label: '발음 연습' }
-        ].map(t => (
+        ].map(tab => (
           <button
-            key={t.id}
-            onClick={() => setBuilderTab(t.id)}
+            key={tab.id}
+            onClick={() => setBuilderTab(tab.id)}
             className={`p-2.5 rounded-2xl border text-center transition ${
-              builderTab === t.id
-                ? 'bg-[#eef6ee] border-[#9ec99e] font-black text-slate-900'
-                : 'bg-white border-slate-200 text-slate-500'
+              builderTab === tab.id
+                ? isDark ? 'bg-emerald-950/60 border-emerald-500 text-white font-black' : 'bg-[#eef6ee] border-[#9ec99e] font-black text-slate-900'
+                : `${t.card} ${t.textMuted}`
             }`}
           >
-            <div className="text-sm font-black">{t.icon}</div>
-            <div className="text-[9px] mt-1 leading-tight">{t.label}</div>
+            <div className="text-sm font-black">{tab.icon}</div>
+            <div className="text-[9px] mt-1 leading-tight">{tab.label}</div>
           </button>
         ))}
       </div>
 
-      {/* Asosiy Klaviatura + Natija Kvadrat + 단어 조립 */}
-      <div className="rounded-3xl bg-white border border-slate-200/90 p-4 space-y-3.5 shadow-2xs">
+      <div className={`rounded-3xl ${t.card} border p-4 space-y-3.5`}>
         <div className="text-[11px] font-bold text-slate-500">
           자음과 모음을 눌러서 글자를 만들어 보세요
         </div>
 
-        {/* 자음 (Undoshlar) */}
         <div className="space-y-1.5">
           <div className="text-[10px] font-bold text-slate-400">자음</div>
           <div className="grid grid-cols-8 gap-1.5">
@@ -728,7 +791,7 @@ export default function App() {
                 className={`py-2 rounded-xl border text-xs font-black transition ${
                   cho === c
                     ? 'bg-[#e6f3e6] border-[#82b982] text-emerald-900'
-                    : 'bg-[#fafafa] border-slate-200 text-slate-700'
+                    : `${t.sub} ${t.textMain}`
                 }`}
               >
                 {c}
@@ -740,7 +803,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* 모음 (Unlilar) */}
         <div className="space-y-1.5">
           <div className="text-[10px] font-bold text-slate-400">모음</div>
           <div className="grid grid-cols-8 gap-1.5">
@@ -751,7 +813,7 @@ export default function App() {
                 className={`py-2 rounded-xl border text-xs font-black transition ${
                   jung === v
                     ? 'bg-[#e6f3e6] border-[#82b982] text-emerald-900'
-                    : 'bg-[#fafafa] border-slate-200 text-slate-700'
+                    : `${t.sub} ${t.textMain}`
                 }`}
               >
                 {v}
@@ -763,17 +825,16 @@ export default function App() {
           </button>
         </div>
 
-        {/* 받침 (Agar '받침 있는 글자' yoki '단어 조립' tanlangan bo'lsa) */}
         {(builderTab === 'with_batchim' || builderTab === 'word') && (
           <div className="space-y-1.5">
-            <div className="text-[10px] font-bold text-slate-400">받침 (Pastki undosh)</div>
+            <div className="text-[10px] font-bold text-slate-400">받침</div>
             <div className="grid grid-cols-6 gap-1.5">
               {batchims.map(b => (
                 <button
                   key={b}
                   onClick={() => { setJong(b); speakKo(composeHangul(cho, jung, b)); }}
                   className={`py-1.5 rounded-xl border text-xs font-black ${
-                    jong === b ? 'bg-[#fdf2f4] border-rose-400 text-rose-800' : 'bg-[#fafafa] border-slate-200 text-slate-700'
+                    jong === b ? 'bg-[#fdf2f4] border-rose-400 text-rose-800' : `${t.sub} ${t.textMain}`
                   }`}
                 >
                   {b}
@@ -783,21 +844,20 @@ export default function App() {
           </div>
         )}
 
-        {/* Chapda Katta Bo'g'in Kvadrat + O'ngda 단어 조립 */}
-        <div className="grid grid-cols-12 gap-3 pt-2 items-center border-t border-slate-100">
+        <div className="grid grid-cols-12 gap-3 pt-2 items-center border-t border-slate-200/40">
           <div
             onClick={() => speakKo(composedSyllable)}
-            className="col-span-5 aspect-square rounded-2xl bg-[#fafafa] border border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400"
+            className={`col-span-5 aspect-square rounded-2xl ${t.sub} border flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400`}
           >
-            <span className="text-5xl font-black text-slate-900">{composedSyllable}</span>
+            <span className={`text-5xl font-black ${t.textMain}`}>{composedSyllable}</span>
             <span className="text-[10px] font-bold text-slate-400 mt-1">{romanGuide}</span>
             <span className="text-[9px] font-bold text-slate-500 mt-0.5">🔊 눌러서 듣기</span>
           </div>
 
           <div className="col-span-7 space-y-2">
             <div className="text-[10px] font-bold text-slate-500">단어 조립</div>
-            <div className="min-h-[38px] px-3 py-2 rounded-xl bg-[#fafafa] border border-slate-200 text-sm font-black text-slate-800 flex items-center">
-              {wordBuffer || <span className="text-[10px] font-normal text-slate-300">글자를 추가하거나 입력</span>}
+            <div className={`min-h-[38px] px-3 py-2 rounded-xl ${t.sub} border text-sm font-black ${t.textMain} flex items-center`}>
+              {wordBuffer || <span className="text-[10px] font-normal text-slate-400">글자를 추가하거나 입력</span>}
             </div>
             <div className="flex gap-1.5">
               <button
@@ -808,20 +868,20 @@ export default function App() {
               </button>
               <button
                 onClick={() => setWordBuffer(w => w.slice(0, -1))}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold"
+                className={`px-2.5 py-1.5 rounded-xl ${t.sub} border text-[11px] font-bold`}
               >
                 ⌫
               </button>
               <button
                 onClick={() => setWordBuffer('')}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-[10px] font-bold"
+                className={`px-2.5 py-1.5 rounded-xl ${t.sub} border text-[10px] font-bold`}
               >
                 전체 지우기
               </button>
             </div>
             <button
               onClick={() => wordBuffer && speakKo(wordBuffer)}
-              className="px-3.5 py-1.5 rounded-full bg-slate-300 hover:bg-slate-800 hover:text-white text-slate-700 font-bold text-[10px] flex items-center gap-1 transition"
+              className="px-3.5 py-1.5 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center gap-1"
             >
               <Volume2 size={12} /> 단어 듣기
             </button>
@@ -829,15 +889,14 @@ export default function App() {
         </div>
       </div>
 
-      {/* Pastki Blok: 🔊 랜덤 읽기 연습 */}
-      <div className="rounded-3xl bg-white border border-slate-200/90 p-5 text-center space-y-3 shadow-2xs">
+      <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-3`}>
         <div className="flex justify-between items-center text-[11px] font-bold">
-          <span className="text-slate-700">🔊 랜덤 읽기 연습</span>
+          <span className={t.textMain}>🔊 랜덤 읽기 연습</span>
           <span className="text-slate-400">지금까지 {practiceCount}개 연습</span>
         </div>
 
         <div className="flex items-center justify-center gap-4 py-1">
-          <span className="text-5xl font-black text-slate-900">{randomChar}</span>
+          <span className={`text-5xl font-black ${t.textMain}`}>{randomChar}</span>
           <button
             onClick={() => speakKo(randomChar)}
             className="text-[11px] font-bold text-slate-500 hover:text-emerald-600 flex items-center gap-1"
@@ -857,59 +916,57 @@ export default function App() {
   );
 
   // =========================================================================
-  // 3. DARS EKRANI — 2-VA 4-RASM BILAN 100% BIR XIL (PUSHTI, YASHIL, BINAFSHA)
+  // 3. DARS EKRANI (PUSHTI, YASHIL, BINAFSHA BLOKLAR + TEST)
   // =========================================================================
   const renderLesson = () => {
     if (!activeLesson) return null;
     const currentQ = quizList[qIdx];
 
     return (
-      <div className="space-y-3.5 pb-12">
-        {/* Top bar: ← 1주차 · DAY 1  |  🌐 O'zbekcha / 한국어 */}
+      <div className="space-y-3.5 pb-24">
         <div className="flex items-center justify-between pt-2">
-          <button onClick={() => setScreen('home')} className="flex items-center gap-1.5 text-xs font-black text-slate-600">
+          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-xs font-black ${t.textMuted}`}>
             <ArrowLeft size={15} /> <span>{activeLesson.week}</span>
           </button>
           <button
             onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
-            className="px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-bold text-slate-600 flex items-center gap-1"
+            className={`px-3 py-1 rounded-full ${t.card} border text-[11px] font-bold flex items-center gap-1`}
           >
             <Globe size={12} className="text-sky-500" /> {uiLang === 'uz' ? "O'zbekcha" : '한국어'}
           </button>
         </div>
 
-        {/* Hero Karta: 🇰🇷 1주차 · DAY 1 — 저는 학생이에요 */}
         <div
           onClick={() => toggleItem('hero', activeLesson.heroKo)}
-          className="rounded-2xl bg-white border border-slate-200/90 p-4 flex items-center gap-3.5 cursor-pointer shadow-2xs"
+          className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer`}
         >
-          <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center text-xl shrink-0">
+          <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0">
             🇰🇷
           </div>
           <div>
             <div className="text-[10px] font-bold text-slate-400">{activeLesson.week}</div>
-            <div className="text-base font-black text-slate-900">{activeLesson.heroKo}</div>
+            <div className={`text-base font-black ${t.textMain}`}>{activeLesson.heroKo}</div>
             {revealed['hero'] && (
               <div className="text-xs font-bold text-indigo-500 mt-0.5">{activeLesson.heroUz}</div>
             )}
           </div>
         </div>
 
-        {/* 1-BLOK (OCH PUSHTI): 저는 ~예요 / 이에요 */}
-        <div className="rounded-3xl bg-[#fdf2f4] border border-[#f5d5dc] overflow-hidden">
+        {/* 1-BLOK (PUSHTI) */}
+        <div className={`rounded-3xl ${isDark ? 'bg-rose-950/40 border-rose-800' : 'bg-[#fdf2f4] border-[#f5d5dc]'} border overflow-hidden`}>
           <button
             onClick={() => setOpenSec(p => ({ ...p, rule: !p.rule }))}
             className="w-full p-4 flex items-center justify-between text-left"
           >
             <div>
-              <span className="font-black text-sm text-slate-900">{activeLesson.pinkTitle} </span>
+              <span className={`font-black text-sm ${t.textMain}`}>{activeLesson.pinkTitle} </span>
               <span className="text-[11px] text-slate-500">{activeLesson.pinkSub}</span>
             </div>
             {openSec.rule ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
           </button>
 
           {openSec.rule && (
-            <div className="bg-white p-4 space-y-4">
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-4`}>
               {activeLesson.pinkGroups.map((grp, gi) => (
                 <div key={gi} className="space-y-2">
                   <div className="text-[11px] font-bold text-slate-400">{grp.cond}</div>
@@ -918,7 +975,7 @@ export default function App() {
                       const key = `p-${gi}-${ii}`;
                       return (
                         <div key={key} onClick={() => toggleItem(key, it.ko)} className="cursor-pointer">
-                          <div className="text-sm font-black text-slate-800 hover:text-rose-600">{it.ko}</div>
+                          <div className={`text-sm font-black ${t.textMain} hover:text-rose-500`}>{it.ko}</div>
                           {revealed[key] && (
                             <div className="text-xs text-slate-400 font-bold">{it.uz}</div>
                           )}
@@ -929,8 +986,7 @@ export default function App() {
                 </div>
               ))}
 
-              {/* memo va ☐ 완료 */}
-              <div className="pt-2 border-t border-slate-100">
+              <div className="pt-2 border-t border-slate-200/30">
                 {editingMemo ? (
                   <div className="flex gap-1.5">
                     <input
@@ -938,7 +994,7 @@ export default function App() {
                       value={memoInput}
                       onChange={e => setMemoInput(e.target.value)}
                       placeholder="Eslatma yozing..."
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs"
+                      className={`flex-1 ${t.sub} border rounded-xl px-3 py-1.5 text-xs`}
                     />
                     <button
                       onClick={() => {
@@ -958,7 +1014,7 @@ export default function App() {
                     <button
                       onClick={() => setDoneSec(p => ({ ...p, rule: !p.rule }))}
                       className={`px-3 py-1 rounded-lg border text-[11px] font-bold ${
-                        doneSec.rule ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-200 text-slate-400'
+                        doneSec.rule ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-300 text-slate-400'
                       }`}
                     >
                       {doneSec.rule ? '✓ 완료' : '☐ 완료'}
@@ -970,34 +1026,34 @@ export default function App() {
           )}
         </div>
 
-        {/* 2-BLOK (OCH YASHIL): 문장 구조 */}
-        <div className="rounded-3xl bg-[#eef6ee] border border-[#d6ead6] overflow-hidden">
+        {/* 2-BLOK (YASHIL) */}
+        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border overflow-hidden`}>
           <button
             onClick={() => setOpenSec(p => ({ ...p, struct: !p.struct }))}
             className="w-full p-4 flex items-center justify-between text-left"
           >
             <div>
-              <span className="font-black text-sm text-slate-900">{activeLesson.greenTitle} </span>
-              <span className="text-[11px] text-emerald-700 font-bold">{activeLesson.greenFormula}</span>
+              <span className={`font-black text-sm ${t.textMain}`}>{activeLesson.greenTitle} </span>
+              <span className="text-[11px] text-emerald-600 font-bold">{activeLesson.greenFormula}</span>
             </div>
             {openSec.struct ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
           </button>
 
           {openSec.struct && (
-            <div className="bg-white p-4 space-y-3">
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-3`}>
               {activeLesson.greenRows.map((row, ri) => {
                 const key = `g-${ri}`;
                 return (
                   <div key={key} onClick={() => toggleItem(key, row.res)} className="cursor-pointer space-y-1">
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-700">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
                       {row.parts.map((pt, pi) => (
                         <React.Fragment key={pi}>
-                          <span className="px-2.5 py-1 rounded-lg bg-[#fafafa] border border-slate-200">{pt}</span>
+                          <span className={`px-2.5 py-1 rounded-lg ${t.sub} border`}>{pt}</span>
                           {pi < row.parts.length - 1 && <span className="text-slate-400">+</span>}
                         </React.Fragment>
                       ))}
                       <span className="text-slate-400">→</span>
-                      <span className="font-black text-slate-900">{row.res}</span>
+                      <span className={`font-black ${t.textMain}`}>{row.res}</span>
                     </div>
                     {revealed[key] && <div className="text-xs text-emerald-600 font-bold">{row.uz}</div>}
                   </div>
@@ -1008,7 +1064,7 @@ export default function App() {
                 <button
                   onClick={() => setDoneSec(p => ({ ...p, struct: !p.struct }))}
                   className={`px-3 py-1 rounded-lg border text-[11px] font-bold ${
-                    doneSec.struct ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-200 text-slate-400'
+                    doneSec.struct ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-300 text-slate-400'
                   }`}
                 >
                   {doneSec.struct ? '✓ 완료' : '☐ 완료'}
@@ -1018,28 +1074,28 @@ export default function App() {
           )}
         </div>
 
-        {/* 3-BLOK (OCH BINAFSHA): 오늘의 핵심 단어 */}
-        <div className="rounded-3xl bg-[#f3f0fa] border border-[#e0d7f5] overflow-hidden">
+        {/* 3-BLOK (BINAFSHA) */}
+        <div className={`rounded-3xl ${isDark ? 'bg-indigo-950/40 border-indigo-800' : 'bg-[#f3f0fa] border-[#e0d7f5]'} border overflow-hidden`}>
           <button
             onClick={() => setOpenSec(p => ({ ...p, words: !p.words }))}
             className="w-full p-4 flex items-center justify-between text-left"
           >
-            <span className="font-black text-sm text-slate-900">오늘의 핵심 단어</span>
+            <span className={`font-black text-sm ${t.textMain}`}>오늘의 핵심 단어</span>
             {openSec.words ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
           </button>
 
           {openSec.words && (
-            <div className="bg-white p-4 space-y-2">
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-2`}>
               {activeLesson.words.map((w, wi) => {
                 const key = `w-${wi}`;
                 return (
                   <div
                     key={key}
                     onClick={() => toggleItem(key, w.ko)}
-                    className="py-1.5 border-b border-slate-100 last:border-none cursor-pointer flex justify-between items-center"
+                    className="py-1.5 border-b border-slate-200/30 last:border-none cursor-pointer flex justify-between items-center"
                   >
                     <div>
-                      <div className="text-sm font-black text-slate-900">{w.ko}</div>
+                      <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
                       <div className="text-[11px] text-slate-400 font-bold">
                         {revealed[key] ? w.uz : '누르면 발음 & 번역'}
                       </div>
@@ -1052,9 +1108,9 @@ export default function App() {
           )}
         </div>
 
-        {/* HAR KIRGANDA ALMASHADIGAN TEST */}
+        {/* TEST */}
         {currentQ && (
-          <div className="rounded-3xl bg-white border border-slate-200 p-4 space-y-3 shadow-2xs">
+          <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
             <div className="flex items-center justify-between text-xs font-black">
               <span className="text-rose-500 flex items-center gap-1">
                 <Shuffle size={13} /> 퀴즈 ({qIdx + 1} / {quizList.length})
@@ -1064,7 +1120,7 @@ export default function App() {
               </button>
             </div>
 
-            <div className="text-sm font-black text-slate-900">{currentQ.q}</div>
+            <div className={`text-sm font-black ${t.textMain}`}>{currentQ.q}</div>
 
             <div className="space-y-2">
               {currentQ.opts.map(opt => (
@@ -1081,8 +1137,8 @@ export default function App() {
                         ? 'bg-emerald-500 text-white border-emerald-600'
                         : qAnswer === opt
                           ? 'bg-rose-500 text-white border-rose-600'
-                          : 'bg-slate-50 text-slate-400 border-slate-200'
-                      : 'bg-[#fafafa] border-slate-200 text-slate-800 hover:border-rose-300'
+                          : `${t.sub} opacity-50`
+                      : `${t.sub} ${t.textMain} hover:border-rose-300`
                   }`}
                 >
                   {opt}
@@ -1091,7 +1147,7 @@ export default function App() {
             </div>
 
             {qAnswer && (
-              <div className={`p-3 rounded-2xl text-xs ${qAnswer === currentQ.ans ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              <div className={`p-3 rounded-2xl text-xs ${qAnswer === currentQ.ans ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
                 <div className="font-black">{qAnswer === currentQ.ans ? '정답이에요! 🎉' : `오답! 정답: ${currentQ.ans}`}</div>
                 <div className="mt-0.5">{currentQ.exp}</div>
               </div>
@@ -1105,12 +1161,13 @@ export default function App() {
                     setQAnswer(null);
                   } else {
                     setCompletedIds(p => [...new Set([...p, activeLesson.id])]);
+                    setProfile(p => ({ ...p, xp: p.xp + 50 }));
                     setScreen('home');
                   }
                 }}
                 className="w-full py-3 rounded-2xl bg-[#1e1e1e] text-white font-black text-xs"
               >
-                {qIdx + 1 < quizList.length ? '다음 문제 →' : '학습 완료 (Darsni yakunlash)'}
+                {qIdx + 1 < quizList.length ? '다음 문제 →' : '학습 완료 (+50 XP)'}
               </button>
             )}
           </div>
@@ -1119,13 +1176,254 @@ export default function App() {
     );
   };
 
+  // =========================================================================
+  // 4. AI USTOZ (AI 튜터)
+  // =========================================================================
+  const renderAiTutor = () => (
+    <div className="flex flex-col h-[80vh] pb-20 pt-2">
+      <div className="flex items-center justify-between pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow">
+            <Bot size={22} />
+          </div>
+          <div>
+            <h2 className={`font-black text-sm ${t.textMain}`}>AI 한국어 튜터 (AI Ustoz)</h2>
+            <span className="text-[10px] font-bold text-emerald-500">● Online • Bosib talaffuzini eshiting</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tezkor savollar */}
+      <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
+        {['이에요 / 예요 farqi?', '을 / 를 qoidasi?', '☕ 카페에서 buyurtma'].map(chip => (
+          <button
+            key={chip}
+            onClick={() => handleAiSend(chip)}
+            className={`shrink-0 px-3 py-1.5 rounded-full ${t.card} border text-[11px] font-bold text-rose-500`}
+          >
+            {chip}
+          </button>
+        ))}
+      </div>
+
+      {/* Xabarlar */}
+      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
+        {aiMessages.map((m, idx) => (
+          <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              onClick={() => m.role === 'ai' && speakKo(m.ko)}
+              className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${
+                m.role === 'user'
+                  ? 'bg-rose-500 text-white font-bold'
+                  : `${t.sub} ${t.textMain}`
+              }`}
+            >
+              <div className="font-black leading-relaxed">{m.ko}</div>
+              {m.uz && <div className="text-[11px] opacity-80">{m.uz}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Yozish maydoni */}
+      <div className="pt-3 flex gap-2">
+        <input
+          type="text"
+          value={aiInput}
+          onChange={e => setAiInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAiSend()}
+          placeholder="Savol bering yoki koreyscha yozing..."
+          className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+        />
+        <button
+          onClick={() => handleAiSend()}
+          className="px-4 rounded-2xl bg-rose-500 text-white font-black flex items-center justify-center"
+        >
+          <Send size={17} />
+        </button>
+      </div>
+    </div>
+  );
+
+  // =========================================================================
+  // 5. TAKRORLASH (복습 - FLASHCARDS)
+  // =========================================================================
+  const renderReview = () => {
+    const card = allWords[flashIdx % allWords.length];
+    return (
+      <div className="space-y-4 pb-24 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className={`text-lg font-black ${t.textMain}`}>복습 • So‘zlarni Takrorlash</h2>
+          <span className="text-xs font-bold text-slate-400">{(flashIdx % allWords.length) + 1} / {allWords.length}</span>
+        </div>
+
+        <div
+          onClick={() => { setFlashFlipped(!flashFlipped); speakKo(card.ko); }}
+          className={`rounded-3xl ${t.card} border-2 p-8 min-h-[250px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
+        >
+          <span className="text-[10px] font-black uppercase text-rose-500">
+            {flashFlipped ? 'Tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
+          </span>
+          {!flashFlipped ? (
+            <>
+              <div className={`text-4xl font-black ${t.textMain}`}>{card.ko}</div>
+              <Volume2 size={24} className="text-emerald-500" />
+            </>
+          ) : (
+            <div className="text-2xl font-black text-emerald-500">{card.uz}</div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            onClick={() => { setFlashFlipped(false); setFlashIdx(Math.floor(Math.random() * allWords.length)); }}
+            className={`py-3.5 rounded-2xl ${t.card} border font-black text-xs flex items-center justify-center gap-1.5`}
+          >
+            <Shuffle size={15} /> Tasodifiy so‘z
+          </button>
+          <button
+            onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); setProfile(p => ({ ...p, xp: p.xp + 5 })); }}
+            className="py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
+          >
+            Yodladim (+5 XP) →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // 6. PROFIL (프로필)
+  // =========================================================================
+  const renderProfile = () => (
+    <div className="space-y-4 pb-24 pt-2">
+      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
+        <div className="flex items-center gap-3.5">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white font-black text-xl flex items-center justify-center">
+            {profile.name.charAt(0)}
+          </div>
+          <div>
+            {editingName ? (
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={nameDraft}
+                  onChange={e => setNameDraft(e.target.value)}
+                  className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold`}
+                />
+                <button
+                  onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }}
+                  className="px-2.5 py-1 rounded-xl bg-emerald-500 text-white text-xs font-bold"
+                >
+                  OK
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
+                <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
+              </div>
+            )}
+            <p className="text-xs text-slate-400 mt-0.5">한글 스튜디오 • 서울대 1A–6B</p>
+          </div>
+        </div>
+        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>
+          {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+        </button>
+      </div>
+
+      {/* Statistika */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
+          <div className="text-[10px] text-slate-400 font-bold">Kunlik Streak</div>
+        </div>
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <Zap size={20} className="mx-auto text-sky-500 fill-sky-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
+          <div className="text-[10px] text-slate-400 font-bold">Jami XP</div>
+        </div>
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <CheckCircle2 size={20} className="mx-auto text-emerald-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{completedIds.length} / {allLessons.length}</div>
+          <div className="text-[10px] text-slate-400 font-bold">Darslar</div>
+        </div>
+      </div>
+
+      {/* Tema almashtirish kartasi */}
+      <div className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between`}>
+        <div>
+          <div className={`text-xs font-black ${t.textMain}`}>Ilova Mavzusi (Tema)</div>
+          <div className="text-[11px] text-slate-400">{isDark ? 'Tungi rejim (Dark Mode)' : 'Yorug‘ Pastel (Soft Studio)'}</div>
+        </div>
+        <button
+          onClick={toggleDark}
+          className="px-4 py-2 rounded-xl bg-rose-500 text-white font-black text-xs"
+        >
+          Almashtirish
+        </button>
+      </div>
+    </div>
+  );
+
+  // =========================================================================
+  // ASOSIY SHELL + PASTKI 5 TA MENYU
+  // =========================================================================
   return (
-    <div className="min-h-screen w-full bg-[#faf8f9] text-[#1e1e1e] font-sans select-none">
-      <main className="max-w-md mx-auto px-4 py-3">
+    <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
+      <main className="max-w-md mx-auto px-4 py-2">
         {screen === 'home' && renderHome()}
         {screen === 'builder' && renderBuilder()}
         {screen === 'lesson' && renderLesson()}
+        {screen === 'ai' && renderAiTutor()}
+        {screen === 'review' && renderReview()}
+        {screen === 'profile' && renderProfile()}
       </main>
+
+      {/* PASTKI 5 TA MENYU (Darslar • Harf yasash • AI Ustoz • Takrorlash • Profil) */}
+      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 py-2 backdrop-blur-xl`}>
+        <div className="max-w-md mx-auto flex items-center justify-around">
+          <button
+            onClick={() => setScreen('home')}
+            className={`flex flex-col items-center ${screen === 'home' || screen === 'lesson' ? 'text-rose-500' : t.textMuted}`}
+          >
+            <BookOpen size={21} />
+            <span className="text-[10px] font-black mt-1">학습 • Darslar</span>
+          </button>
+
+          <button
+            onClick={() => setScreen('builder')}
+            className={`flex flex-col items-center ${screen === 'builder' ? 'text-emerald-600' : t.textMuted}`}
+          >
+            <Sparkles size={21} />
+            <span className="text-[10px] font-black mt-1">조립 • Harflar</span>
+          </button>
+
+          <button
+            onClick={() => setScreen('ai')}
+            className="-mt-6 w-13 h-13 rounded-full bg-rose-500 border-b-4 border-rose-700 text-white flex items-center justify-center shadow-lg active:translate-y-0.5"
+          >
+            <Bot size={25} />
+          </button>
+
+          <button
+            onClick={() => setScreen('review')}
+            className={`flex flex-col items-center ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}
+          >
+            <RotateCcw size={21} />
+            <span className="text-[10px] font-black mt-1">복습 • Mashq</span>
+          </button>
+
+          <button
+            onClick={() => setScreen('profile')}
+            className={`flex flex-col items-center ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}
+          >
+            <User size={21} />
+            <span className="text-[10px] font-black mt-1">프로필 • Profil</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
