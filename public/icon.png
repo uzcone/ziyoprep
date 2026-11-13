@@ -1,1 +1,17 @@
-.
+import React from "react";
+import mascot from "./ziyoprep-mascot.jpg";
+
+export default function ZiyoPrepIcon() {
+  return (
+    <img
+      src={mascot}
+      alt="ZiyoPrep"
+      style={{
+        width: 180,
+        height: 180,
+        objectFit: "cover",
+        borderRadius: "24%",
+      }}
+    />
+  );
+}
