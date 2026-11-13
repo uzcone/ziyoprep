@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
-  BookOpen, Sparkles, Bot, RotateCcw, User, 
+  BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, Clock, Target, Layers, Timer
+  Headphones, Mic, Clock, Target, Layers, Timer, Award
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
@@ -12,6 +12,40 @@ import {
   signOut, onAuthStateChanged 
 } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
+
+// ZiyoPrep Yashil Boyo'g'li Maskot Komponenti (/icon.png yoki /mascot.png yuklanganda rasmni, aks holda SVG maskotni ko'rsatadi)
+function ZiyoOwlAvatar({ src = '/icon.png', className = 'w-12 h-12' }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!imgError) {
+    return (
+      <img
+        src={src}
+        alt="ZiyoPrep Mascot"
+        onError={() => setImgError(true)}
+        className={`${className} object-cover shadow-md`}
+      />
+    );
+  }
+
+  return (
+    <div className={`${className} bg-gradient-to-br from-[#65d32e] to-[#3ca818] flex items-center justify-center relative overflow-hidden shadow-md`}>
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <circle cx="50" cy="54" r="38" fill="#58cc02" />
+        <polygon points="22,25 34,12 42,26" fill="#58cc02" />
+        <polygon points="78,25 66,12 58,26" fill="#58cc02" />
+        <rect x="14" y="24" width="72" height="12" rx="4" fill="#ffffff" />
+        <circle cx="36" cy="52" r="14" fill="#ffffff" />
+        <circle cx="64" cy="52" r="14" fill="#ffffff" />
+        <circle cx="38" cy="52" r="7" fill="#1e293b" />
+        <circle cx="62" cy="52" r="7" fill="#1e293b" />
+        <circle cx="40" cy="49" r="2.5" fill="#ffffff" />
+        <circle cx="64" cy="49" r="2.5" fill="#ffffff" />
+        <polygon points="44,62 56,62 50,72" fill="#f59e0b" />
+      </svg>
+    </div>
+  );
+}
 
 // Unicode Hangul Bo'g'in Yig'uvchi Formula
 const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -72,7 +106,7 @@ export default function App() {
   }, []);
 
   const handleGuestLogin = () => {
-    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'talaba@hangulstudio.uz', isGuest: true };
+    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'talaba@ziyoprep.uz', isGuest: true };
     setCurrentUser(guest);
     localStorage.setItem('hs_auth_user', JSON.stringify(guest));
   };
@@ -1002,12 +1036,12 @@ export default function App() {
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
-  // --- AQLLI AI USTOZ: 토히르벡 (HAR QANDAY SAVOLGA MOS JAVOB BERADI) ---
+  // --- AQLLI AI USTOZ: 토히르벡 ---
   const [aiMessages, setAiMessages] = useState([
     {
       role: 'ai',
-      ko: '안녕하세요! 저는 AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
-      uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 (Tokhirbek) man. Menga istalgan savol bering, so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!'
+      ko: '안녕하세요! 저는 ZiyoPrep AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
+      uz: 'Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Menga istalgan savol bering, so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!'
     }
   ]);
   const [aiInput, setAiInput] = useState('');
@@ -1020,15 +1054,13 @@ export default function App() {
   const generateSmartAiReply = (rawText) => {
     const q = rawText.toLowerCase().trim();
 
-    // 1. Salomlashish
     if (/^(salom|assalom|hello|hi|안녕|반가워|하이)/.test(q)) {
       return {
-        ko: `안녕하세요, ${profile.name} 씨! 오늘도 한국어 공부 화이팅해요!`,
+        ko: `안녕하세요, ${profile.name} 씨! 오늘도 ZiyoPrep과 함께 화이팅해요!`,
         uz: `Va alaykum assalom, ${profile.name}! Bugun kayfiyatlar qanday? Qaysi mavzuda suhbatlashamiz: Kafe, Universitet yoki TOPIK grammatikasi?`
       };
     }
 
-    // 2. "Men kimman" / Foydalanuvchi haqida savol
     if (q.includes('kimman') || q.includes('men haqimda') || q.includes('프로필') || q.includes('내 이름')) {
       return {
         ko: `당신은 열심히 공부하는 ${profile.name} 학생이에요! 현재 ${profile.xp} XP를 모았어요.`,
@@ -1036,15 +1068,13 @@ export default function App() {
       };
     }
 
-    // 3. AI ismi / O'zi haqida savol
     if (q.includes('isming') || q.includes('kimsan') || q.includes('토히르벡') || q.includes('누구')) {
       return {
-        ko: '제 이름은 토히르벡이에요! 서울대 한국어 1A부터 6B까지 도와주는 AI 선생님입니다.',
+        ko: '제 이름은 토히르벡이에요! ZiyoPrep에서 한국어를 가르치는 AI 선생님입니다.',
         uz: 'Mening ismim 토히르벡 (Tokhirbek)! Sizga Hangul alifbosidan tortib 서울대 한국어 1A–6B va TOPIK 6 gacha koreys tilini o‘rgatuvchi shaxsiy AI ustozingizman.'
       };
     }
 
-    // 4. Qanday yordam bera olasan / Nima qila olasan
     if (q.includes('nima qila') || q.includes('yordam') || q.includes('qanday')) {
       return {
         ko: '단어 번역, 문법 설명, 한국어 대화 연습을 모두 도와줄 수 있어요!',
@@ -1052,7 +1082,6 @@ export default function App() {
       };
     }
 
-    // 5. Grammatika savollari
     if (q.includes('예요') || q.includes('이에요')) {
       return {
         ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 사용해요!',
@@ -1084,7 +1113,6 @@ export default function App() {
       };
     }
 
-    // 6. Ichki lug'at bazasidan (1A-6B) avtomatik so'z qidirish va tarjima qilish!
     const foundWord = allWords.find(
       w => q.includes(w.uz.toLowerCase().split('/')[0].trim()) || q.includes(w.ko.toLowerCase())
     );
@@ -1095,7 +1123,6 @@ export default function App() {
       };
     }
 
-    // 7. Agar foydalanuvchi koreyscha (Hangul) yozgan bo'lsa
     if (/[가-힣]/.test(rawText)) {
       return {
         ko: `"${rawText}"라고 하셨군요! 정말 자연스러운 한국어예요. 계속 이야기해 볼까요?`,
@@ -1103,7 +1130,6 @@ export default function App() {
       };
     }
 
-    // 8. Boshqa har qanday erkin savollar uchun kontekstli aqlli javob
     return {
       ko: `"${rawText}"에 대한 좋은 질문이에요! 한국어로 "저는 한국어를 배우고 싶어요"라고 연습해 보세요.`,
       uz: `Qiziq savol ("${rawText}")! Men 토히르벡 (Tokhirbek AI) sifatida sizga koreys tilini o‘rgatishga tayyorman. Biror o‘zbekcha so‘z yozing (masalan: 'kutubxona', 'talaba', 'stipendiya') yoki koreyscha gap tuzib ko‘ring!`
@@ -1123,23 +1149,20 @@ export default function App() {
     }, 350);
   };
 
-  // --- TAKRORLASH (FLASHCARDS + LISTENING + SPEAKING + TOPIK MOCK + SPEED SPRINT) ---
-  const [reviewMode, setReviewMode] = useState('cards'); // 'cards' | 'listen' | 'speak' | 'mock' | 'sprint'
+  // --- TAKRORLASH ---
+  const [reviewMode, setReviewMode] = useState('cards');
   const [flashIdx, setFlashIdx] = useState(0);
   const [flashFlipped, setFlashFlipped] = useState(false);
 
-  // Listening state
   const [listenIdx, setListenIdx] = useState(0);
   const [listenOpts, setListenOpts] = useState([]);
   const [listenPick, setListenPick] = useState(null);
 
-  // Speaking state
   const [speakIdx, setSpeakIdx] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [speechText, setSpeechText] = useState('');
   const [speechStatus, setSpeechStatus] = useState(null);
 
-  // TOPIK Mock Test state
   const [mockActive, setMockActive] = useState(false);
   const [mockList, setMockList] = useState([]);
   const [mockStep, setMockStep] = useState(0);
@@ -1147,7 +1170,6 @@ export default function App() {
   const [mockSeconds, setMockSeconds] = useState(300);
   const [mockDone, setMockDone] = useState(false);
 
-  // YANGI O'YIN: 30 Soniyalik Speed Sprint
   const [sprintRunning, setSprintRunning] = useState(false);
   const [sprintTime, setSprintTime] = useState(30);
   const [sprintScore, setSprintScore] = useState(0);
@@ -1330,17 +1352,20 @@ export default function App() {
   };
 
   // =========================================================================
-  // 0. KIRISH EKRANI (LOGIN / REGISTER / AKKAUNTSIZ KIRISH)
+  // 0. KIRISH EKRANI (ZIYOPREP YASHIL BOYO'G'LI MASKOT BILAN)
   // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className={`font-black text-lg tracking-tight ${t.textMain}`}>한글 스튜디오</span>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500">서울대 1A–6B</span>
+          <div className="flex items-center gap-2.5">
+            <ZiyoOwlAvatar src="/icon.png" className="w-10 h-10 rounded-2xl" />
+            <div>
+              <span className={`font-black text-lg tracking-tight block leading-none ${t.textMain}`}>ZiyoPrep</span>
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">한글 스튜디오</span>
+            </div>
           </div>
-          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
+          <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>
             {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
           </button>
         </div>
@@ -1348,34 +1373,36 @@ export default function App() {
         <div className="max-w-md w-full mx-auto my-auto text-center space-y-6">
           {authMode === 'welcome' ? (
             <>
-              <div className="w-28 h-28 mx-auto rounded-[32px] bg-[#fdf2f4] dark:bg-rose-950/50 border-2 border-[#f8d7de] flex flex-col items-center justify-center shadow-lg">
-                <span className="text-4xl font-black text-slate-900 dark:text-white">가나다</span>
-                <span className="text-[10px] font-black text-rose-500 mt-1">서울대 1A–6B</span>
+              <div className="relative w-36 h-36 mx-auto">
+                <ZiyoOwlAvatar src="/mascot.png" className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" />
+                <span className="absolute -bottom-2 inset-x-3 bg-[#58cc02] text-white text-[10px] font-black py-1 rounded-full shadow-lg uppercase">
+                  ZiyoPrep • 서울대 1A–6B
+                </span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2">
                 <h1 className={`text-2xl font-black ${t.textMain}`}>
-                  Koreys tilini Hangul alifbosidan TOPIK 6 gacha o‘rganing!
+                  ZiyoPrep bilan koreys tilini quvnoq va samarali o‘rganing!
                 </h1>
                 <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                  Bosilganda talaffuz va tarjima, bo‘g‘in konstruktori va AI ustoz 토히르벡 bitta ilovada.
+                  Hangul alifbosi, 서울대 한국어 1A–6B kitoblari, Speaking mashqlari va shaxsiy AI ustoz 토히르벡.
                 </p>
               </div>
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-1">
                 <button
                   onClick={handleGuestLogin}
-                  className="w-full py-4 rounded-2xl bg-[#e11d48] hover:bg-rose-600 text-white font-black text-sm uppercase shadow-lg"
+                  className="w-full py-4 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] border-b-4 border-[#46a302] text-white font-black text-sm uppercase shadow-lg active:translate-y-0.5 transition"
                 >
                   Akkauntsiz Boshlash (Tezkor kirish)
                 </button>
                 <button
                   onClick={handleGoogleLogin}
-                  className={`w-full py-4 rounded-2xl ${t.card} border-2 font-black text-sm ${t.textMain}`}
+                  className={`w-full py-4 rounded-2xl ${t.card} border-2 border-b-4 font-black text-sm ${t.textMain} active:translate-y-0.5 transition`}
                 >
                   Google bilan davom etish
                 </button>
                 <button
                   onClick={() => { setAuthError(''); setAuthMode('login'); }}
-                  className="text-xs font-bold text-rose-500 hover:underline"
+                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
                   Email va Parol orqali kirish
                 </button>
@@ -1388,7 +1415,7 @@ export default function App() {
                   <ArrowLeft size={16} />
                 </button>
                 <h2 className={`font-black text-base ${t.textMain}`}>
-                  {authMode === 'login' ? 'Tizimga kirish' : 'Ro‘yxatdan o‘tish'}
+                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : 'Ro‘yxatdan o‘tish'}
                 </h2>
                 <div className="w-8" />
               </div>
@@ -1426,7 +1453,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-3.5 rounded-2xl bg-[#e11d48] text-white font-black text-xs uppercase"
+                  className="w-full py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#46a302] text-white font-black text-xs uppercase"
                 >
                   {authLoading ? 'Yuklanmoqda...' : authMode === 'login' ? 'Kirish' : 'Akkaunt yaratish'}
                 </button>
@@ -1434,7 +1461,7 @@ export default function App() {
 
               <button
                 onClick={() => { setAuthError(''); setAuthMode(authMode === 'login' ? 'register' : 'login'); }}
-                className="w-full text-center text-xs font-bold text-rose-500"
+                className="w-full text-center text-xs font-bold text-emerald-600"
               >
                 {authMode === 'login' ? "Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
               </button>
@@ -1442,21 +1469,29 @@ export default function App() {
           )}
         </div>
 
-        <div className="text-center text-[11px] text-slate-400">한글 스튜디오 • 서울대 한국어 1A–6B</div>
+        <div className="text-center text-[11px] text-slate-400">ZiyoPrep • 한글 스튜디오 (서울대 1A–6B)</div>
       </div>
     );
   }
 
   // =========================================================================
-  // 1. ASOSIY EKRAN — "한글 스튜디오"
+  // 1. ASOSIY EKRAN — "ZiyoPrep • 한글 스튜디오"
   // =========================================================================
   const renderHome = () => {
     const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
 
     return (
       <div className="space-y-4 pb-28">
+        {/* ZiyoPrep Brend Header */}
         <div className="flex items-center justify-between pt-2">
-          <h1 className={`text-[22px] font-black tracking-tight ${t.textMain}`}>한글 스튜디오</h1>
+          <div className="flex items-center gap-2.5">
+            <ZiyoOwlAvatar src="/icon.png" className="w-10 h-10 rounded-2xl" />
+            <div>
+              <h1 className={`text-lg font-black tracking-tight leading-none ${t.textMain}`}>ZiyoPrep</h1>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">한글 스튜디오 • 1A–6B</span>
+            </div>
+          </div>
+
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
@@ -1471,25 +1506,29 @@ export default function App() {
           </div>
         </div>
 
-        {/* KUNLIK MAQSAD PROGRESS */}
-        <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
-          <div className="flex justify-between items-center text-[11px] font-black">
-            <span className="flex items-center gap-1.5 text-amber-500">
-              <Target size={14} /> Kunlik maqsad
-            </span>
-            <span className={t.textMuted}>{profile.dailyXp} / 100 XP ({dailyPct}%)</span>
-          </div>
-          <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-rose-500 rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
+        {/* BOYO'G'LI MASKOT KUTIB OLISH & KUNLIK MAQSAD KARTASI */}
+        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800/70' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
+          <ZiyoOwlAvatar src="/mascot.png" className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" />
+          <div className="flex-1 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
+              <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{profile.dailyXp}/100 XP</span>
+            </div>
+            <div className="w-full h-2.5 bg-white/80 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+              <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
+            </div>
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+              🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP
+            </div>
           </div>
         </div>
 
         {/* ▶ 이어서 공부하기 */}
         <button
           onClick={() => startLesson(nextLesson)}
-          className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-rose-300 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
+          className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-emerald-400 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
         >
-          <Play size={13} className="text-[#e11d48] fill-[#e11d48]" />
+          <Play size={13} className="text-[#58cc02] fill-[#58cc02]" />
           <span>
             {uiLang === 'uz'
               ? `${nextLesson.week} Davom etish (${nextLesson.title})`
@@ -1520,7 +1559,7 @@ export default function App() {
           <span className="text-slate-400 font-bold text-lg">›</span>
         </div>
 
-        {/* YANGI: 30 SONIYALIK SO'Z OVCHISI O'YINI BANNER */}
+        {/* 30-SONIYALIK SO'Z OVCHISI O'YINI */}
         <div
           onClick={() => {
             setScreen('review');
@@ -1534,7 +1573,7 @@ export default function App() {
               <Timer size={20} />
             </div>
             <div>
-              <div className={`text-xs font-black ${t.textMain}`}>⚡ 30-Soniyalik So‘z Ovchisi (Yangi o‘yin!)</div>
+              <div className={`text-xs font-black ${t.textMain}`}>⚡ 30-Soniyalik So‘z Ovchisi</div>
               <div className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">Vaqt tugamasidan so‘zlarni topib XP yig‘ing</div>
             </div>
           </div>
@@ -1553,7 +1592,7 @@ export default function App() {
                   onClick={() => setSelectedBookCode(b.code)}
                   className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 transition ${
                     active
-                      ? isDark ? 'bg-slate-800 border-2 border-rose-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
+                      ? isDark ? 'bg-slate-800 border-2 border-emerald-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
                       : isDark ? 'bg-rose-950/60 text-rose-200' : 'bg-[#f8dce2] text-[#7f2d3f]'
                   }`}
                 >
@@ -1586,13 +1625,13 @@ export default function App() {
                   startLesson(lesson);
                 }}
                 className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer transition ${
-                  isOpen ? 'hover:border-rose-300' : 'opacity-65'
+                  isOpen ? 'hover:border-emerald-400' : 'opacity-65'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${
                     isDone
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-[#58cc02] text-white'
                       : isOpen
                         ? 'bg-[#dbeafe] text-[#1d4ed8]'
                         : 'bg-[#fce7eb] text-[#be123c]'
@@ -1608,11 +1647,11 @@ export default function App() {
 
                 <div>
                   {isDone ? (
-                    <CheckCircle2 size={17} className="text-emerald-500" />
+                    <CheckCircle2 size={17} className="text-[#58cc02]" />
                   ) : !isOpen ? (
                     <Lock size={15} className="text-slate-300" />
                   ) : (
-                    <span className="text-[10px] font-black text-rose-500">›</span>
+                    <span className="text-[10px] font-black text-emerald-600">›</span>
                   )}
                 </div>
               </div>
@@ -1838,9 +1877,7 @@ export default function App() {
           onClick={() => toggleItem('hero', activeLesson.heroKo)}
           className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer`}
         >
-          <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0">
-            🇰🇷
-          </div>
+          <ZiyoOwlAvatar src="/icon.png" className="w-11 h-11 rounded-2xl shrink-0" />
           <div>
             <div className="text-[10px] font-bold text-slate-400">{activeLesson.week}</div>
             <div className={`text-base font-black ${t.textMain}`}>{activeLesson.heroKo}</div>
@@ -2063,7 +2100,7 @@ export default function App() {
                     setScreen('home');
                   }
                 }}
-                className="w-full py-3 rounded-2xl bg-[#1e1e1e] text-white font-black text-xs"
+                className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
               >
                 {qIdx + 1 < quizList.length ? '다음 문제 →' : '학습 완료 (+50 XP)'}
               </button>
@@ -2075,17 +2112,15 @@ export default function App() {
   };
 
   // =========================================================================
-  // 4. AI USTOZ — 토히르벡 (HAR QANDAY SAVOLGA MOS AQLLI JAVOB BERADI)
+  // 4. AI USTOZ — 토히르벡 (BOYO'G'LI MASKOT BILAN)
   // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow font-black text-sm">
-            토
-          </div>
+          <ZiyoOwlAvatar src="/icon.png" className="w-11 h-11 rounded-2xl" />
           <div>
-            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (AI Ustoz)</h2>
+            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (ZiyoPrep AI)</h2>
             <span className="text-[10px] font-bold text-emerald-500">● Online • Istalgan savol bering yoki koreyscha yozing</span>
           </div>
         </div>
@@ -2096,7 +2131,7 @@ export default function App() {
           <button
             key={chip}
             onClick={() => handleAiSend(chip)}
-            className={`shrink-0 px-3 py-1.5 rounded-full ${t.card} border text-[11px] font-bold text-rose-500`}
+            className={`shrink-0 px-3 py-1.5 rounded-full ${t.card} border text-[11px] font-bold text-emerald-600 dark:text-emerald-400`}
           >
             {chip}
           </button>
@@ -2110,12 +2145,12 @@ export default function App() {
               onClick={() => m.role === 'ai' && speakKo(m.ko)}
               className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${
                 m.role === 'user'
-                  ? 'bg-rose-500 text-white font-bold'
+                  ? 'bg-[#58cc02] text-white font-bold'
                   : `${t.sub} ${t.textMain}`
               }`}
             >
               {m.role === 'ai' && (
-                <div className="text-[10px] font-black text-rose-500">토히르벡 AI</div>
+                <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">🦉 토히르벡 AI</div>
               )}
               <div className="font-black leading-relaxed">{m.ko}</div>
               {m.uz && <div className="text-[11px] opacity-85 leading-relaxed">{m.uz}</div>}
@@ -2136,7 +2171,7 @@ export default function App() {
         />
         <button
           onClick={() => handleAiSend()}
-          className="px-4 rounded-2xl bg-rose-500 text-white font-black flex items-center justify-center"
+          className="px-4 rounded-2xl bg-[#58cc02] text-white font-black flex items-center justify-center"
         >
           <Send size={18} />
         </button>
@@ -2145,7 +2180,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (KARTOCHKA • LISTENING • SPEAKING • TOPIK TEST • SPRINT O'YIN)
+  // 5. TAKRORLASH
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
@@ -2154,7 +2189,6 @@ export default function App() {
 
     return (
       <div className="space-y-4 pb-28 pt-2">
-        {/* 5 ta mashq rejimi */}
         <div className="grid grid-cols-5 gap-1">
           {[
             { id: 'cards', icon: Layers, label: 'Kartochka' },
@@ -2172,7 +2206,7 @@ export default function App() {
               }}
               className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[10px] font-black transition ${
                 reviewMode === m.id
-                  ? 'bg-rose-500 text-white border-rose-600 shadow'
+                  ? 'bg-[#58cc02] text-white border-emerald-600 shadow'
                   : `${t.card} ${t.textMuted}`
               }`}
             >
@@ -2182,7 +2216,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* 1. KARTOCHKALAR */}
         {reviewMode === 'cards' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -2194,7 +2227,7 @@ export default function App() {
               onClick={() => { setFlashFlipped(!flashFlipped); speakKo(card.ko); }}
               className={`rounded-3xl ${t.card} border-2 p-8 min-h-[240px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
             >
-              <span className="text-[10px] font-black uppercase text-rose-500">
+              <span className="text-[10px] font-black uppercase text-emerald-500">
                 {flashFlipped ? 'Tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
               </span>
               {!flashFlipped ? (
@@ -2216,7 +2249,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); setProfile(p => ({ ...p, xp: p.xp + 5, dailyXp: p.dailyXp + 5 })); }}
-                className="py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
+                className="py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
               >
                 Yodladim (+5 XP) →
               </button>
@@ -2224,10 +2257,9 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. LISTENING */}
         {reviewMode === 'listen' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
-            <div className="text-xs font-black text-rose-500 uppercase">듣기 연습 • Tinglab Tushunish</div>
+            <div className="text-xs font-black text-emerald-500 uppercase">듣기 연습 • Tinglab Tushunish</div>
             <button
               onClick={() => speakKo(listenWord.ko)}
               className="w-full py-6 rounded-2xl bg-indigo-500/15 border-2 border-indigo-500 text-indigo-500 font-black text-sm flex items-center justify-center gap-2"
@@ -2273,10 +2305,9 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. SPEAKING */}
         {reviewMode === 'speak' && (
           <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
-            <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] font-black uppercase">
               말하기 연습 • AI Talaffuz Tekshiruvi
             </span>
             <div className={`text-3xl font-black ${t.textMain}`}>{speakWord.ko}</div>
@@ -2292,7 +2323,7 @@ export default function App() {
               <button
                 onClick={() => handleSpeechTest(speakWord.ko)}
                 className={`px-5 py-3 rounded-2xl text-white font-black text-xs flex items-center gap-2 ${
-                  isRecording ? 'bg-rose-600 animate-pulse' : 'bg-emerald-500'
+                  isRecording ? 'bg-rose-600 animate-pulse' : 'bg-[#58cc02]'
                 }`}
               >
                 <Mic size={16} /> {isRecording ? 'Eshitilmoqda...' : 'Mikrofonga gapiring'}
@@ -2319,7 +2350,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. YANGI O'YIN: 30 SONIYALIK SPEED SPRINT */}
         {reviewMode === 'sprint' && (
           <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
             <div className="flex justify-between items-center text-xs font-black">
@@ -2366,7 +2396,6 @@ export default function App() {
           </div>
         )}
 
-        {/* 5. TOPIK MOCK TEST */}
         {reviewMode === 'mock' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             {!mockActive ? (
@@ -2378,7 +2407,7 @@ export default function App() {
                 </p>
                 <button
                   onClick={launchTopikMock}
-                  className="w-full py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase shadow"
+                  className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow"
                 >
                   Imtihonni Boshlash
                 </button>
@@ -2386,7 +2415,7 @@ export default function App() {
             ) : !mockDone ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs font-black">
-                  <span className="text-rose-500">Savol {mockStep + 1} / {mockList.length}</span>
+                  <span className="text-emerald-500">Savol {mockStep + 1} / {mockList.length}</span>
                   <span className="text-indigo-500 flex items-center gap-1">
                     <Clock size={14} /> {Math.floor(mockSeconds / 60)}:{String(mockSeconds % 60).padStart(2, '0')}
                   </span>
@@ -2398,7 +2427,7 @@ export default function App() {
                       key={opt}
                       onClick={() => setMockSelected({ ...mockSelected, [mockStep]: opt })}
                       className={`w-full p-3.5 rounded-2xl text-left border text-xs font-bold ${
-                        mockSelected[mockStep] === opt ? 'border-rose-500 bg-rose-500/15 text-rose-500' : `${t.sub} ${t.textMain}`
+                        mockSelected[mockStep] === opt ? 'border-emerald-500 bg-emerald-500/15 text-emerald-500' : `${t.sub} ${t.textMain}`
                       }`}
                     >
                       {opt}
@@ -2418,7 +2447,7 @@ export default function App() {
                       setMockDone(true);
                       setProfile(p => ({ ...p, xp: p.xp + 80, dailyXp: p.dailyXp + 80 }));
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
+                    className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
                   >
                     Imtihonni Yakunlash (+80 XP)
                   </button>
@@ -2435,7 +2464,7 @@ export default function App() {
                 </p>
                 <button
                   onClick={launchTopikMock}
-                  className="w-full py-3.5 rounded-2xl bg-rose-500 text-white font-black text-xs"
+                  className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
                 >
                   Qayta topshirish
                 </button>
@@ -2448,87 +2477,130 @@ export default function App() {
   };
 
   // =========================================================================
-  // 6. PROFIL
+  // 6. PROFIL (YUTUQLAR MEDALLARI + HAFTALIK XP GRAFIGI)
   // =========================================================================
-  const renderProfile = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
-        <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white font-black text-xl flex items-center justify-center">
-            {profile.name.charAt(0)}
-          </div>
-          <div>
-            {editingName ? (
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={nameDraft}
-                  onChange={e => setNameDraft(e.target.value)}
-                  className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold`}
-                />
-                <button
-                  onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }}
-                  className="px-2.5 py-1 rounded-xl bg-emerald-500 text-white text-xs font-bold"
-                >
-                  OK
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
-              </div>
-            )}
-            <p className="text-xs text-slate-400 mt-0.5">{currentUser?.email}</p>
-          </div>
-        </div>
-        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>
-          {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
-        </button>
-      </div>
+  const renderProfile = () => {
+    const weekDays = [
+      { d: 'Du', v: 45 },
+      { d: 'Se', v: 80 },
+      { d: 'Ch', v: 60 },
+      { d: 'Pa', v: 100 },
+      { d: 'Ju', v: 75 },
+      { d: 'Sh', v: 90 },
+      { d: 'Ya', v: Math.min(100, profile.dailyXp) }
+    ];
 
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
-          <div className="text-[10px] text-slate-400 font-bold">Kunlik Streak</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Zap size={20} className="mx-auto text-sky-500 fill-sky-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-          <div className="text-[10px] text-slate-400 font-bold">Jami XP</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <CheckCircle2 size={20} className="mx-auto text-emerald-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{completedIds.length} / {allLessons.length}</div>
-          <div className="text-[10px] text-slate-400 font-bold">Darslar</div>
-        </div>
-      </div>
+    const badges = [
+      { icon: '🦉', name: 'ZiyoPrep A’zosi', unlocked: true },
+      { icon: '🔥', name: '10+ Kun Streak', unlocked: profile.streak >= 10 },
+      { icon: '⚡', name: '1000+ XP Ustasi', unlocked: profile.xp >= 1000 },
+      { icon: '🎓', name: '5+ Dars Bitiruvchi', unlocked: completedIds.length >= 5 }
+    ];
 
-      <div className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between`}>
-        <div>
-          <div className={`text-xs font-black ${t.textMain}`}>Ilova Mavzusi (Tema)</div>
-          <div className="text-[11px] text-slate-400">{isDark ? 'Tungi rejim (Dark Mode)' : 'Yorug‘ Pastel (Soft Studio)'}</div>
+    return (
+      <div className="space-y-4 pb-28 pt-2">
+        <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
+          <div className="flex items-center gap-3.5">
+            <ZiyoOwlAvatar src="/icon.png" className="w-14 h-14 rounded-2xl" />
+            <div>
+              {editingName ? (
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onChange={e => setNameDraft(e.target.value)}
+                    className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold`}
+                  />
+                  <button
+                    onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }}
+                    className="px-2.5 py-1 rounded-xl bg-emerald-500 text-white text-xs font-bold"
+                  >
+                    OK
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
+                  <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
+                </div>
+              )}
+              <p className="text-xs text-slate-400 mt-0.5">{currentUser?.email}</p>
+            </div>
+          </div>
+          <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>
+            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+          </button>
         </div>
+
+        {/* Statistika */}
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Kunlik Streak</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Zap size={20} className="mx-auto text-sky-500 fill-sky-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Jami XP</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <CheckCircle2 size={20} className="mx-auto text-emerald-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{completedIds.length} / {allLessons.length}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Darslar</div>
+          </div>
+        </div>
+
+        {/* HAFTALIK XP FAOLIK GRAFIGI */}
+        <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
+          <div className="flex justify-between items-center text-xs font-black">
+            <span className={t.textMain}>Haftalik O‘qish Faolligi</span>
+            <span className="text-emerald-500">XP Grafiği</span>
+          </div>
+          <div className="grid grid-cols-7 gap-2 items-end h-24 pt-2">
+            {weekDays.map(item => (
+              <div key={item.d} className="flex flex-col items-center gap-1.5 h-full justify-end">
+                <div className="w-full bg-slate-200/50 dark:bg-slate-800 rounded-lg h-16 flex items-end overflow-hidden">
+                  <div className="w-full bg-[#58cc02] rounded-lg transition-all" style={{ height: `${item.v}%` }} />
+                </div>
+                <span className="text-[10px] font-black text-slate-400">{item.d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* YUTUQLAR (NISHONLAR) */}
+        <div className={`rounded-3xl ${t.card} border p-4 space-y-2.5`}>
+          <div className="text-xs font-black flex items-center gap-1.5 text-amber-500">
+            <Award size={15} /> Yutuqlar va Nishonlar
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {badges.map(b => (
+              <div
+                key={b.name}
+                className={`p-2.5 rounded-2xl border flex items-center gap-2 text-xs font-black ${
+                  b.unlocked ? `${t.sub} ${t.textMain}` : 'opacity-40'
+                }`}
+              >
+                <span className="text-lg">{b.icon}</span>
+                <span className="text-[11px]">{b.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <button
-          onClick={toggleDark}
-          className="px-4 py-2 rounded-xl bg-rose-500 text-white font-black text-xs"
+          onClick={handleLogout}
+          className="w-full py-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 font-black text-xs flex items-center justify-center gap-2"
         >
-          Almashtirish
+          <LogOut size={16} /> Akkauntdan chiqish (Login sahifaga qaytish)
         </button>
       </div>
-
-      <button
-        onClick={handleLogout}
-        className="w-full py-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 font-black text-xs flex items-center justify-center gap-2"
-      >
-        <LogOut size={16} /> Akkauntdan chiqish (Login sahifaga qaytish)
-      </button>
-    </div>
-  );
+    );
+  };
 
   // =========================================================================
-  // ASOSIY SHELL + KATTALASHTIRILGAN PASTKI 5 TA MENYU
+  // ASOSIY SHELL + PASTKI 5 TA MENYU (MARKAZDA YASHIL BOYO'G'LI AI USTOZ)
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
@@ -2546,7 +2618,7 @@ export default function App() {
           <button
             onClick={() => setScreen('home')}
             className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
-              screen === 'home' || screen === 'lesson' ? 'text-rose-500' : t.textMuted
+              screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted
             }`}
           >
             <BookOpen size={25} strokeWidth={2.3} />
@@ -2565,10 +2637,9 @@ export default function App() {
 
           <button
             onClick={() => setScreen('ai')}
-            className="-mt-8 w-16 h-16 rounded-full bg-gradient-to-tr from-rose-600 to-pink-500 border-b-4 border-rose-800 text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition"
+            className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition overflow-hidden p-0.5"
           >
-            <Bot size={28} strokeWidth={2.3} />
-            <span className="text-[8px] font-black leading-none mt-0.5">토히르벡</span>
+            <ZiyoOwlAvatar src="/icon.png" className="w-full h-full rounded-full" />
           </button>
 
           <button
