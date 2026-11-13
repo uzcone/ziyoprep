@@ -13,7 +13,7 @@ import { snu1B } from './data/snu1B.js';
 import { snu2A, snu2B } from './data/snu2AB.js';
 import { snu3AB, snu4AB, snu56 } from './data/snu3_6.js';
 
-// ZiyoPrep Yashil Boyo'g'li Maskot
+// ZiyoPrep Yashil Boyo'g'li Maskot (Kiyiladigan aksessuarlar: TOPIK qalpoqchasi, ko'zoynak, toj bilan)
 function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   return (
     <div className={`${className} overflow-hidden shadow-md relative select-none`}>
@@ -129,6 +129,7 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   );
 }
 
+// Unicode Hangul Bo'g'in Yig'uvchi Formula
 const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -155,6 +156,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
+  // --- 1. HAQIQIY LOGIN / REGISTER / GOOGLE / MEHMON KIRISH ---
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('hs_auth_user');
@@ -163,45 +165,99 @@ export default function App() {
       return null;
     }
   });
-  const [authMode, setAuthMode] = useState('welcome');
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hs_registered_users');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'login' | 'register' | 'google'
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
 
   const handleGuestLogin = () => {
-    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'talaba@ziyoprep.uz', isGuest: true };
+    const guest = { uid: 'guest', name: 'Mehmon Talaba', email: 'guest@ziyoprep.uz', isGuest: true };
     setCurrentUser(guest);
     localStorage.setItem('hs_auth_user', JSON.stringify(guest));
+    setProfile(p => ({ ...p, name: 'Mehmon Talaba' }));
   };
 
-  const handleGoogleLogin = () => {
-    const gUser = { uid: 'google_user', name: 'Tokhirbek', email: 'tokhirbek@gmail.com' };
+  const handleGoogleSubmit = (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const email = authForm.email.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      return setAuthError("To‘g‘ri Gmail manzilini kiriting (masalan: ism@gmail.com)!");
+    }
+    const name = authForm.name.trim() || email.split('@')[0];
+    const gUser = { uid: 'google_' + email, name, email, provider: 'google' };
     setCurrentUser(gUser);
     localStorage.setItem('hs_auth_user', JSON.stringify(gUser));
+    setProfile(p => ({ ...p, name }));
   };
 
   const handleEmailAuth = (e) => {
     e.preventDefault();
     setAuthError('');
-    if (!authForm.email.trim() || !authForm.password.trim()) {
-      return setAuthError("Email va parolni kiriting!");
+    const email = authForm.email.trim().toLowerCase();
+    const password = authForm.password.trim();
+
+    if (!email || !email.includes('@')) {
+      return setAuthError("To‘g‘ri email manzilini kiriting!");
     }
-    if (authForm.password.length < 4) {
-      return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lishi kerak.");
+    if (password.length < 4) {
+      return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lishi kerak!");
     }
-    const displayName = authForm.name.trim() || authForm.email.split('@')[0] || 'Tokhirbek';
-    const userObj = { uid: 'user_' + Date.now(), name: displayName, email: authForm.email.trim() };
-    setCurrentUser(userObj);
-    localStorage.setItem('hs_auth_user', JSON.stringify(userObj));
-    setProfile(p => ({ ...p, name: displayName }));
+
+    if (authMode === 'register') {
+      if (!authForm.name.trim()) {
+        return setAuthError("Ismingizni kiriting!");
+      }
+      const exists = registeredUsers.find(u => u.email === email);
+      if (exists) {
+        return setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! Kirish bo‘limidan kiring.");
+      }
+      const newUser = {
+        uid: 'user_' + Date.now(),
+        name: authForm.name.trim(),
+        email,
+        password
+      };
+      const updatedList = [...registeredUsers, newUser];
+      setRegisteredUsers(updatedList);
+      localStorage.setItem('hs_registered_users', JSON.stringify(updatedList));
+
+      const sessionUser = { uid: newUser.uid, name: newUser.name, email: newUser.email };
+      setCurrentUser(sessionUser);
+      localStorage.setItem('hs_auth_user', JSON.stringify(sessionUser));
+      setProfile(p => ({ ...p, name: newUser.name }));
+    } else {
+      const found = registeredUsers.find(u => u.email === email);
+      if (!found) {
+        return setAuthError("Bunday email topilmadi! Avval 'Ro‘yxatdan o‘tish' tugmasini bosing.");
+      }
+      if (found.password !== password) {
+        return setAuthError("Parol noto‘g‘ri! Qaytadan tekshirib kiriting.");
+      }
+      const sessionUser = { uid: found.uid, name: found.name, email: found.email };
+      setCurrentUser(sessionUser);
+      localStorage.setItem('hs_auth_user', JSON.stringify(sessionUser));
+      setProfile(p => ({ ...p, name: found.name }));
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('hs_auth_user');
     setCurrentUser(null);
+    setAuthForm({ name: '', email: '', password: '' });
+    setAuthError('');
     setAuthMode('welcome');
     setScreen('home');
   };
 
+  // --- 2. ASOSIY ILOVA HOLATLARI ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
   const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
@@ -293,6 +349,7 @@ export default function App() {
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes || []);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
+  // --- 3. REAL HAYOTIY DIALOG SIMULYATORI (ROLEPLAY) ---
   const roleplayScenarios = [
     {
       id: 'cafe',
@@ -387,6 +444,7 @@ export default function App() {
   const [dialogStep, setDialogStep] = useState(0);
   const [dialogFeedback, setDialogFeedback] = useState(null);
 
+  // --- 4. 쓰기 • YOZISH VA IMLO TRENAJYORI ---
   const writingPrompts = [
     { uz: 'Talaba', ko: '학생', hint: 'ㅎ + ㅏ + ㄱ + ㅅ + ㅐ + ㅇ' },
     { uz: 'Kutubxona', ko: '도서관', hint: 'ㄷ + ㅗ + ㅅ + ㅓ + ㄱ + ㅘ + ㄴ' },
@@ -399,6 +457,7 @@ export default function App() {
   const [writeInput, setWriteInput] = useState('');
   const [writeResult, setWriteResult] = useState(null);
 
+  // --- AQLLI AI USTOZ: 토히르벡 ---
   const [aiMessages, setAiMessages] = useState([
     {
       role: 'ai',
@@ -492,6 +551,7 @@ export default function App() {
     }, 350);
   };
 
+  // --- TAKRORLASH ---
   const [reviewMode, setReviewMode] = useState('cards');
   const [flashIdx, setFlashIdx] = useState(0);
   const [flashFlipped, setFlashFlipped] = useState(false);
@@ -563,6 +623,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, [mockActive, mockDone]);
 
+  // --- 글자 조립 ---
   const [builderTab, setBuilderTab] = useState('no_batchim');
   const [cho, setCho] = useState('ㄱ');
   const [jung, setJung] = useState('ㅏ');
@@ -592,6 +653,7 @@ export default function App() {
     setProfile(p => ({ ...p, xp: p.xp + 2, dailyXp: p.dailyXp + 2 }));
   };
 
+  // --- DARS ICHIDAGI HOLATLAR ---
   const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
   const [doneSec, setDoneSec] = useState({ rule: false, struct: false });
   const [revealed, setRevealed] = useState({});
@@ -695,6 +757,9 @@ export default function App() {
     textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
   };
 
+  // =========================================================================
+  // 0. KIRISH EKRANI (Qushcha o'zi + Haqiqiy Google va Login/Register)
+  // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
@@ -712,15 +777,13 @@ export default function App() {
         </div>
 
         <div className="max-w-md w-full mx-auto my-auto text-center space-y-6">
-          {authMode === 'welcome' ? (
+          {authMode === 'welcome' && (
             <>
-              <div className="relative w-36 h-36 mx-auto">
+              <div className="w-36 h-36 mx-auto">
                 <ZiyoOwlAvatar className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" equipped={equippedItems} />
-                <span className="absolute -bottom-2 inset-x-3 bg-[#58cc02] text-white text-[10px] font-black py-1 rounded-full shadow-lg uppercase">
-                  ZiyoPrep • 서울대 1A–6B
-                </span>
               </div>
-              <div className="space-y-2 pt-2">
+
+              <div className="space-y-2">
                 <h1 className={`text-2xl font-black ${t.textMain}`}>
                   ZiyoPrep bilan koreys tilini quvnoq va samarali o‘rganing!
                 </h1>
@@ -728,6 +791,7 @@ export default function App() {
                   Hangul alifbosi, 서울대 한국어 1A–6B to‘liq darsliklari, Uyga vazifalar, Real Dialoglar va AI ustoz 토히르벡.
                 </p>
               </div>
+
               <div className="space-y-3 pt-1">
                 <button
                   onClick={handleGuestLogin}
@@ -736,27 +800,86 @@ export default function App() {
                   Akkauntsiz Boshlash (Tezkor kirish)
                 </button>
                 <button
-                  onClick={handleGoogleLogin}
-                  className={`w-full py-4 rounded-2xl ${t.card} border-2 border-b-4 font-black text-sm ${t.textMain} active:translate-y-0.5 transition`}
+                  onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('google'); }}
+                  className={`w-full py-4 rounded-2xl ${t.card} border-2 border-b-4 font-black text-sm ${t.textMain} flex items-center justify-center gap-2 active:translate-y-0.5 transition`}
                 >
-                  Google bilan davom etish
+                  <span className="text-base font-black text-blue-500">G</span>
+                  <span>Google bilan davom etish</span>
                 </button>
-                <button
-                  onClick={() => { setAuthError(''); setAuthMode('login'); }}
-                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-                >
-                  Email va Parol orqali kirish
-                </button>
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('login'); }}
+                    className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Email va Parol bilan kirish
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('register'); }}
+                    className="text-xs font-black text-indigo-500 hover:underline"
+                  >
+                    Ro‘yxatdan o‘tish
+                  </button>
+                </div>
               </div>
             </>
-          ) : (
+          )}
+
+          {authMode === 'google' && (
+            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
+              <div className="flex items-center justify-between">
+                <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${t.sub} border`}>
+                  <ArrowLeft size={16} />
+                </button>
+                <h2 className={`font-black text-base ${t.textMain}`}>Google hisob bilan kirish</h2>
+                <div className="w-8" />
+              </div>
+
+              {authError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold text-center">
+                  {authError}
+                </div>
+              )}
+
+              <form onSubmit={handleGoogleSubmit} className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 block mb-1">Ismingiz</label>
+                  <input
+                    type="text"
+                    placeholder="Masalan: Tokhirbek"
+                    value={authForm.name}
+                    onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 block mb-1">Gmail manzilingiz</label>
+                  <input
+                    type="email"
+                    placeholder="example@gmail.com"
+                    value={authForm.email}
+                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-blue-600 border-b-4 border-blue-800 text-white font-black text-xs uppercase"
+                >
+                  Google orqali tasdiqlash
+                </button>
+              </form>
+            </div>
+          )}
+
+          {(authMode === 'login' || authMode === 'register') && (
             <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
               <div className="flex items-center justify-between">
                 <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${t.sub} border`}>
                   <ArrowLeft size={16} />
                 </button>
                 <h2 className={`font-black text-base ${t.textMain}`}>
-                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : 'Ro‘yxatdan o‘tish'}
+                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : 'Yangi akkaunt yaratish'}
                 </h2>
                 <div className="w-8" />
               </div>
@@ -771,7 +894,7 @@ export default function App() {
                 {authMode === 'register' && (
                   <input
                     type="text"
-                    placeholder="Ismingiz"
+                    placeholder="Ismingiz (masalan: Tokhirbek)"
                     value={authForm.name}
                     onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
                     className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
@@ -795,7 +918,7 @@ export default function App() {
                   type="submit"
                   className="w-full py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#46a302] text-white font-black text-xs uppercase"
                 >
-                  {authMode === 'login' ? 'Kirish' : 'Akkaunt yaratish'}
+                  {authMode === 'login' ? 'Kirish' : 'Ro‘yxatdan o‘tish'}
                 </button>
               </form>
 
@@ -803,17 +926,20 @@ export default function App() {
                 onClick={() => { setAuthError(''); setAuthMode(authMode === 'login' ? 'register' : 'login'); }}
                 className="w-full text-center text-xs font-bold text-emerald-600"
               >
-                {authMode === 'login' ? "Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
+                {authMode === 'login' ? "Akkauntingiz yo‘qmi? Avval ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
               </button>
             </div>
           )}
         </div>
 
-        <div className="text-center text-[11px] text-slate-400">ZiyoPrep • 한글 스튜디오 (서울대 1A–6B)</div>
+        <div className="text-center text-[11px] text-slate-400">ZiyoPrep • 한글 스튜디오</div>
       </div>
     );
   }
 
+  // =========================================================================
+  // 1. ASOSIY EKRAN — "ZiyoPrep • 한글 스튜디오"
+  // =========================================================================
   const renderHome = () => {
     const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
 
@@ -991,6 +1117,9 @@ export default function App() {
     );
   };
 
+  // =========================================================================
+  // 2. "글자 조립"
+  // =========================================================================
   const renderBuilder = () => (
     <div className="space-y-3.5 pb-28">
       <div className="flex items-center justify-between pt-2">
@@ -1166,6 +1295,9 @@ export default function App() {
     </div>
   );
 
+  // =========================================================================
+  // 3. DARS EKRANI (GRAMMATIKA + LUG'AT + UYGA VAZIFA + TEST)
+  // =========================================================================
   const renderLesson = () => {
     if (!activeLesson) return null;
     const currentQ = quizList[qIdx];
@@ -1461,6 +1593,9 @@ export default function App() {
     );
   };
 
+  // =========================================================================
+  // 4. AI USTOZ — 토히르벡
+  // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
@@ -1526,6 +1661,9 @@ export default function App() {
     </div>
   );
 
+  // =========================================================================
+  // 5. TAKRORLASH (KARTOCHKA, TINGLASH, DIALOG, YOZISH, NUTQ, SPRINT, TOPIK)
+  // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
     const listenWord = allWords[listenIdx % allWords.length];
@@ -1982,6 +2120,9 @@ export default function App() {
     );
   };
 
+  // =========================================================================
+  // 6. PROFIL, XP DO'KONI VA TALABALAR REYTINGI
+  // =========================================================================
   const renderProfile = () => {
     const shopItems = [
       { id: 'glasses', icon: '🕶️', name: 'Aqlli Ko‘zoynak', price: 200, desc: 'Boyo‘g‘liga zamonaviy ko‘zoynak taqing' },
@@ -2149,6 +2290,9 @@ export default function App() {
     );
   };
 
+  // =========================================================================
+  // ASOSIY SHELL + PASTKI 5 TA MENYU
+  // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
       <main className="max-w-md mx-auto px-4 py-2">
