@@ -169,7 +169,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
-  // --- 1. HAQIQIY LOGIN / REGISTER / GOOGLE / MEHMON KIRISH ---
+  // --- 1. LOGIN / REGISTER / GOOGLE / MEHMON KIRISH ---
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('hs_auth_user');
@@ -287,7 +287,7 @@ export default function App() {
   const [selectedVocabTopicId, setSelectedVocabTopicId] = useState('1a-l1');
   const [vocabSearch, setVocabSearch] = useState('');
   const [vocabQuizMode, setVocabQuizMode] = useState(false);
-  const [vocabQuizDirection, setVocabQuizDirection] = useState('ko2uz'); // 'ko2uz' | 'uz2ko'
+  const [vocabQuizDirection, setVocabQuizDirection] = useState('ko2uz');
   const [vocabQuizWord, setVocabQuizWord] = useState(null);
   const [vocabQuizOpts, setVocabQuizOpts] = useState([]);
   const [vocabQuizPick, setVocabQuizPick] = useState(null);
@@ -489,64 +489,25 @@ export default function App() {
   const [writeInput, setWriteInput] = useState('');
   const [writeResult, setWriteResult] = useState(null);
 
-  // --- AQLLI AI USTOZ: 토히르벡 ---
+  // --- HAQIQIY GEMINI AI USTOZ: 토히르벡 ---
   const [aiMessages, setAiMessages] = useState([
     {
       role: 'ai',
       ko: '안녕하세요! 저는 ZiyoPrep AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
-      uz: `Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Bazamda 서울대 1A–6A dan ${allVocabWords.length} ta so‘z va barcha grammatikalar bor. Istalgan so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!`
+      uz: `Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Bazamda 서울대 1A–6A dan ${allVocabWords.length}+ so‘z va barcha grammatikalar bor. Istalgan savol bering, xatolaringizni tekshirtiring yoki koreyscha suhbatlashing!`
     }
   ]);
   const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [aiMessages]);
+  }, [aiMessages, aiLoading]);
 
-  const generateSmartAiReply = (rawText) => {
+  // Zaxira (offline) javob generatori
+  const generateFallbackAiReply = (rawText) => {
     const q = rawText.toLowerCase().trim();
-
-    if (/^(salom|assalom|hello|hi|안녕|반가워|하이)/.test(q)) {
-      return {
-        ko: `안녕하세요, ${profile.name} 씨! 오늘도 ZiyoPrep과 함께 화이팅해요!`,
-        uz: `Va alaykum assalom, ${profile.name}! Bugun kayfiyatlar qanday? Qaysi mavzuda suhbatlashamiz: Kafe, Universitet yoki TOPIK grammatikasi?`
-      };
-    }
-
-    if (q.includes('kimman') || q.includes('men haqimda') || q.includes('프로필') || q.includes('내 이름')) {
-      return {
-        ko: `당신은 열심히 공부하는 ${profile.name} 학생이에요! 현재 ${profile.xp} XP를 모았어요.`,
-        uz: `Siz — tinimsiz izlanayotgan talaba ${profile.name}siz! Hozirgacha ${profile.xp} XP to‘pladingiz, ${profile.streak} kunlik streak va ${completedIds.length} ta darsni tugatdingiz. Barakalla!`
-      };
-    }
-
-    if (q.includes('isming') || q.includes('kimsan') || q.includes('토히르벡') || q.includes('누구')) {
-      return {
-        ko: '제 이름은 토히르벡이에요! ZiyoPrep에서 한국어를 가르치는 AI 선생님입니다.',
-        uz: 'Mening ismim 토히르벡 (Tokhirbek)! Sizga Hangul alifbosidan tortib 서울대 한국어 1A–6B va TOPIK 6 gacha koreys tilini o‘rgatuvchi shaxsiy AI ustozingizman.'
-      };
-    }
-
-    if (q.includes('예요') || q.includes('이에요')) {
-      return {
-        ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 사용해요!',
-        uz: "Qoida juda oson: So‘z oxiri undosh (받침) bilan tugasa '이에요' (학생이에요), unli bilan tugasa '예요' (가수예요) qo‘shiladi."
-      };
-    }
-    if (q.includes('아서') || q.includes('니까') || q.includes('sabab')) {
-      return {
-        ko: '명령문(세요)이나 청유문(읍시다) 앞에는 반드시 "-(으)니까"를 써야 해요!',
-        uz: "Farqi: Oddiy sababda '-아서/어서' (배가 아파서 병원에 갔어요), buyruq va taklif gaplarda esa '-(으)니까' (추우니까 옷을 입으세요) ishlatiladi!"
-      };
-    }
-    if (q.includes('kafe') || q.includes('카페') || q.includes('kofe') || q.includes('커피')) {
-      return {
-        ko: '카페에서: "아이스 아메리카노 한 잔 주세요. 여기서 마실 거예요."',
-        uz: "Kafeda: 'Bitta muzli amerikano bering. Shu yerda ichaman.' Pastdagi Mashq -> Dialog bo‘limida kafeda jonli buyurtma berishni mashq qilishingiz mumkin!"
-      };
-    }
-
     const cleanQuery = q.replace(/(koreyscha nima|nima degani|tarjimasi|\?)/g, '').trim();
     const foundWord = allWords.find(
       w => (cleanQuery.length >= 2 && w.uz.toLowerCase().includes(cleanQuery)) ||
@@ -555,34 +516,50 @@ export default function App() {
     if (foundWord) {
       return {
         ko: `"${foundWord.ko}" — 뜻: ${foundWord.uz}!`,
-        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}". Talaffuzini eshitish uchun xabar ustiga bosing!`
+        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}".`
       };
     }
-
-    if (/[가-힣]/.test(rawText)) {
-      return {
-        ko: `"${rawText}"라고 하셨군요! 정말 자연스러운 한국어예요. 계속 이야기해 볼까요?`,
-        uz: `Ajoyib! Siz "${rawText}" deb koreyscha yozdingiz — talaffuzi va tuzilishi juda tabiiy! Yana davom ettiring, men tinglayapman.`
-      };
-    }
-
     return {
-      ko: `"${rawText}"에 대한 좋은 질문이에요! 한국어로 "저는 한국어를 배우고 싶어요"라고 연습해 보세요.`,
-      uz: `Qiziq savol ("${rawText}")! Men 토히르벡 (Tokhirbek AI) sifatida sizga koreys tilini o‘rgatishga tayyorman. Biror o‘zbekcha yoki koreyscha so‘z yozing (masalan: 'kutubxona', 'stipendiya', '자존심')!`
+      ko: `"${rawText}"에 대해 같이 공부해 봐요!`,
+      uz: `Server bilan aloqa tekshirilmoqda. Hozircha lug‘atdan so‘z qidirishingiz yoki savolingizni qayta yuborishingiz mumkin!`
     };
   };
 
-  const handleAiSend = (preset) => {
+  // Haqiqiy Gemini API ga ulangan asosiy funksiya
+  const handleAiSend = async (preset) => {
     const text = (preset || aiInput).trim();
-    if (!text) return;
-    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
-    setAiInput('');
+    if (!text || aiLoading) return;
 
-    setTimeout(() => {
-      const reply = generateSmartAiReply(text);
-      setAiMessages(prev => [...prev, { role: 'ai', ...reply }]);
-      speakKo(reply.ko);
-    }, 350);
+    const updatedHistory = [...aiMessages, { role: 'user', ko: text }];
+    setAiMessages(updatedHistory);
+    setAiInput('');
+    setAiLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: aiMessages,
+          userName: profile.name
+        })
+      });
+
+      const data = await res.json();
+      if (data.ko || data.uz) {
+        setAiMessages(prev => [...prev, { role: 'ai', ko: data.ko || '', uz: data.uz || '' }]);
+        if (data.ko) speakKo(data.ko);
+      } else {
+        throw new Error(data.error || 'AI javob qaytarmadi');
+      }
+    } catch {
+      const fallback = generateFallbackAiReply(text);
+      setAiMessages(prev => [...prev, { role: 'ai', ...fallback }]);
+      speakKo(fallback.ko);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   // --- TAKRORLASH ---
@@ -792,7 +769,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 0. KIRISH EKRANI (Qushcha o'zi + Haqiqiy Google va Login/Register)
+  // 0. KIRISH EKRANI
   // =========================================================================
   if (!currentUser) {
     return (
@@ -1241,7 +1218,7 @@ export default function App() {
           })}
         </div>
 
-        {/* Mavzular tanlovi (1과 ~ 18과) */}
+        {/* Mavzular tanlovi */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {vBook.topics.map(tp => (
             <button
@@ -1269,7 +1246,6 @@ export default function App() {
               <span className="text-emerald-500">To‘g‘ri: {vocabQuizScore} / {vocabQuizCount}</span>
             </div>
 
-            {/* Yo'nalishni almashtirish tugmalari */}
             <div className="grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => {
@@ -1856,7 +1832,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 4. AI USTOZ — 토히르벡
+  // 4. HAQIQIY GEMINI AI USTOZ — 토히르벡
   // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
@@ -1864,14 +1840,19 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
           <div>
-            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (ZiyoPrep AI)</h2>
-            <span className="text-[10px] font-bold text-emerald-500">● Online • {allVocabWords.length}+ so‘z bazasiga ulangan</span>
+            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (Gemini AI Ustoz)</h2>
+            <span className="text-[10px] font-bold text-emerald-500">● Jonli AI ulangan • Istalgan savol bering</span>
           </div>
         </div>
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
-        {['Men kimman?', 'Isming nima?', 'kutubxona', '이에요 / 예요 farqi?', '☕ 카페에서 buyurtma'].map(chip => (
+        {[
+          'Koreys tilida qanday tez gapirish mumkin?',
+          '이에요 va 예요 farqini misollar bilan tushuntir',
+          'Kafeda buyurtma berish dialogini tuzib ber',
+          'TOPIK 4-daraja uchun muhim grammatikalar qaysilar?'
+        ].map(chip => (
           <button
             key={chip}
             onClick={() => handleAiSend(chip)}
@@ -1886,21 +1867,32 @@ export default function App() {
         {aiMessages.map((m, idx) => (
           <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              onClick={() => m.role === 'ai' && speakKo(m.ko)}
-              className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${
+              onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)}
+              className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1.5 cursor-pointer ${
                 m.role === 'user'
                   ? 'bg-[#58cc02] text-white font-bold'
                   : `${t.sub} ${t.textMain}`
               }`}
             >
               {m.role === 'ai' && (
-                <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">🦉 토히르벡 AI</div>
+                <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                  <span>🦉 토히르벡 AI</span>
+                  <Volume2 size={12} />
+                </div>
               )}
-              <div className="font-black leading-relaxed">{m.ko}</div>
-              {m.uz && <div className="text-[11px] opacity-85 leading-relaxed">{m.uz}</div>}
+              {m.ko && <div className="font-black leading-relaxed whitespace-pre-line">{m.ko}</div>}
+              {m.uz && <div className="text-[11px] opacity-90 leading-relaxed whitespace-pre-line">{m.uz}</div>}
             </div>
           </div>
         ))}
+
+        {aiLoading && (
+          <div className="flex justify-start">
+            <div className={`rounded-2xl px-4 py-2.5 text-xs font-bold ${t.sub} ${t.textMuted} animate-pulse`}>
+              🦉 토히르벡 javob yozmoqda...
+            </div>
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
@@ -1910,12 +1902,13 @@ export default function App() {
           value={aiInput}
           onChange={e => setAiInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAiSend()}
-          placeholder="토히르벡 ga savol yoki so‘z yozing..."
+          placeholder="토히르벡 ga istalgan savol yozing..."
           className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
         />
         <button
           onClick={() => handleAiSend()}
-          className="px-4 rounded-2xl bg-[#58cc02] text-white font-black flex items-center justify-center"
+          disabled={aiLoading}
+          className="px-4 rounded-2xl bg-[#58cc02] disabled:opacity-50 text-white font-black flex items-center justify-center"
         >
           <Send size={18} />
         </button>
