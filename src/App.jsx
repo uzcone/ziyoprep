@@ -4,11 +4,12 @@ import {
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, Clock, Target, Layers, Timer, Award
+  Headphones, Mic, Clock, Layers, Timer, Award,
+  MessageSquare, Keyboard, ShoppingBag, Trophy
 } from 'lucide-react';
 
-// ZiyoPrep Yashil Boyo'g'li Maskot (Seul minorasi, ZiyoPrep bog'ichi va 한국어 kitobi bilan)
-function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
+// ZiyoPrep Yashil Boyo'g'li Maskot (Kiyiladigan aksessuarlar: TOPIK qalpoqchasi, ko'zoynak, toj bilan)
+function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   return (
     <div className={`${className} overflow-hidden shadow-md relative select-none`}>
       <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -47,6 +48,7 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
         <path d="M156 58 Q154 26 132 38 Z" fill="#65d318" />
         <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
 
+        {/* Oq Bosh Bog'ich (ZiyoPrep + Koreya bayrog'i) */}
         <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
         <path d="M161 74 L185 88 L178 98 L158 84 Z" fill="#f1f5f9" />
         <path d="M159 81 L180 104 L170 110 L154 86 Z" fill="#e2e8f0" />
@@ -65,6 +67,27 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
           <line x1="14" y1="8.5" x2="16" y2="10" stroke="#0f172a" strokeWidth="1" />
         </g>
 
+        {/* AKSESSUAR 1: TOPIK Bitiruvchi Qalpoqchasi */}
+        {equipped.gradCap && (
+          <g>
+            <polygon points="100,12 152,30 100,48 48,30" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+            <rect x="74" y="34" width="52" height="14" rx="4" fill="#334155" />
+            <line x1="146" y1="32" x2="152" y2="54" stroke="#facc15" strokeWidth="3" />
+            <circle cx="152" cy="55" r="4" fill="#f59e0b" />
+          </g>
+        )}
+
+        {/* AKSESSUAR 2: Oltin Qirollik Toji */}
+        {equipped.crown && (
+          <g>
+            <polygon points="68,46 76,20 90,36 100,14 110,36 124,20 132,46" fill="#facc15" stroke="#d97706" strokeWidth="2" />
+            <circle cx="100" cy="24" r="3" fill="#ef4444" />
+            <circle cx="78" cy="30" r="2.5" fill="#3b82f6" />
+            <circle cx="122" cy="30" r="2.5" fill="#3b82f6" />
+          </g>
+        )}
+
+        {/* Katta Quvnoq Ko'zlar */}
         <circle cx="72" cy="105" r="22" fill="#ffffff" />
         <circle cx="128" cy="105" r="22" fill="#ffffff" />
         <circle cx="76" cy="105" r="11.5" fill="#1e293b" />
@@ -72,9 +95,22 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
         <circle cx="80" cy="100" r="4.2" fill="#ffffff" />
         <circle cx="128" cy="100" r="4.2" fill="#ffffff" />
 
+        {/* AKSESSUAR 3: Aqlli Ko'zoynak */}
+        {equipped.glasses && (
+          <g>
+            <circle cx="72" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
+            <circle cx="128" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
+            <line x1="96" y1="103" x2="104" y2="103" stroke="#0f172a" strokeWidth="5" />
+            <line x1="36" y1="96" x2="48" y2="102" stroke="#0f172a" strokeWidth="4" />
+            <line x1="164" y1="96" x2="152" y2="102" stroke="#0f172a" strokeWidth="4" />
+          </g>
+        )}
+
+        {/* Sariq Tumshuq */}
         <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
         <path d="M94 123 Q100 133 106 123 Z" fill="#ea580c" />
 
+        {/* Ko'k 한국어 Kitobi */}
         <path d="M46 132 L98 142 L98 184 L46 172 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
         <path d="M154 132 L102 142 L102 184 L154 172 Z" fill="url(#bookGrad)" stroke="#1e3a8a" strokeWidth="1.5" />
         <path d="M50 130 L98 140 L102 140 L150 130 L150 135 L100 145 L50 135 Z" fill="#f8fafc" />
@@ -122,7 +158,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
-  // --- 1. LOGIN / REGISTER / AKKAUNTSIZ KIRISH (100% MUSTAQIL) ---
+  // --- 1. LOGIN / REGISTER / AKKAUNTSIZ KIRISH ---
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('hs_auth_user');
@@ -186,14 +222,30 @@ export default function App() {
         xp: saved?.xp ?? 1450,
         dailyXp: saved?.dailyXp ?? 60,
         streak: saved?.streak ?? 12,
-        hearts: saved?.hearts ?? 5
+        freezes: saved?.freezes ?? 1
       };
     } catch {
-      return { name: 'Tokhirbek', xp: 1450, dailyXp: 60, streak: 12, hearts: 5 };
+      return { name: 'Tokhirbek', xp: 1450, dailyXp: 60, streak: 12, freezes: 1 };
     }
   });
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profile.name);
+
+  // XP Do'koni (Maskot aksessuarlari)
+  const [ownedItems, setOwnedItems] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('hs_owned_items')) || { glasses: false, gradCap: false, crown: false };
+    } catch {
+      return { glasses: false, gradCap: false, crown: false };
+    }
+  });
+  const [equippedItems, setEquippedItems] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('hs_equipped_items')) || { glasses: false, gradCap: false, crown: false };
+    } catch {
+      return { glasses: false, gradCap: false, crown: false };
+    }
+  });
 
   const [completedIds, setCompletedIds] = useState(() => {
     try {
@@ -215,6 +267,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem('hs_profile', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { localStorage.setItem('hs_completed', JSON.stringify(completedIds)); }, [completedIds]);
   useEffect(() => { localStorage.setItem('hs_memos', JSON.stringify(memos)); }, [memos]);
+  useEffect(() => { localStorage.setItem('hs_owned_items', JSON.stringify(ownedItems)); }, [ownedItems]);
+  useEffect(() => { localStorage.setItem('hs_equipped_items', JSON.stringify(equippedItems)); }, [equippedItems]);
 
   const toggleDark = () => {
     setIsDark(prev => {
@@ -236,12 +290,12 @@ export default function App() {
     } catch {}
   };
 
-  // --- 서울대 한국어 1A ~ 6B ---
+  // --- KENGAYTIRILGAN 서울대 한국어 1A ~ 6B ---
   const snuBooks = [
     {
       code: '1A',
       label: '서울대 한국어 1A',
-      range: 'TOPIK 1 · Boshlang‘ich 1 (6 dars)',
+      range: 'TOPIK 1 · Boshlang‘ich 1 (7 dars)',
       lessons: [
         {
           id: '1a-1', num: 1, week: '1A · 1과', emoji: '👋', title: '안녕하세요? (Tanishuv)',
@@ -418,13 +472,40 @@ export default function App() {
           quizzes: [
             { q: "‘쉬다’ (dam olmoq) fe’lining o‘tgan zamoni:", opts: ['쉬었어요', '쉬았어요', '쉬해요', '쉴 거예요'], ans: '쉬었어요', exp: "‘ㅟ’ unlisidan keyin ‘-었어요’ qo‘shiladi." }
           ]
+        },
+        {
+          id: '1a-7', num: 7, week: '1A · 7과', emoji: '👨‍👩‍👧‍👦', title: '가족이 몇 명이에요? (Oila va Hurmat)',
+          heroKo: '부모님께서 고향에 계세요', heroUz: 'Ota-onam vatanimda yashaydilar',
+          pinkTitle: 'N께서 / V-(으)세요 / 계시다', pinkSub: 'Kattalarga hurmat shakli (높임말)',
+          pinkGroups: [
+            {
+              cond: '있다 → 계시다 (bor/yashamoq) | 먹다 → 드시다 (yemoq) | 자다 → 주무시다 (uxlamoq)',
+              items: [
+                { ko: '할머니께서 지금 주무세요.', uz: 'Buvim hozir uxlayaptilar.' },
+                { ko: '아버지께서 신문을 읽으세요.', uz: 'Otam gazeta o‘qiyaptilar.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '가족 + 께서 + 동사-(으)세요',
+          greenRows: [
+            { parts: ['부모님께서', '고향에', '계세요'], res: '부모님께서 고향에 계세요.', uz: 'Ota-onam vatanimda yashaydilar.' }
+          ],
+          words: [
+            { ko: '부모님', uz: 'Ota-ona' },
+            { ko: '고향', uz: 'Vatan / Tug‘ilgan joy' },
+            { ko: '계시다', uz: 'Bor bo‘lmoq (hurmat)' },
+            { ko: '드시다', uz: 'Yemoq / Ichmoq (hurmat)' }
+          ],
+          quizzes: [
+            { q: "‘있다’ fe’lining kattalarga nisbatan hurmat shakli:", opts: ['계시다', '드시다', '주무시다', '말씀하시다'], ans: '계시다', exp: "Hurmat shaklida ‘있다’ → ‘계시다’ bo‘ladi." }
+          ]
         }
       ]
     },
     {
       code: '1B',
       label: '서울대 한국어 1B',
-      range: 'TOPIK 1–2 · Boshlang‘ich 2 (4 dars)',
+      range: 'TOPIK 1–2 · Boshlang‘ich 2 (5 dars)',
       lessons: [
         {
           id: '1b-1', num: 1, week: '1B · 7과', emoji: '☀️', title: '날씨가 어때요? (Ob-havo)',
@@ -532,6 +613,33 @@ export default function App() {
           ],
           quizzes: [
             { q: "‘Sovuq suv ichish mumkin emas’ — to‘g‘ri taqiq:", opts: ['찬물을 마시면 안 돼요', '찬물을 마셔야 돼요', '찬물을 마시고 싶어요', '찬물을 마실 거예요'], ans: '찬물을 마시면 안 돼요', exp: "Taqiq shakli: ‘-(으)면 안 되다’." }
+          ]
+        },
+        {
+          id: '1b-5', num: 5, week: '1B · 11과', emoji: '✈️', title: '방학에 여행을 갈 거예요 (Kelajak reja)',
+          heroKo: '이번 방학에 친구하고 부산에 갈 거예요', heroUz: 'Shu ta’tilda do‘stim bilan Busanga bormoqchiman',
+          pinkTitle: 'V-(으)ㄹ 거예요 & V-(으)러 가다', pinkSub: 'Kelajak zamon rejalari va maqsad',
+          pinkGroups: [
+            {
+              cond: 'Kelajak reja: -(으)ㄹ 거예요 | Maqsad: -(으)러 가다 (-gani bormoq)',
+              items: [
+                { ko: '주말에 수영하러 바다에 갈 거예요.', uz: 'Dam olish kuni suzgani dengizga bormoqchiman.' },
+                { ko: '내일 도서관에 책을 빌리러 가요.', uz: 'Ertaga kutubxonaga kitob olgani boraman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '장소 + 에 + V-(으)러 갈 거예요',
+          greenRows: [
+            { parts: ['도서관에', '공부하러', '갈 거예요'], res: '도서관에 공부하러 갈 거예요.', uz: 'Kutubxonaga o‘qigani bormoqchiman.' }
+          ],
+          words: [
+            { ko: '방학', uz: 'Ta’til' },
+            { ko: '빌리다', uz: 'Qarzga/vaqtincha olmoq' },
+            { ko: '수영하다', uz: 'Suzmoq' },
+            { ko: '계획', uz: 'Reja' }
+          ],
+          quizzes: [
+            { q: "‘Kitob olgani boraman’ — maqsad qo‘shimchasi:", opts: ['책을 빌리러 가요', '책을 빌리지만 가요', '책을 빌려서 가요', '책을 빌린 적이 가요'], ans: '책을 빌리러 가요', exp: "Harakat maqsadi: ‘-(으)러 가다’." }
           ]
         }
       ]
@@ -1038,6 +1146,114 @@ export default function App() {
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
+  // --- 3. REAL HAYOTIY DIALOG SIMULYATORI (ROLEPLAY) ---
+  const roleplayScenarios = [
+    {
+      id: 'cafe',
+      emoji: '☕',
+      title: 'Kafeda Buyurtma',
+      level: '1A–1B',
+      steps: [
+        {
+          npcKo: '어서 오세요! 주문하시겠어요?',
+          npcUz: 'Xush kelibsiz! Buyurtma berasizmi?',
+          opts: [
+            { ko: '네, 아이스 아메리카노 한 잔 주세요.', uz: 'Ha, bitta muzli amerikano bering.', ok: true },
+            { ko: '아니요, 학교에 갔어요.', uz: 'Yo‘q, maktabga bordim.', ok: false }
+          ]
+        },
+        {
+          npcKo: '네, 알겠습니다. 여기서 드실 거예요?',
+          npcUz: 'Xo‘p, tushunarli. Shu yerda ichasizmi?',
+          opts: [
+            { ko: '네, 여기서 마실 거예요.', uz: 'Ha, shu yerda ichaman.', ok: true },
+            { ko: '어제 영화를 봤어요.', uz: 'Kecha kino ko‘rdim.', ok: false }
+          ]
+        },
+        {
+          npcKo: '사천오백 원입니다. 진동벨 울리면 가져가세요!',
+          npcUz: '4,500 von bo‘ldi. Qo‘ng‘iroq jiringlaganda olib keting!',
+          opts: [
+            { ko: '네, 감사합니다!', uz: 'Xo‘p, rahmat!', ok: true },
+            { ko: '얼마예요?', uz: 'Qancha turadi?', ok: false }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'hospital',
+      emoji: '🏥',
+      title: 'Shifokor Qabulida',
+      level: '1B–2A',
+      steps: [
+        {
+          npcKo: '어떻게 오셨어요? 어디가 아프세요?',
+          npcUz: 'Nima shikoyat bilan keldingiz? Qayeringiz og‘riyapti?',
+          opts: [
+            { ko: '어제부터 목이 아프고 열이 나요.', uz: 'Kechadan beri tomog‘im og‘riyapti va isitmam bor.', ok: true },
+            { ko: '날씨가 맑아서 기분이 좋아요.', uz: 'Havo ochiq bo‘lgani uchun kayfiyatim yaxshi.', ok: false }
+          ]
+        },
+        {
+          npcKo: '감기에 걸리셨네요. 처방전을 드릴 테니까 약국에 가세요.',
+          npcUz: 'Shamollab qolibsiz. Retsept beraman, dorixonaga boring.',
+          opts: [
+            { ko: '선생님, 찬물을 마셔도 돼요?', uz: 'Doktor, sovuq suv ichsam maylimi?', ok: true },
+            { ko: '지하철로 30분 걸려요.', uz: 'Metroda 30 daqiqa ketadi.', ok: false }
+          ]
+        },
+        {
+          npcKo: '아니요, 찬물을 마시면 안 돼요. 따뜻한 물을 많이 드세요.',
+          npcUz: 'Yo‘q, sovuq suv ichish mumkin emas. Iliq suv ko‘proq iching.',
+          opts: [
+            { ko: '네, 잘 알겠습니다. 감사합니다!', uz: 'Xo‘p, tushundim. Rahmat!', ok: true },
+            { ko: '아메리카노 두 잔 주세요.', uz: 'Ikkita amerikano bering.', ok: false }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'interview',
+      emoji: '💼',
+      title: 'Kompaniyada Suhbat',
+      level: '3A–4B',
+      steps: [
+        {
+          npcKo: '자기소개를 간단하게 해 주시겠어요?',
+          npcUz: 'O‘zingizni qisqacha tanishtirib bera olasizmi?',
+          opts: [
+            { ko: '안녕하세요! 저는 한국어와 IT에 관심이 많은 토히르벡입니다.', uz: 'Assalomu alaykum! Men koreys tili va IT ga qiziqishi katta Tokhirbekman.', ok: true },
+            { ko: '가방에 지갑이 없어요.', uz: 'Sumkada hamyon yo‘q.', ok: false }
+          ]
+        },
+        {
+          npcKo: '우리 회사에 지원한 이유가 무엇입니까?',
+          npcUz: 'Kompaniyamizga hujjat topshirishingiz sababi nima?',
+          opts: [
+            { ko: '귀사의 혁신적인 기술력 덕분에 많이 배울 수 있을 것 같아서 지원했습니다.', uz: 'Kompaniyangizning innovatsion texnologiyalari sharofati bilan ko‘p narsa o‘rgana olaman deb o‘ylab topshirdim.', ok: true },
+            { ko: '비가 오니까 우산을 가지고 가세요.', uz: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting.', ok: false }
+          ]
+        }
+      ]
+    }
+  ];
+  const [activeDialog, setActiveDialog] = useState(roleplayScenarios[0]);
+  const [dialogStep, setDialogStep] = useState(0);
+  const [dialogFeedback, setDialogFeedback] = useState(null);
+
+  // --- 4. 쓰기 • YOZISH VA IMLO TRENAJYORI ---
+  const writingPrompts = [
+    { uz: 'Talaba', ko: '학생', hint: 'ㅎ + ㅏ + ㄱ + ㅅ + ㅐ + ㅇ' },
+    { uz: 'Kutubxona', ko: '도서관', hint: 'ㄷ + ㅗ + ㅅ + ㅓ + ㄱ + ㅘ + ㄴ' },
+    { uz: 'Rahmat', ko: '감사합니다', hint: 'ㄱ + ㅏ + ㅁ + ㅅ + ㅏ + ㅎ + ㅏ + ㅂ + ㄴ + ㅣ + ㄷ + ㅏ' },
+    { uz: 'Stipendiya', ko: '장학금', hint: 'ㅈ + ㅏ + ㅇ + ㅎ + ㅏ + ㄱ + ㄱ + ㅡ + ㅁ' },
+    { uz: 'Men talabaman', ko: '저는 학생이에요', hint: '저는 + 학생 + 이에요' },
+    { uz: 'Koreys tili', ko: '한국어', hint: 'ㅎ + ㅏ + ㄴ + ㄱ + ㅜ + ㄱ + ㅇ + ㅓ' }
+  ];
+  const [writeIdx, setWriteIdx] = useState(0);
+  const [writeInput, setWriteInput] = useState('');
+  const [writeResult, setWriteResult] = useState(null);
+
   // --- AQLLI AI USTOZ: 토히르벡 ---
   const [aiMessages, setAiMessages] = useState([
     {
@@ -1077,13 +1293,6 @@ export default function App() {
       };
     }
 
-    if (q.includes('nima qila') || q.includes('yordam') || q.includes('qanday')) {
-      return {
-        ko: '단어 번역, 문법 설명, 한국어 대화 연습을 모두 도와줄 수 있어요!',
-        uz: "Men: 1) O‘zbekcha so‘zlarni koreyschaga tarjima qilaman (masalan: 'kutubxona koreyscha nima?'); 2) Grammatikani tushuntiraman; 3) Koreyscha suhbat quraman!"
-      };
-    }
-
     if (q.includes('예요') || q.includes('이에요')) {
       return {
         ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 사용해요!',
@@ -1096,22 +1305,10 @@ export default function App() {
         uz: "Farqi: Oddiy sababda '-아서/어서' (배가 아파서 병원에 갔어요), buyruq va taklif gaplarda esa '-(으)니까' (추우니까 옷을 입으세요) ishlatiladi!"
       };
     }
-    if (q.includes('다고') || q.includes('bilvosita')) {
-      return {
-        ko: '간접화법: 동사는 "-ㄴ/는다고 해요", 형용사는 "-다고 해요"를 붙여요.',
-        uz: "Bilvosita nutqda fe'lga '-ㄴ/는다고 해요' (온다고 했어요 — kelaman deb aytdi), sifatga '-다고 해요' qo‘shiladi."
-      };
-    }
     if (q.includes('kafe') || q.includes('카페') || q.includes('kofe') || q.includes('커피')) {
       return {
         ko: '카페에서: "아이스 아메리카노 한 잔 주세요. 여기서 마실 거예요."',
-        uz: "Kafeda: 'Bitta muzli amerikano bering. Shu yerda ichaman.' Sotuvchi: '네, 진동벨 울리면 가져가세요!' (Xo‘p, qo‘ng‘iroq jiringlaganda olib keting!)"
-      };
-    }
-    if (q.includes('topik') || q.includes('imtihon')) {
-      return {
-        ko: 'TOPIK 시험을 잘 보려면 매일 단어를 외우고 듣기 연습을 해야 해요!',
-        uz: "TOPIK dan yuqori ball olish uchun pastdagi '복습 • Mashq' bo‘limidagi TOPIK Mock Test va Listening mashqlarini har kuni bajaring!"
+        uz: "Kafeda: 'Bitta muzli amerikano bering. Shu yerda ichaman.' Pastdagi Mashq -> Dialog bo‘limida kafeda jonli buyurtma berishni mashq qilishingiz mumkin!"
       };
     }
 
@@ -1354,14 +1551,14 @@ export default function App() {
   };
 
   // =========================================================================
-  // 0. KIRISH EKRANI (ZIYOPREP YASHIL BOYO'G'LI MASKOT BILAN)
+  // 0. KIRISH EKRANI
   // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
               <span className={`font-black text-lg tracking-tight block leading-none ${t.textMain}`}>ZiyoPrep</span>
               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">한글 스튜디오</span>
@@ -1376,7 +1573,7 @@ export default function App() {
           {authMode === 'welcome' ? (
             <>
               <div className="relative w-36 h-36 mx-auto">
-                <ZiyoOwlAvatar className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" />
+                <ZiyoOwlAvatar className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" equipped={equippedItems} />
                 <span className="absolute -bottom-2 inset-x-3 bg-[#58cc02] text-white text-[10px] font-black py-1 rounded-full shadow-lg uppercase">
                   ZiyoPrep • 서울대 1A–6B
                 </span>
@@ -1386,7 +1583,7 @@ export default function App() {
                   ZiyoPrep bilan koreys tilini quvnoq va samarali o‘rganing!
                 </h1>
                 <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                  Hangul alifbosi, 서울대 한국어 1A–6B kitoblari, Speaking mashqlari va shaxsiy AI ustoz 토히르벡.
+                  Hangul alifbosi, 서울대 한국어 1A–6B kitoblari, Real Dialoglar, Speaking mashqlari va shaxsiy AI ustoz 토히르벡.
                 </p>
               </div>
               <div className="space-y-3 pt-1">
@@ -1485,7 +1682,7 @@ export default function App() {
       <div className="space-y-4 pb-28">
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
               <h1 className={`text-lg font-black tracking-tight leading-none ${t.textMain}`}>ZiyoPrep</h1>
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">한글 스튜디오 • 1A–6B</span>
@@ -1507,7 +1704,7 @@ export default function App() {
         </div>
 
         <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800/70' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" />
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" equipped={equippedItems} />
           <div className="flex-1 space-y-2">
             <div className="flex justify-between items-center">
               <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
@@ -1517,7 +1714,7 @@ export default function App() {
               <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
             </div>
             <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-              🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP
+              🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP • ❄️ {profile.freezes}
             </div>
           </div>
         </div>
@@ -1534,48 +1731,37 @@ export default function App() {
           </span>
         </button>
 
-        <div
-          onClick={() => setScreen('builder')}
-          className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center shadow-xs">
-              abc
+        {/* TEZKOR MINI-ILOVALAR: 글자 조립 + DIALOG SIMULYATORI */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <div
+            onClick={() => setScreen('builder')}
+            className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-3.5 cursor-pointer active:scale-98 transition space-y-1.5`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center">
+              가나다
             </div>
-            <div>
-              <div className={`font-black text-sm ${t.textMain}`}>
-                글자 조립 {uiLang === 'uz' && <span className="text-xs font-bold text-emerald-600">(Harf yig‘ish)</span>}
-              </div>
-              <div className={`text-[11px] ${t.textMuted} mt-0.5`}>
-                {uiLang === 'uz'
-                  ? 'Undosh va unlini bosib bo‘g‘in yasang va talaffuzini eshiting'
-                  : '자음·모음을 눌러 글자 만들고 발음 듣기'}
-              </div>
-            </div>
+            <div className={`font-black text-xs ${t.textMain}`}>글자 조립 (Harf)</div>
+            <div className={`text-[10px] ${t.textMuted}`}>Bo‘g‘in yig‘ish & Talaffuz</div>
           </div>
-          <span className="text-slate-400 font-bold text-lg">›</span>
+
+          <div
+            onClick={() => {
+              setScreen('review');
+              setReviewMode('dialog');
+              setDialogStep(0);
+              setDialogFeedback(null);
+            }}
+            className={`rounded-2xl ${isDark ? 'bg-sky-950/40 border-sky-800' : 'bg-[#eef6fc] border-[#cce5f6]'} border p-3.5 cursor-pointer active:scale-98 transition space-y-1.5`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-sky-500 text-white font-black text-xs flex items-center justify-center">
+              <MessageSquare size={18} />
+            </div>
+            <div className={`font-black text-xs ${t.textMain}`}>🎭 Dialog Simulyator</div>
+            <div className={`text-[10px] ${t.textMuted}`}>Kafe, Shifoxona, Suhbat</div>
+          </div>
         </div>
 
-        <div
-          onClick={() => {
-            setScreen('review');
-            setReviewMode('sprint');
-            startSprintGame();
-          }}
-          className={`rounded-2xl ${isDark ? 'bg-amber-950/40 border-amber-800' : 'bg-amber-50 border-amber-200'} border p-3.5 flex items-center justify-between cursor-pointer active:scale-99 transition`}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black">
-              <Timer size={20} />
-            </div>
-            <div>
-              <div className={`text-xs font-black ${t.textMain}`}>⚡ 30-Soniyalik So‘z Ovchisi</div>
-              <div className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">Vaqt tugamasidan so‘zlarni topib XP yig‘ing</div>
-            </div>
-          </div>
-          <span className="text-amber-500 font-black">›</span>
-        </div>
-
+        {/* 서울대 한국어 1A ~ 6B Tablari */}
         <div className="space-y-1 pt-1">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
@@ -1602,6 +1788,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* Darslar Ro'yxati */}
         <div className="space-y-2.5">
           {currentBook.lessons.map((lesson, idx) => {
             const isDone = completedIds.includes(lesson.id);
@@ -1871,7 +2058,7 @@ export default function App() {
           onClick={() => toggleItem('hero', activeLesson.heroKo)}
           className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer`}
         >
-          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl shrink-0" />
+          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl shrink-0" equipped={equippedItems} />
           <div>
             <div className="text-[10px] font-bold text-slate-400">{activeLesson.week}</div>
             <div className={`text-base font-black ${t.textMain}`}>{activeLesson.heroKo}</div>
@@ -2106,13 +2293,13 @@ export default function App() {
   };
 
   // =========================================================================
-  // 4. AI USTOZ — 토히르벡 (BOYO'G'LI MASKOT BILAN)
+  // 4. AI USTOZ — 토히르벡
   // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2.5">
-          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
+          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
           <div>
             <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (ZiyoPrep AI)</h2>
             <span className="text-[10px] font-bold text-emerald-500">● Online • Istalgan savol bering yoki koreyscha yozing</span>
@@ -2174,20 +2361,23 @@ export default function App() {
   );
 
   // =========================================================================
-  // 5. TAKRORLASH
+  // 5. TAKRORLASH (KARTOCHKA, DIALOG, YOZISH, SPEAKING, SPRINT, TOPIK)
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
     const listenWord = allWords[listenIdx % allWords.length];
     const speakWord = allWords[speakIdx % allWords.length];
+    const writeItem = writingPrompts[writeIdx % writingPrompts.length];
+    const currentDialogObj = activeDialog.steps[dialogStep];
 
     return (
       <div className="space-y-4 pb-28 pt-2">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {[
-            { id: 'cards', icon: Layers, label: 'Kartochka' },
-            { id: 'listen', icon: Headphones, label: 'Listening' },
-            { id: 'speak', icon: Mic, label: 'Speaking' },
+            { id: 'cards', icon: Layers, label: 'So‘z' },
+            { id: 'dialog', icon: MessageSquare, label: 'Dialog' },
+            { id: 'write', icon: Keyboard, label: 'Yozish' },
+            { id: 'speak', icon: Mic, label: 'Nutq' },
             { id: 'sprint', icon: Timer, label: 'Sprint' },
             { id: 'mock', icon: Clock, label: 'TOPIK' }
           ].map(m => (
@@ -2198,18 +2388,19 @@ export default function App() {
                 if (m.id === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
                 if (m.id === 'sprint' && !sprintWord) startSprintGame();
               }}
-              className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[10px] font-black transition ${
+              className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[9px] font-black transition ${
                 reviewMode === m.id
                   ? 'bg-[#58cc02] text-white border-emerald-600 shadow'
                   : `${t.card} ${t.textMuted}`
               }`}
             >
-              <m.icon size={16} />
+              <m.icon size={15} />
               <span>{m.label}</span>
             </button>
           ))}
         </div>
 
+        {/* 1. KARTOCHKA */}
         {reviewMode === 'cards' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -2251,54 +2442,160 @@ export default function App() {
           </div>
         )}
 
-        {reviewMode === 'listen' && (
-          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
-            <div className="text-xs font-black text-emerald-500 uppercase">듣기 연습 • Tinglab Tushunish</div>
-            <button
-              onClick={() => speakKo(listenWord.ko)}
-              className="w-full py-6 rounded-2xl bg-indigo-500/15 border-2 border-indigo-500 text-indigo-500 font-black text-sm flex items-center justify-center gap-2"
-            >
-              <Volume2 size={26} /> Audioni Eshitish (Bosing)
-            </button>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {(listenOpts.length > 0 ? listenOpts : [listenWord.uz]).map(opt => (
+        {/* 2. REAL HAYOTIY DIALOG SIMULYATORI (ROLEPLAY) */}
+        {reviewMode === 'dialog' && (
+          <div className="space-y-3.5">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {roleplayScenarios.map(sc => (
                 <button
-                  key={opt}
+                  key={sc.id}
                   onClick={() => {
-                    setListenPick(opt);
-                    if (opt === listenWord.uz) {
-                      setProfile(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
-                    }
+                    setActiveDialog(sc);
+                    setDialogStep(0);
+                    setDialogFeedback(null);
+                    speakKo(sc.steps[0].npcKo);
                   }}
-                  className={`p-3.5 rounded-2xl border text-xs font-bold transition ${
-                    listenPick !== null
-                      ? opt === listenWord.uz
-                        ? 'bg-emerald-500 text-white border-emerald-600'
-                        : listenPick === opt
-                          ? 'bg-rose-500 text-white border-rose-600'
-                          : `${t.sub} opacity-50`
-                      : `${t.sub} ${t.textMain}`
+                  className={`shrink-0 px-3.5 py-2 rounded-2xl border text-xs font-black flex items-center gap-1.5 ${
+                    activeDialog.id === sc.id ? 'bg-sky-500 text-white border-sky-600' : `${t.card} ${t.textMain}`
                   }`}
                 >
-                  {opt}
+                  <span>{sc.emoji}</span>
+                  <span>{sc.title}</span>
                 </button>
               ))}
             </div>
 
-            <button
-              onClick={() => {
-                const next = listenIdx + 1;
-                setListenIdx(next);
-                prepareListening(next);
-              }}
-              className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs"
-            >
-              Keyingi audio (+15 XP) →
-            </button>
+            {currentDialogObj ? (
+              <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
+                <div className="flex justify-between items-center text-[10px] font-black text-sky-500 uppercase">
+                  <span>{activeDialog.emoji} {activeDialog.title} ({activeDialog.level})</span>
+                  <span>Bosqich {dialogStep + 1} / {activeDialog.steps.length}</span>
+                </div>
+
+                <div
+                  onClick={() => speakKo(currentDialogObj.npcKo)}
+                  className={`p-4 rounded-2xl ${t.sub} border space-y-1 cursor-pointer`}
+                >
+                  <div className="text-[10px] font-black text-emerald-500 flex items-center gap-1">
+                    <Volume2 size={13} /> Suhbatdosh (Eshitish uchun bosing):
+                  </div>
+                  <div className={`text-base font-black ${t.textMain}`}>{currentDialogObj.npcKo}</div>
+                  <div className="text-xs text-slate-400 font-bold">{currentDialogObj.npcUz}</div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400">Sizning javobingizni tanlang:</div>
+                  {currentDialogObj.opts.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        speakKo(opt.ko);
+                        if (opt.ok) {
+                          setDialogFeedback({ ok: true, msg: "To‘g‘ri va tabiiy javob! 🎉 (+15 XP)" });
+                          setProfile(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
+                        } else {
+                          setDialogFeedback({ ok: false, msg: "Bu javob vaziyatga mos kelmadi. Yana urinib ko‘ring!" });
+                        }
+                      }}
+                      className={`w-full p-3.5 rounded-2xl text-left border space-y-0.5 transition ${t.sub} hover:border-sky-400`}
+                    >
+                      <div className={`text-xs font-black ${t.textMain}`}>{opt.ko}</div>
+                      <div className="text-[11px] text-slate-400">{opt.uz}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {dialogFeedback && (
+                  <div className={`p-3 rounded-2xl text-xs font-black ${dialogFeedback.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
+                    {dialogFeedback.msg}
+                  </div>
+                )}
+
+                {dialogFeedback?.ok && (
+                  <button
+                    onClick={() => {
+                      if (dialogStep + 1 < activeDialog.steps.length) {
+                        const next = dialogStep + 1;
+                        setDialogStep(next);
+                        setDialogFeedback(null);
+                        speakKo(activeDialog.steps[next].npcKo);
+                      } else {
+                        setDialogStep(0);
+                        setDialogFeedback(null);
+                      }
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+                  >
+                    {dialogStep + 1 < activeDialog.steps.length ? 'Keyingi suhbat →' : 'Suhbat yakunlandi! Qaytadan boshlash'}
+                  </button>
+                )}
+              </div>
+            ) : null}
           </div>
         )}
 
+        {/* 3. 쓰기 • YOZISH VA IMLO TRENAJYORI */}
+        {reviewMode === 'write' && (
+          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-black text-indigo-500 uppercase">✍️ 쓰기 • Koreyscha Yozish</span>
+              <button onClick={() => speakKo(writeItem.ko)} className="text-xs font-bold text-emerald-500 flex items-center gap-1">
+                <Volume2 size={15} /> Eshitish
+              </button>
+            </div>
+
+            <div className="text-center py-2 space-y-1">
+              <div className="text-[11px] text-slate-400 font-bold">Quyidagi so‘z/gapni koreys tilida yozing:</div>
+              <div className={`text-2xl font-black ${t.textMain}`}>{writeItem.uz}</div>
+              <div className="text-[10px] text-slate-400">Yordam: {writeItem.hint}</div>
+            </div>
+
+            <input
+              type="text"
+              value={writeInput}
+              onChange={e => setWriteInput(e.target.value)}
+              placeholder="Koreyscha yozing (masalan: 학생)..."
+              className={`w-full ${t.sub} border-2 focus:border-indigo-500 rounded-2xl px-4 py-3.5 text-center text-base font-black outline-none`}
+            />
+
+            {writeResult && (
+              <div className={`p-3 rounded-2xl text-xs font-black text-center ${writeResult.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
+                {writeResult.msg}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={() => {
+                  const cleanUser = writeInput.replace(/\s+/g, '').trim();
+                  const cleanAns = writeItem.ko.replace(/\s+/g, '').trim();
+                  if (cleanUser === cleanAns) {
+                    setWriteResult({ ok: true, msg: `Barakalla! "${writeItem.ko}" — 100% to‘g‘ri! (+20 XP)` });
+                    setProfile(p => ({ ...p, xp: p.xp + 20, dailyXp: p.dailyXp + 20 }));
+                    speakKo(writeItem.ko);
+                  } else {
+                    setWriteResult({ ok: false, msg: `Xato! To‘g‘ri yozilishi: ${writeItem.ko}` });
+                  }
+                }}
+                className="py-3.5 rounded-2xl bg-indigo-600 text-white font-black text-xs"
+              >
+                Tekshirish
+              </button>
+              <button
+                onClick={() => {
+                  setWriteIdx(i => i + 1);
+                  setWriteInput('');
+                  setWriteResult(null);
+                }}
+                className={`py-3.5 rounded-2xl ${t.sub} border font-black text-xs`}
+              >
+                Keyingi so‘z →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 4. SPEAKING */}
         {reviewMode === 'speak' && (
           <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
             <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] font-black uppercase">
@@ -2344,6 +2641,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 5. SPRINT */}
         {reviewMode === 'sprint' && (
           <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
             <div className="flex justify-between items-center text-xs font-black">
@@ -2390,6 +2688,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 6. TOPIK MOCK */}
         {reviewMode === 'mock' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             {!mockActive ? (
@@ -2471,31 +2770,28 @@ export default function App() {
   };
 
   // =========================================================================
-  // 6. PROFIL
+  // 6. PROFIL, XP DO'KONI VA TALABALAR REYTINGI (LEADERBOARD)
   // =========================================================================
   const renderProfile = () => {
-    const weekDays = [
-      { d: 'Du', v: 45 },
-      { d: 'Se', v: 80 },
-      { d: 'Ch', v: 60 },
-      { d: 'Pa', v: 100 },
-      { d: 'Ju', v: 75 },
-      { d: 'Sh', v: 90 },
-      { d: 'Ya', v: Math.min(100, profile.dailyXp) }
+    const shopItems = [
+      { id: 'glasses', icon: '🕶️', name: 'Aqlli Ko‘zoynak', price: 200, desc: 'Boyo‘g‘liga zamonaviy ko‘zoynak taqing' },
+      { id: 'gradCap', icon: '🎓', name: 'TOPIK 6 Qalpoqchasi', price: 400, desc: 'Akademik bitiruvchi bosh kiyimi' },
+      { id: 'crown', icon: '👑', name: 'Oltin Qirollik Toji', price: 700, desc: 'Eng faol talabalar toji' }
     ];
 
-    const badges = [
-      { icon: '🦉', name: 'ZiyoPrep A’zosi', unlocked: true },
-      { icon: '🔥', name: '10+ Kun Streak', unlocked: profile.streak >= 10 },
-      { icon: '⚡', name: '1000+ XP Ustasi', unlocked: profile.xp >= 1000 },
-      { icon: '🎓', name: '5+ Dars Bitiruvchi', unlocked: completedIds.length >= 5 }
-    ];
+    const leaderboard = [
+      { name: '김민준 (Seul)', xp: 2450, badge: 'TOPIK 5' },
+      { name: 'Fariza', xp: 1890, badge: 'TOPIK 4' },
+      { name: `${profile.name} (Siz)`, xp: profile.xp, badge: 'TOPIK 4', isMe: true },
+      { name: '김예인', xp: 1320, badge: 'TOPIK 3' },
+      { name: '투굴두르', xp: 980, badge: 'TOPIK 2' }
+    ].sort((a, b) => b.xp - a.xp);
 
     return (
       <div className="space-y-4 pb-28 pt-2">
         <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
           <div className="flex items-center gap-3.5">
-            <ZiyoOwlAvatar className="w-14 h-14 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
             <div>
               {editingName ? (
                 <div className="flex gap-1.5">
@@ -2526,6 +2822,7 @@ export default function App() {
           </button>
         </div>
 
+        {/* Statistika */}
         <div className="grid grid-cols-3 gap-2.5">
           <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
             <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
@@ -2535,7 +2832,7 @@ export default function App() {
           <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
             <Zap size={20} className="mx-auto text-sky-500 fill-sky-500" />
             <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-            <div className="text-[10px] text-slate-400 font-bold">Jami XP</div>
+            <div className="text-[10px] text-slate-400 font-bold">Mavjud XP</div>
           </div>
           <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
             <CheckCircle2 size={20} className="mx-auto text-emerald-500" />
@@ -2544,37 +2841,93 @@ export default function App() {
           </div>
         </div>
 
+        {/* 🛍️ XP DO'KONI (MASKOT AKSESSUARLARI & STREAK MUZLATGICH) */}
         <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
           <div className="flex justify-between items-center text-xs font-black">
-            <span className={t.textMain}>Haftalik O‘qish Faolligi</span>
-            <span className="text-emerald-500">XP Grafiği</span>
+            <span className="flex items-center gap-1.5 text-emerald-500"><ShoppingBag size={15} /> XP Do‘koni (Maskot Kiyimlari)</span>
+            <span className="text-sky-500">⚡ {profile.xp} XP</span>
           </div>
-          <div className="grid grid-cols-7 gap-2 items-end h-24 pt-2">
-            {weekDays.map(item => (
-              <div key={item.d} className="flex flex-col items-center gap-1.5 h-full justify-end">
-                <div className="w-full bg-slate-200/50 dark:bg-slate-800 rounded-lg h-16 flex items-end overflow-hidden">
-                  <div className="w-full bg-[#58cc02] rounded-lg transition-all" style={{ height: `${item.v}%` }} />
+
+          <div className="space-y-2">
+            {shopItems.map(item => {
+              const isOwned = ownedItems[item.id];
+              const isEquipped = equippedItems[item.id];
+              return (
+                <div key={item.id} className={`p-3 rounded-2xl ${t.sub} border flex items-center justify-between`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{item.icon}</span>
+                    <div>
+                      <div className={`text-xs font-black ${t.textMain}`}>{item.name}</div>
+                      <div className="text-[10px] text-slate-400">{item.desc}</div>
+                    </div>
+                  </div>
+                  {isOwned ? (
+                    <button
+                      onClick={() => setEquippedItems(p => ({ ...p, [item.id]: !p[item.id] }))}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black ${
+                        isEquipped ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-white'
+                      }`}
+                    >
+                      {isEquipped ? 'Kiyilgan ✓' : 'Kiyish'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (profile.xp < item.price) return alert("XP yetarli emas! Dars yoki mashq bajarib XP yig‘ing.");
+                        setProfile(p => ({ ...p, xp: p.xp - item.price }));
+                        setOwnedItems(p => ({ ...p, [item.id]: true }));
+                        setEquippedItems(p => ({ ...p, [item.id]: true }));
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-black"
+                    >
+                      ⚡ {item.price}
+                    </button>
+                  )}
                 </div>
-                <span className="text-[10px] font-black text-slate-400">{item.d}</span>
+              );
+            })}
+
+            {/* Streak Muzlatgich */}
+            <div className={`p-3 rounded-2xl ${t.sub} border flex items-center justify-between`}>
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">❄️</span>
+                <div>
+                  <div className={`text-xs font-black ${t.textMain}`}>Streak Muzlatgich ({profile.freezes} ta bor)</div>
+                  <div className="text-[10px] text-slate-400">1 kun dars qilmasangiz ham streak saqlanadi</div>
+                </div>
               </div>
-            ))}
+              <button
+                onClick={() => {
+                  if (profile.xp < 150) return alert("150 XP kerak!");
+                  setProfile(p => ({ ...p, xp: p.xp - 150, freezes: p.freezes + 1 }));
+                }}
+                className="px-3 py-1.5 rounded-xl bg-sky-500 text-white text-[11px] font-black"
+              >
+                ⚡ 150
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* 🏆 TALABALAR REYTINGI (LEADERBOARD) */}
         <div className={`rounded-3xl ${t.card} border p-4 space-y-2.5`}>
           <div className="text-xs font-black flex items-center gap-1.5 text-amber-500">
-            <Award size={15} /> Yutuqlar va Nishonlar
+            <Trophy size={15} /> Haftalik Talabalar Reytingi
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {badges.map(b => (
+          <div className="space-y-1.5">
+            {leaderboard.map((st, i) => (
               <div
-                key={b.name}
-                className={`p-2.5 rounded-2xl border flex items-center gap-2 text-xs font-black ${
-                  b.unlocked ? `${t.sub} ${t.textMain}` : 'opacity-40'
+                key={st.name}
+                className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs font-black ${
+                  st.isMe ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500' : `${t.sub} ${t.textMain}`
                 }`}
               >
-                <span className="text-lg">{b.icon}</span>
-                <span className="text-[11px]">{b.name}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+                  <span>{st.name}</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-400">{st.badge}</span>
+                </div>
+                <span>⚡ {st.xp} XP</span>
               </div>
             ))}
           </div>
@@ -2630,7 +2983,7 @@ export default function App() {
             onClick={() => setScreen('ai')}
             className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition overflow-hidden p-0.5"
           >
-            <ZiyoOwlAvatar className="w-full h-full rounded-full" />
+            <ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} />
           </button>
 
           <button
