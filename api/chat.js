@@ -5,19 +5,21 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY topilmadi' });
+    return res.status(500).json({
+      ko: 'API 키 설정이 필요해요!',
+      uz: 'Vercel Settings -> Environment Variables bo‘limida GEMINI_API_KEY topilmadi!'
+    });
   }
 
   try {
     const { message, history = [], userName = 'Talaba' } = req.body;
 
-    const systemPrompt = `Sen ZiyoPrep ilovasining aqlli va do'stona koreys tili AI ustozi "토히르벡 (Tokhirbek AI)"san.
+    const systemPrompt = `Sen ZiyoPrep ilovasining aqlli, samimiy va bilimdon koreys tili AI ustozi "토히르벡 (Tokhirbek AI)"san.
 Foydalanuvchi ismi: ${userName}.
 Qoidalar:
-1. Foydalanuvchi o'zbekcha, koreyscha yoki aralash yozsa, tabiiy, tushunarli va mehr bilan javob ber.
-2. Javobingni har doim JSON formatida qaytar: {"ko": "koreyscha qisqa va tabiiy javob (ovozli o'qish uchun)", "uz": "o'zbekcha batafsil tushuntirish, tarjima yoki misollar"}.
-3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g'ri variantini ko'rsat.
-4. Seoul National University Korean (서울대 한국어 1A-6B) va TOPIK grammatikasi bo'yicha aniq misollar ber.`;
+1. Foydalanuvchi o'zbekcha, koreyscha yoki aralash nima yozsa ham, xuddi jonli ustozdek tabiiy, aqlli va batafsil javob ber.
+2. Javobingni har doim JSON formatida qaytar: {"ko": "koreyscha tabiiy javob (ovozli o'qish uchun)", "uz": "o'zbekcha batafsil tushuntirish, misollar yoki suhbat javobi"}.
+3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g'ri variantini ko'rsat.`;
 
     const contents = [
       ...history.slice(-6).map((m) => ({
@@ -44,15 +46,21 @@ Qoidalar:
     );
 
     const data = await response.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!rawText) {
-      return res.status(500).json({ error: 'AI javob qaytarmadi', details: data });
+    if (!response.ok) {
+      return res.status(200).json({
+        ko: 'API 키를 확인해 주세요!',
+        uz: `Google API xatosi (${response.status}): ${data?.error?.message || 'API kalit noto‘g‘ri. Google AI Studio dan AIzaSy... bilan boshlanuvchi kalit oling.'}`
+      });
     }
 
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = JSON.parse(rawText);
     return res.status(200).json(parsed);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(200).json({
+      ko: '잠시 오류가 발생했어요.',
+      uz: `Server xatosi: ${err.message}`
+    });
   }
 }
