@@ -5,15 +5,29 @@ import {
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
   Headphones, Mic, Clock, Layers, Timer,
-  MessageSquare, Keyboard, ShoppingBag, Trophy
+  MessageSquare, Keyboard, ShoppingBag, Trophy, Search
 } from 'lucide-react';
 
+// Darslik fayllari
 import { snu1A } from './data/snu1A.js';
 import { snu1B } from './data/snu1B.js';
 import { snu2A, snu2B } from './data/snu2AB.js';
-import { snu3AB, snu4AB, snu56 } from './data/snu3_6.js';
+import { snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B } from './data/snu3_6.js';
 
-// ZiyoPrep Yashil Boyo'g'li Maskot (Kiyiladigan aksessuarlar: TOPIK qalpoqchasi, ko'zoynak, toj bilan)
+// Lug'at fayllari (1A ~ 6A)
+import { vocab1A } from './data/vocab1A.js';
+import { vocab1B } from './data/vocab1B.js';
+import { vocab2A } from './data/vocab2A.js';
+import { vocab2B } from './data/vocab2B.js';
+import { vocab3A } from './data/vocab3A.js';
+import { vocab3B } from './data/vocab3B.js';
+import { vocab4A } from './data/vocab4A.js';
+import { vocab4B } from './data/vocab4B.js';
+import { vocab5A } from './data/vocab5A.js';
+import { vocab5B } from './data/vocab5B.js';
+import { vocab6A } from './data/vocab6A.js';
+
+// ZiyoPrep Yashil Boyo'g'li Maskot
 function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   return (
     <div className={`${className} overflow-hidden shadow-md relative select-none`}>
@@ -129,7 +143,6 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   );
 }
 
-// Unicode Hangul Bo'g'in Yig'uvchi Formula
 const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -173,7 +186,7 @@ export default function App() {
       return [];
     }
   });
-  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'login' | 'register' | 'google'
+  const [authMode, setAuthMode] = useState('welcome');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
 
@@ -265,6 +278,22 @@ export default function App() {
   const [activeLesson, setActiveLesson] = useState(null);
   const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
 
+  // --- LUG'ATLAR BO'LIMI HOLATLARI ---
+  const vocabBooks = [
+    vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A
+  ].filter(Boolean);
+
+  const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
+  const [selectedVocabTopicId, setSelectedVocabTopicId] = useState('1a-l1');
+  const [vocabSearch, setVocabSearch] = useState('');
+  const [vocabQuizMode, setVocabQuizMode] = useState(false);
+  const [vocabQuizDirection, setVocabQuizDirection] = useState('ko2uz'); // 'ko2uz' | 'uz2ko'
+  const [vocabQuizWord, setVocabQuizWord] = useState(null);
+  const [vocabQuizOpts, setVocabQuizOpts] = useState([]);
+  const [vocabQuizPick, setVocabQuizPick] = useState(null);
+  const [vocabQuizScore, setVocabQuizScore] = useState(0);
+  const [vocabQuizCount, setVocabQuizCount] = useState(0);
+
   const [profile, setProfile] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('hs_profile'));
@@ -340,12 +369,15 @@ export default function App() {
     } catch {}
   };
 
-  // --- src/data/ PAPKASIDAGI BARCHA KITOBLAR ---
-  const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3AB, snu4AB, snu56].filter(Boolean);
+  // --- BARCHA 12 TA KITOB (1A ~ 6B) ---
+  const snuBooks = [
+    snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B
+  ].filter(Boolean);
 
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons || []);
-  const allWords = allLessons.flatMap(l => l.words || []);
+  const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
+  const allWords = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes || []);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
@@ -462,7 +494,7 @@ export default function App() {
     {
       role: 'ai',
       ko: '안녕하세요! 저는 ZiyoPrep AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
-      uz: 'Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Menga istalgan savol bering, so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!'
+      uz: `Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Bazamda 서울대 1A–6A dan ${allVocabWords.length} ta so‘z va barcha grammatikalar bor. Istalgan so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!`
     }
   ]);
   const [aiInput, setAiInput] = useState('');
@@ -515,13 +547,15 @@ export default function App() {
       };
     }
 
+    const cleanQuery = q.replace(/(koreyscha nima|nima degani|tarjimasi|\?)/g, '').trim();
     const foundWord = allWords.find(
-      w => q.includes(w.uz.toLowerCase().split('/')[0].trim()) || q.includes(w.ko.toLowerCase())
+      w => (cleanQuery.length >= 2 && w.uz.toLowerCase().includes(cleanQuery)) ||
+           (cleanQuery.length >= 1 && w.ko.toLowerCase() === cleanQuery)
     );
     if (foundWord) {
       return {
-        ko: `"${foundWord.ko}" — 뜻: ${foundWord.uz}! 예문: 저는 ${foundWord.ko}에 대해 공부해요.`,
-        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}". Eshitish uchun xabar ustiga bosing!`
+        ko: `"${foundWord.ko}" — 뜻: ${foundWord.uz}!`,
+        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}". Talaffuzini eshitish uchun xabar ustiga bosing!`
       };
     }
 
@@ -534,7 +568,7 @@ export default function App() {
 
     return {
       ko: `"${rawText}"에 대한 좋은 질문이에요! 한국어로 "저는 한국어를 배우고 싶어요"라고 연습해 보세요.`,
-      uz: `Qiziq savol ("${rawText}")! Men 토히르벡 (Tokhirbek AI) sifatida sizga koreys tilini o‘rgatishga tayyorman. Biror o‘zbekcha so‘z yozing (masalan: 'kutubxona', 'talaba', 'stipendiya') yoki koreyscha gap tuzib ko‘ring!`
+      uz: `Qiziq savol ("${rawText}")! Men 토히르벡 (Tokhirbek AI) sifatida sizga koreys tilini o‘rgatishga tayyorman. Biror o‘zbekcha yoki koreyscha so‘z yozing (masalan: 'kutubxona', 'stipendiya', '자존심')!`
     };
   };
 
@@ -762,7 +796,7 @@ export default function App() {
   // =========================================================================
   if (!currentUser) {
     return (
-      <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
+      <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 pt-10 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2.5">
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
@@ -788,7 +822,7 @@ export default function App() {
                   ZiyoPrep bilan koreys tilini quvnoq va samarali o‘rganing!
                 </h1>
                 <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                  Hangul alifbosi, 서울대 한국어 1A–6B to‘liq darsliklari, Uyga vazifalar, Real Dialoglar va AI ustoz 토히르벡.
+                  Hangul alifbosi, 서울대 한국어 1A–6B darsliklari, {allVocabWords.length}+ lug‘at va Savol-Javob testlari, Real Dialoglar va AI ustoz 토히르벡.
                 </p>
               </div>
 
@@ -996,6 +1030,23 @@ export default function App() {
           </span>
         </button>
 
+        {/* 📚 LUG'ATLAR & SAVOL-JAVOB MAXSUS KARTASI */}
+        <div
+          onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }}
+          className={`rounded-2xl ${isDark ? 'bg-indigo-950/45 border-indigo-700' : 'bg-gradient-to-r from-[#f3f0fa] to-[#eef2ff] border-[#d8ccf5]'} border p-3.5 flex items-center justify-between cursor-pointer active:scale-99 transition`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+              단어장
+            </div>
+            <div>
+              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar & Savol-Javob ({allVocabWords.length}+ so‘z)</div>
+              <div className={`text-[10px] ${t.textMuted}`}>서울대 1A–6A barcha bo‘lim lug‘atlari + Test</div>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-black text-[10px]">Ochish ›</span>
+        </div>
+
         <div className="grid grid-cols-2 gap-2.5">
           <div
             onClick={() => setScreen('builder')}
@@ -1025,6 +1076,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* 12 TA ALOHIDA KITOB TABI (1A ~ 6B) */}
         <div className="space-y-1 pt-1">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
@@ -1112,6 +1164,216 @@ export default function App() {
           >
             {uiLang === 'uz' ? '전체 코스 열기 (Barcha darslarni ochish)' : '전체 코스 열기'}
           </button>
+        )}
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // 1.5. LUG'ATLAR VA SAVOL-JAVOB EKRANI (1A ~ 6A)
+  // =========================================================================
+  const renderVocab = () => {
+    const vBook = vocabBooks.find(b => b.code === selectedVocabBook) || vocabBooks[0];
+    const vTopic = vBook.topics.find(tp => tp.id === selectedVocabTopicId) || vBook.topics[0];
+    const filteredWords = vTopic.words.filter(w =>
+      w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+      w.uz.toLowerCase().includes(vocabSearch.toLowerCase())
+    );
+
+    const startVocabQuiz = (dir = vocabQuizDirection) => {
+      const pool = vTopic.words.length >= 4 ? vTopic.words : allVocabWords;
+      const target = pool[Math.floor(Math.random() * pool.length)];
+      if (dir === 'ko2uz') {
+        const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+        setVocabQuizOpts(shuffleArray([target.uz, ...wrongs]));
+      } else {
+        const wrongs = shuffleArray(pool.filter(w => w.ko !== target.ko)).slice(0, 3).map(w => w.ko);
+        setVocabQuizOpts(shuffleArray([target.ko, ...wrongs]));
+      }
+      setVocabQuizWord(target);
+      setVocabQuizPick(null);
+      setVocabQuizMode(true);
+      speakKo(target.ko);
+    };
+
+    return (
+      <div className="space-y-3.5 pb-28">
+        <div className="flex items-center justify-between pt-2">
+          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
+            <ArrowLeft size={16} /> <span>📚 Lug‘atlar ({vBook.code})</span>
+          </button>
+          <button
+            onClick={() => {
+              if (vocabQuizMode) {
+                setVocabQuizMode(false);
+              } else {
+                setVocabQuizScore(0);
+                setVocabQuizCount(0);
+                startVocabQuiz(vocabQuizDirection);
+              }
+            }}
+            className="px-3.5 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-xs"
+          >
+            {vocabQuizMode ? '📖 Lug‘at ro‘yxati' : '🎯 Savol-Javob Test'}
+          </button>
+        </div>
+
+        {/* Kitoblar tanlovi (1A ~ 6A) */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {vocabBooks.map(b => {
+            const totalW = b.topics.reduce((s, tp) => s + tp.words.length, 0);
+            return (
+              <button
+                key={b.code}
+                onClick={() => {
+                  setSelectedVocabBook(b.code);
+                  setSelectedVocabTopicId(b.topics[0].id);
+                  setVocabSearch('');
+                  setVocabQuizMode(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition ${
+                  selectedVocabBook === b.code ? 'bg-indigo-600 text-white' : `${t.card} border ${t.textMain}`
+                }`}
+              >
+                {b.code} ({totalW})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mavzular tanlovi (1과 ~ 18과) */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {vBook.topics.map(tp => (
+            <button
+              key={tp.id}
+              onClick={() => {
+                setSelectedVocabTopicId(tp.id);
+                setVocabSearch('');
+                if (vocabQuizMode) {
+                  setTimeout(() => startVocabQuiz(vocabQuizDirection), 50);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-black shrink-0 border transition ${
+                vTopic.id === tp.id ? 'bg-[#58cc02] text-white border-emerald-600' : `${t.sub} ${t.textMuted}`
+              }`}
+            >
+              {tp.name} ({tp.words.length})
+            </button>
+          ))}
+        </div>
+
+        {vocabQuizMode && vocabQuizWord ? (
+          <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
+            <div className="flex items-center justify-between text-xs font-black">
+              <span className="text-indigo-500">{vTopic.name}</span>
+              <span className="text-emerald-500">To‘g‘ri: {vocabQuizScore} / {vocabQuizCount}</span>
+            </div>
+
+            {/* Yo'nalishni almashtirish tugmalari */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => {
+                  setVocabQuizDirection('ko2uz');
+                  startVocabQuiz('ko2uz');
+                }}
+                className={`py-2 rounded-xl text-[11px] font-black border ${
+                  vocabQuizDirection === 'ko2uz' ? 'bg-indigo-600 text-white border-indigo-700' : `${t.sub} ${t.textMuted}`
+                }`}
+              >
+                🇰🇷 Koreyscha → 🇺🇿 O‘zbekcha
+              </button>
+              <button
+                onClick={() => {
+                  setVocabQuizDirection('uz2ko');
+                  startVocabQuiz('uz2ko');
+                }}
+                className={`py-2 rounded-xl text-[11px] font-black border ${
+                  vocabQuizDirection === 'uz2ko' ? 'bg-indigo-600 text-white border-indigo-700' : `${t.sub} ${t.textMuted}`
+                }`}
+              >
+                🇺🇿 O‘zbekcha → 🇰🇷 Koreyscha
+              </button>
+            </div>
+
+            <div onClick={() => speakKo(vocabQuizWord.ko)} className="py-4 cursor-pointer space-y-1.5">
+              <div className={`text-2xl font-black ${t.textMain}`}>
+                {vocabQuizDirection === 'ko2uz' ? vocabQuizWord.ko : vocabQuizWord.uz}
+              </div>
+              <div className="text-xs text-indigo-500 font-bold flex items-center justify-center gap-1">
+                <Volume2 size={14} /> Talaffuzni eshitish
+              </div>
+            </div>
+
+            <div className="space-y-2 text-left">
+              {vocabQuizOpts.map(opt => {
+                const correctAns = vocabQuizDirection === 'ko2uz' ? vocabQuizWord.uz : vocabQuizWord.ko;
+                return (
+                  <button
+                    key={opt}
+                    disabled={vocabQuizPick !== null}
+                    onClick={() => {
+                      setVocabQuizPick(opt);
+                      setVocabQuizCount(c => c + 1);
+                      if (vocabQuizDirection === 'uz2ko') speakKo(opt);
+                      if (opt === correctAns) {
+                        setVocabQuizScore(s => s + 1);
+                        setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
+                      }
+                    }}
+                    className={`w-full p-3.5 rounded-2xl border text-xs font-black transition ${
+                      vocabQuizPick !== null
+                        ? opt === correctAns
+                          ? 'bg-emerald-500 text-white border-emerald-600'
+                          : vocabQuizPick === opt
+                            ? 'bg-rose-500 text-white border-rose-600'
+                            : `${t.sub} opacity-50`
+                        : `${t.sub} ${t.textMain} hover:border-indigo-400`
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+
+            {vocabQuizPick !== null && (
+              <button
+                onClick={() => startVocabQuiz(vocabQuizDirection)}
+                className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+              >
+                Keyingi savol (+10 XP) →
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                value={vocabSearch}
+                onChange={e => setVocabSearch(e.target.value)}
+                placeholder={`${vTopic.name} (${vTopic.words.length} ta so‘z) ichidan qidirish...`}
+                className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              {filteredWords.map((w, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => speakKo(w.ko)}
+                  className={`rounded-2xl ${t.card} border p-3 flex items-center justify-between cursor-pointer hover:border-indigo-400 active:scale-99 transition`}
+                >
+                  <div className="pr-2">
+                    <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
+                    <div className="text-xs text-slate-400 font-bold mt-0.5">{w.uz}</div>
+                  </div>
+                  <Volume2 size={16} className="text-indigo-500 shrink-0" />
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     );
@@ -1296,7 +1558,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // 3. DARS EKRANI (GRAMMATIKA + LUG'AT + UYGA VAZIFA + TEST)
+  // 3. DARS EKRANI
   // =========================================================================
   const renderLesson = () => {
     if (!activeLesson) return null;
@@ -1603,13 +1865,13 @@ export default function App() {
           <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
           <div>
             <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (ZiyoPrep AI)</h2>
-            <span className="text-[10px] font-bold text-emerald-500">● Online • Istalgan savol bering yoki koreyscha yozing</span>
+            <span className="text-[10px] font-bold text-emerald-500">● Online • {allVocabWords.length}+ so‘z bazasiga ulangan</span>
           </div>
         </div>
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
-        {['Men kimman?', 'Isming nima?', 'kutubxona koreyscha nima?', '이에요 / 예요 farqi?', '☕ 카페에서 buyurtma'].map(chip => (
+        {['Men kimman?', 'Isming nima?', 'kutubxona', '이에요 / 예요 farqi?', '☕ 카페에서 buyurtma'].map(chip => (
           <button
             key={chip}
             onClick={() => handleAiSend(chip)}
@@ -1648,7 +1910,7 @@ export default function App() {
           value={aiInput}
           onChange={e => setAiInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAiSend()}
-          placeholder="토히르벡 ga savol yozing..."
+          placeholder="토히르벡 ga savol yoki so‘z yozing..."
           className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
         />
         <button
@@ -1662,7 +1924,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (KARTOCHKA, TINGLASH, DIALOG, YOZISH, NUTQ, SPRINT, TOPIK)
+  // 5. TAKRORLASH
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
@@ -1718,11 +1980,11 @@ export default function App() {
               </span>
               {!flashFlipped ? (
                 <>
-                  <div className={`text-4xl font-black ${t.textMain}`}>{card.ko}</div>
+                  <div className={`text-3xl font-black ${t.textMain}`}>{card.ko}</div>
                   <Volume2 size={24} className="text-emerald-500" />
                 </>
               ) : (
-                <div className="text-2xl font-black text-emerald-500">{card.uz}</div>
+                <div className="text-xl font-black text-emerald-500">{card.uz}</div>
               )}
             </div>
 
@@ -2003,7 +2265,7 @@ export default function App() {
 
             {sprintRunning && sprintWord ? (
               <>
-                <div className={`text-3xl font-black py-3 ${t.textMain}`}>{sprintWord.ko}</div>
+                <div className={`text-2xl font-black py-3 ${t.textMain}`}>{sprintWord.ko}</div>
                 <div className="grid grid-cols-2 gap-2.5">
                   {sprintChoices.map(ch => (
                     <button
@@ -2295,8 +2557,9 @@ export default function App() {
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
-      <main className="max-w-md mx-auto px-4 py-2">
+      <main className="max-w-md mx-auto px-4 pt-8 pb-2">
         {screen === 'home' && renderHome()}
+        {screen === 'vocab' && renderVocab()}
         {screen === 'builder' && renderBuilder()}
         {screen === 'lesson' && renderLesson()}
         {screen === 'ai' && renderAiTutor()}
@@ -2317,13 +2580,13 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setScreen('builder')}
+            onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }}
             className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
-              screen === 'builder' ? 'text-emerald-600' : t.textMuted
+              screen === 'vocab' ? 'text-indigo-500' : t.textMuted
             }`}
           >
             <Sparkles size={25} strokeWidth={2.3} />
-            <span className="text-[11px] font-black mt-1">조립 • Harf</span>
+            <span className="text-[11px] font-black mt-1">단어 • Lug‘at</span>
           </button>
 
           <button
