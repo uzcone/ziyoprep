@@ -13,35 +13,103 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from './firebase';
 
-// ZiyoPrep Yashil Boyo'g'li Maskot Komponenti (/icon.png yoki /mascot.png yuklanganda rasmni, aks holda SVG maskotni ko'rsatadi)
-function ZiyoOwlAvatar({ src = '/icon.png', className = 'w-12 h-12' }) {
-  const [imgError, setImgError] = useState(false);
-
-  if (!imgError) {
-    return (
-      <img
-        src={src}
-        alt="ZiyoPrep Mascot"
-        onError={() => setImgError(true)}
-        className={`${className} object-cover shadow-md`}
-      />
-    );
-  }
-
+// ZiyoPrep Yashil Boyo'g'li Maskot (Seul minorasi, ZiyoPrep bog'ichi va 한국어 kitobi bilan)
+function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
   return (
-    <div className={`${className} bg-gradient-to-br from-[#65d32e] to-[#3ca818] flex items-center justify-center relative overflow-hidden shadow-md`}>
-      <svg viewBox="0 0 100 100" className="w-full h-full">
-        <circle cx="50" cy="54" r="38" fill="#58cc02" />
-        <polygon points="22,25 34,12 42,26" fill="#58cc02" />
-        <polygon points="78,25 66,12 58,26" fill="#58cc02" />
-        <rect x="14" y="24" width="72" height="12" rx="4" fill="#ffffff" />
-        <circle cx="36" cy="52" r="14" fill="#ffffff" />
-        <circle cx="64" cy="52" r="14" fill="#ffffff" />
-        <circle cx="38" cy="52" r="7" fill="#1e293b" />
-        <circle cx="62" cy="52" r="7" fill="#1e293b" />
-        <circle cx="40" cy="49" r="2.5" fill="#ffffff" />
-        <circle cx="64" cy="49" r="2.5" fill="#ffffff" />
-        <polygon points="44,62 56,62 50,72" fill="#f59e0b" />
+    <div className={`${className} overflow-hidden shadow-md relative select-none`}>
+      <svg viewBox="0 0 200 200" className="w-full h-full">
+        <defs>
+          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7dd3fc" />
+            <stop offset="60%" stopColor="#bae6fd" />
+            <stop offset="100%" stopColor="#86efac" />
+          </linearGradient>
+          <linearGradient id="owlBody" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#76e026" />
+            <stop offset="100%" stopColor="#48b808" />
+          </linearGradient>
+          <linearGradient id="bookGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#1e40af" />
+            <stop offset="100%" stopColor="#1e3a8a" />
+          </linearGradient>
+        </defs>
+
+        {/* Osmon va Tabiat Foni */}
+        <rect width="200" height="200" rx="44" fill="url(#skyGrad)" />
+        <circle cx="155" cy="42" r="18" fill="#ffffff" opacity="0.6" />
+        <circle cx="142" cy="46" r="13" fill="#ffffff" opacity="0.6" />
+
+        {/* Namsan Seul Minorasi (O'ng orqa fonda) */}
+        <rect x="166" y="45" width="4" height="65" fill="#94a3b8" />
+        <rect x="167.2" y="25" width="1.6" height="22" fill="#ef4444" />
+        <ellipse cx="168" cy="52" rx="11" ry="4.5" fill="#f8fafc" stroke="#64748b" strokeWidth="1" />
+        <rect x="161" y="48" width="14" height="4" rx="1" fill="#3b82f6" />
+
+        {/* Yashil tepaliklar va Sakura */}
+        <ellipse cx="100" cy="185" rx="115" ry="45" fill="#4ade80" />
+        <ellipse cx="45" cy="188" rx="75" ry="35" fill="#22c55e" />
+        <circle cx="178" cy="145" r="16" fill="#f9a8d4" opacity="0.85" />
+        <ellipse cx="24" cy="72" rx="6" ry="3.5" transform="rotate(-25 24 72)" fill="#f472b6" />
+        <ellipse cx="175" cy="112" rx="5" ry="3" transform="rotate(20 175 112)" fill="#f472b6" />
+
+        {/* Boyo'g'li Quloqlari va Tanasi */}
+        <path d="M44 58 Q46 26 68 38 Z" fill="#65d318" />
+        <path d="M156 58 Q154 26 132 38 Z" fill="#65d318" />
+        <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
+
+        {/* Oq Bosh Bog'ich (ZiyoPrep + Koreya bayrog'i) */}
+        <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
+        {/* Bog'ich uchlari */}
+        <path d="M161 74 L185 88 L178 98 L158 84 Z" fill="#f1f5f9" />
+        <path d="M159 81 L180 104 L170 110 L154 86 Z" fill="#e2e8f0" />
+
+        {/* ZiyoPrep yozuvi */}
+        <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">
+          ZiyoPrep
+        </text>
+
+        {/* Koreya Bayrog'i (Bog'ich o'ng tomonida) */}
+        <g transform="translate(128, 63) rotate(10)">
+          <rect width="19" height="13" rx="2" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
+          <circle cx="9.5" cy="6.5" r="3.4" fill="#dc2626" />
+          <path d="M6.1 6.5 A3.4 3.4 0 0 0 12.9 6.5 A1.7 1.7 0 0 1 9.5 6.5 A1.7 1.7 0 0 0 6.1 6.5 Z" fill="#2563eb" />
+          <line x1="3" y1="3" x2="5" y2="4.5" stroke="#0f172a" strokeWidth="1" />
+          <line x1="14" y1="4.5" x2="16" y2="3" stroke="#0f172a" strokeWidth="1" />
+          <line x1="3" y1="10" x2="5" y2="8.5" stroke="#0f172a" strokeWidth="1" />
+          <line x1="14" y1="8.5" x2="16" y2="10" stroke="#0f172a" strokeWidth="1" />
+        </g>
+
+        {/* Katta Quvnoq Ko'zlar */}
+        <circle cx="72" cy="105" r="22" fill="#ffffff" />
+        <circle cx="128" cy="105" r="22" fill="#ffffff" />
+        <circle cx="76" cy="105" r="11.5" fill="#1e293b" />
+        <circle cx="124" cy="105" r="11.5" fill="#1e293b" />
+        <circle cx="80" cy="100" r="4.2" fill="#ffffff" />
+        <circle cx="128" cy="100" r="4.2" fill="#ffffff" />
+
+        {/* Sariq Tumshuq */}
+        <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
+        <path d="M94 123 Q100 133 106 123 Z" fill="#ea580c" />
+
+        {/* Ko'k 한국어 Kitobi */}
+        <path d="M46 132 L98 142 L98 184 L46 172 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
+        <path d="M154 132 L102 142 L102 184 L154 172 Z" fill="url(#bookGrad)" stroke="#1e3a8a" strokeWidth="1.5" />
+        <path d="M50 130 L98 140 L102 140 L150 130 L150 135 L100 145 L50 135 Z" fill="#f8fafc" />
+
+        {/* Kitob muqovasidagi 한국어 yozuvi */}
+        <text x="128" y="162" textAnchor="middle" fill="#ffffff" fontSize="12.5" fontWeight="900" fontFamily="sans-serif" transform="rotate(-11 128 162)">
+          한국어
+        </text>
+        <circle cx="129" cy="173" r="4.5" fill="#dc2626" />
+        <path d="M124.5 173 A4.5 4.5 0 0 0 133.5 173 Z" fill="#3b82f6" />
+
+        {/* Yashil Qanotlar (Kitobni ushlab turgan qo'llar) */}
+        <ellipse cx="42" cy="154" rx="13" ry="16" transform="rotate(-18 42 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
+        <ellipse cx="158" cy="154" rx="13" ry="16" transform="rotate(18 158 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
+
+        {/* Quvonch chiziqlari */}
+        <rect x="20" y="42" width="14" height="5" rx="2.5" transform="rotate(32 20 42)" fill="#facc15" />
+        <rect x="14" y="55" width="13" height="5" rx="2.5" transform="rotate(12 14 55)" fill="#facc15" />
       </svg>
     </div>
   );
@@ -1359,7 +1427,7 @@ export default function App() {
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar src="/icon.png" className="w-10 h-10 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
             <div>
               <span className={`font-black text-lg tracking-tight block leading-none ${t.textMain}`}>ZiyoPrep</span>
               <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">한글 스튜디오</span>
@@ -1374,7 +1442,7 @@ export default function App() {
           {authMode === 'welcome' ? (
             <>
               <div className="relative w-36 h-36 mx-auto">
-                <ZiyoOwlAvatar src="/mascot.png" className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" />
+                <ZiyoOwlAvatar className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" />
                 <span className="absolute -bottom-2 inset-x-3 bg-[#58cc02] text-white text-[10px] font-black py-1 rounded-full shadow-lg uppercase">
                   ZiyoPrep • 서울대 1A–6B
                 </span>
@@ -1485,7 +1553,7 @@ export default function App() {
         {/* ZiyoPrep Brend Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar src="/icon.png" className="w-10 h-10 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
             <div>
               <h1 className={`text-lg font-black tracking-tight leading-none ${t.textMain}`}>ZiyoPrep</h1>
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">한글 스튜디오 • 1A–6B</span>
@@ -1508,7 +1576,7 @@ export default function App() {
 
         {/* BOYO'G'LI MASKOT KUTIB OLISH & KUNLIK MAQSAD KARTASI */}
         <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800/70' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
-          <ZiyoOwlAvatar src="/mascot.png" className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" />
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" />
           <div className="flex-1 space-y-2">
             <div className="flex justify-between items-center">
               <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
@@ -1877,7 +1945,7 @@ export default function App() {
           onClick={() => toggleItem('hero', activeLesson.heroKo)}
           className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer`}
         >
-          <ZiyoOwlAvatar src="/icon.png" className="w-11 h-11 rounded-2xl shrink-0" />
+          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl shrink-0" />
           <div>
             <div className="text-[10px] font-bold text-slate-400">{activeLesson.week}</div>
             <div className={`text-base font-black ${t.textMain}`}>{activeLesson.heroKo}</div>
@@ -2118,7 +2186,7 @@ export default function App() {
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2.5">
-          <ZiyoOwlAvatar src="/icon.png" className="w-11 h-11 rounded-2xl" />
+          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
           <div>
             <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (ZiyoPrep AI)</h2>
             <span className="text-[10px] font-bold text-emerald-500">● Online • Istalgan savol bering yoki koreyscha yozing</span>
@@ -2501,7 +2569,7 @@ export default function App() {
       <div className="space-y-4 pb-28 pt-2">
         <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
           <div className="flex items-center gap-3.5">
-            <ZiyoOwlAvatar src="/icon.png" className="w-14 h-14 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-14 h-14 rounded-2xl" />
             <div>
               {editingName ? (
                 <div className="flex gap-1.5">
@@ -2639,7 +2707,7 @@ export default function App() {
             onClick={() => setScreen('ai')}
             className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition overflow-hidden p-0.5"
           >
-            <ZiyoOwlAvatar src="/icon.png" className="w-full h-full rounded-full" />
+            <ZiyoOwlAvatar className="w-full h-full rounded-full" />
           </button>
 
           <button
