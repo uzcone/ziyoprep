@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   if (!apiKey) {
     return res.status(500).json({
       ko: 'API 키 설정이 필요해요!',
-      uz: 'Vercel Settings -> Environment Variables bo‘limida GEMINI_API_KEY topilmadi!'
+      uz: 'Vercel Settings da GEMINI_API_KEY topilmadi!'
     });
   }
 
@@ -19,7 +19,7 @@ Foydalanuvchi ismi: ${userName}.
 Qoidalar:
 1. Foydalanuvchi o'zbekcha, koreyscha yoki aralash nima yozsa ham, xuddi jonli ustozdek tabiiy, aqlli va batafsil javob ber.
 2. Javobingni har doim JSON formatida qaytar: {"ko": "koreyscha tabiiy javob (ovozli o'qish uchun)", "uz": "o'zbekcha batafsil tushuntirish, misollar yoki suhbat javobi"}.
-3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g'ri variantini ko'rsat.`;
+3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g‘ri variantini ko'rsat.`;
 
     const contents = [
       ...history.slice(-6).map((m) => ({
@@ -29,20 +29,15 @@ Qoidalar:
       { role: 'user', parts: [{ text: message }] }
     ];
 
-    // Model nomi (gemini-1.5-flash barqaror ishlaydi)
-    let url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-    const headers = { 'Content-Type': 'application/json' };
-
-    // Agar kalit AIza bilan boshlansa ?key= orqali, AQ. bilan boshlansa Bearer token sifatida yuboramiz
-    if (apiKey.startsWith('AIza')) {
-      url += `?key=${apiKey}`;
-    } else {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
-
+    // AQ... tokeni uchun Gemini API so'rovini Bearer token orqali yuboramiz
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+    
     const response = await fetch(url, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents,
