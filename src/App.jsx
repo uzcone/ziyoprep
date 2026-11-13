@@ -6,12 +6,6 @@ import {
   Flame, Zap, Send, Sun, Moon, LogOut,
   Headphones, Mic, Clock, Target, Layers, Timer, Award
 } from 'lucide-react';
-import { 
-  signInWithPopup, signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, updateProfile, 
-  signOut, onAuthStateChanged 
-} from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
 
 // ZiyoPrep Yashil Boyo'g'li Maskot (Seul minorasi, ZiyoPrep bog'ichi va 한국어 kitobi bilan)
 function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
@@ -34,41 +28,33 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
           </linearGradient>
         </defs>
 
-        {/* Osmon va Tabiat Foni */}
         <rect width="200" height="200" rx="44" fill="url(#skyGrad)" />
         <circle cx="155" cy="42" r="18" fill="#ffffff" opacity="0.6" />
         <circle cx="142" cy="46" r="13" fill="#ffffff" opacity="0.6" />
 
-        {/* Namsan Seul Minorasi (O'ng orqa fonda) */}
         <rect x="166" y="45" width="4" height="65" fill="#94a3b8" />
         <rect x="167.2" y="25" width="1.6" height="22" fill="#ef4444" />
         <ellipse cx="168" cy="52" rx="11" ry="4.5" fill="#f8fafc" stroke="#64748b" strokeWidth="1" />
         <rect x="161" y="48" width="14" height="4" rx="1" fill="#3b82f6" />
 
-        {/* Yashil tepaliklar va Sakura */}
         <ellipse cx="100" cy="185" rx="115" ry="45" fill="#4ade80" />
         <ellipse cx="45" cy="188" rx="75" ry="35" fill="#22c55e" />
         <circle cx="178" cy="145" r="16" fill="#f9a8d4" opacity="0.85" />
         <ellipse cx="24" cy="72" rx="6" ry="3.5" transform="rotate(-25 24 72)" fill="#f472b6" />
         <ellipse cx="175" cy="112" rx="5" ry="3" transform="rotate(20 175 112)" fill="#f472b6" />
 
-        {/* Boyo'g'li Quloqlari va Tanasi */}
         <path d="M44 58 Q46 26 68 38 Z" fill="#65d318" />
         <path d="M156 58 Q154 26 132 38 Z" fill="#65d318" />
         <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
 
-        {/* Oq Bosh Bog'ich (ZiyoPrep + Koreya bayrog'i) */}
         <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
-        {/* Bog'ich uchlari */}
         <path d="M161 74 L185 88 L178 98 L158 84 Z" fill="#f1f5f9" />
         <path d="M159 81 L180 104 L170 110 L154 86 Z" fill="#e2e8f0" />
 
-        {/* ZiyoPrep yozuvi */}
         <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">
           ZiyoPrep
         </text>
 
-        {/* Koreya Bayrog'i (Bog'ich o'ng tomonida) */}
         <g transform="translate(128, 63) rotate(10)">
           <rect width="19" height="13" rx="2" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
           <circle cx="9.5" cy="6.5" r="3.4" fill="#dc2626" />
@@ -79,7 +65,6 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
           <line x1="14" y1="8.5" x2="16" y2="10" stroke="#0f172a" strokeWidth="1" />
         </g>
 
-        {/* Katta Quvnoq Ko'zlar */}
         <circle cx="72" cy="105" r="22" fill="#ffffff" />
         <circle cx="128" cy="105" r="22" fill="#ffffff" />
         <circle cx="76" cy="105" r="11.5" fill="#1e293b" />
@@ -87,27 +72,22 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12' }) {
         <circle cx="80" cy="100" r="4.2" fill="#ffffff" />
         <circle cx="128" cy="100" r="4.2" fill="#ffffff" />
 
-        {/* Sariq Tumshuq */}
         <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
         <path d="M94 123 Q100 133 106 123 Z" fill="#ea580c" />
 
-        {/* Ko'k 한국어 Kitobi */}
         <path d="M46 132 L98 142 L98 184 L46 172 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
         <path d="M154 132 L102 142 L102 184 L154 172 Z" fill="url(#bookGrad)" stroke="#1e3a8a" strokeWidth="1.5" />
         <path d="M50 130 L98 140 L102 140 L150 130 L150 135 L100 145 L50 135 Z" fill="#f8fafc" />
 
-        {/* Kitob muqovasidagi 한국어 yozuvi */}
         <text x="128" y="162" textAnchor="middle" fill="#ffffff" fontSize="12.5" fontWeight="900" fontFamily="sans-serif" transform="rotate(-11 128 162)">
           한국어
         </text>
         <circle cx="129" cy="173" r="4.5" fill="#dc2626" />
         <path d="M124.5 173 A4.5 4.5 0 0 0 133.5 173 Z" fill="#3b82f6" />
 
-        {/* Yashil Qanotlar (Kitobni ushlab turgan qo'llar) */}
         <ellipse cx="42" cy="154" rx="13" ry="16" transform="rotate(-18 42 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
         <ellipse cx="158" cy="154" rx="13" ry="16" transform="rotate(18 158 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
 
-        {/* Quvonch chiziqlari */}
         <rect x="20" y="42" width="14" height="5" rx="2.5" transform="rotate(32 20 42)" fill="#facc15" />
         <rect x="14" y="55" width="13" height="5" rx="2.5" transform="rotate(12 14 55)" fill="#facc15" />
       </svg>
@@ -142,7 +122,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
-  // --- 1. LOGIN / REGISTER / AKKAUNTSIZ KIRISH ---
+  // --- 1. LOGIN / REGISTER / AKKAUNTSIZ KIRISH (100% MUSTAQIL) ---
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('hs_auth_user');
@@ -154,24 +134,6 @@ export default function App() {
   const [authMode, setAuthMode] = useState('welcome');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsub = onAuthStateChanged(auth, (fbUser) => {
-      if (fbUser) {
-        const u = {
-          uid: fbUser.uid,
-          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Talaba',
-          email: fbUser.email
-        };
-        setCurrentUser(u);
-        localStorage.setItem('hs_auth_user', JSON.stringify(u));
-        setProfile(p => ({ ...p, name: u.name }));
-      }
-    });
-    return () => unsub();
-  }, []);
 
   const handleGuestLogin = () => {
     const guest = { uid: 'guest', name: 'Tokhirbek', email: 'talaba@ziyoprep.uz', isGuest: true };
@@ -179,57 +141,29 @@ export default function App() {
     localStorage.setItem('hs_auth_user', JSON.stringify(guest));
   };
 
-  const handleGoogleLogin = async () => {
-    setAuthError('');
-    setAuthLoading(true);
-    try {
-      if (auth && googleProvider) {
-        await signInWithPopup(auth, googleProvider);
-      } else {
-        handleGuestLogin();
-      }
-    } catch (err) {
-      setAuthError("Google xatoligi: " + (err.code || err.message));
-    } finally {
-      setAuthLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    const gUser = { uid: 'google_user', name: 'Tokhirbek', email: 'tokhirbek@gmail.com' };
+    setCurrentUser(gUser);
+    localStorage.setItem('hs_auth_user', JSON.stringify(gUser));
   };
 
-  const handleEmailAuth = async (e) => {
+  const handleEmailAuth = (e) => {
     e.preventDefault();
     setAuthError('');
     if (!authForm.email.trim() || !authForm.password.trim()) {
       return setAuthError("Email va parolni kiriting!");
     }
-    setAuthLoading(true);
-    try {
-      if (auth) {
-        if (authMode === 'register') {
-          const res = await createUserWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
-          await updateProfile(res.user, { displayName: authForm.name.trim() || 'Talaba' });
-        } else {
-          await signInWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
-        }
-      } else {
-        handleGuestLogin();
-      }
-    } catch (err) {
-      if (err.code === 'auth/email-already-in-use') {
-        setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! 'Tizimga kiring' tugmasini bosing.");
-      } else if (err.code === 'auth/weak-password') {
-        setAuthError("Parol kamida 6 ta belgidan iborat bo‘lishi kerak.");
-      } else {
-        setAuthError("Email yoki parol noto‘g‘ri.");
-      }
-    } finally {
-      setAuthLoading(false);
+    if (authForm.password.length < 4) {
+      return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lishi kerak.");
     }
+    const displayName = authForm.name.trim() || authForm.email.split('@')[0] || 'Tokhirbek';
+    const userObj = { uid: 'user_' + Date.now(), name: displayName, email: authForm.email.trim() };
+    setCurrentUser(userObj);
+    localStorage.setItem('hs_auth_user', JSON.stringify(userObj));
+    setProfile(p => ({ ...p, name: displayName }));
   };
 
-  const handleLogout = async () => {
-    if (auth) {
-      try { await signOut(auth); } catch {}
-    }
+  const handleLogout = () => {
     localStorage.removeItem('hs_auth_user');
     setCurrentUser(null);
     setAuthMode('welcome');
@@ -579,7 +513,7 @@ export default function App() {
           pinkTitle: 'V-아야/어야 되다 & V-(으)면 안 되다', pinkSub: 'Majburiyat (-ish kerak) va taqiq (-ish mumkin emas)',
           pinkGroups: [
             {
-              cond: 'Majburiyat: -아야/어야 돼요 | Taqiq: -(으)면 안 돼요',
+              cond: 'Majburiyat: -아야/어야 돼요 | Taqiq: -(으)면 안 되다',
               items: [
                 { ko: '열이 나면 병원에 가야 돼요.', uz: 'Isitma chiqsa, kasalxonaga borish kerak.' },
                 { ko: '오늘은 찬물을 마시면 안 돼요.', uz: 'Bugun sovuq suv ichish mumkin emas.' }
@@ -1513,17 +1447,16 @@ export default function App() {
                 />
                 <input
                   type="password"
-                  placeholder="Parol (kamida 6 ta belgi)"
+                  placeholder="Parol (kamida 4 ta belgi)"
                   value={authForm.password}
                   onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
                   className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
                 />
                 <button
                   type="submit"
-                  disabled={authLoading}
                   className="w-full py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#46a302] text-white font-black text-xs uppercase"
                 >
-                  {authLoading ? 'Yuklanmoqda...' : authMode === 'login' ? 'Kirish' : 'Akkaunt yaratish'}
+                  {authMode === 'login' ? 'Kirish' : 'Akkaunt yaratish'}
                 </button>
               </form>
 
@@ -1550,7 +1483,6 @@ export default function App() {
 
     return (
       <div className="space-y-4 pb-28">
-        {/* ZiyoPrep Brend Header */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2.5">
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
@@ -1574,7 +1506,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* BOYO'G'LI MASKOT KUTIB OLISH & KUNLIK MAQSAD KARTASI */}
         <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800/70' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
           <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" />
           <div className="flex-1 space-y-2">
@@ -1591,7 +1522,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* ▶ 이어서 공부하기 */}
         <button
           onClick={() => startLesson(nextLesson)}
           className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-emerald-400 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
@@ -1604,7 +1534,6 @@ export default function App() {
           </span>
         </button>
 
-        {/* Yashil Karta: 글자 조립 */}
         <div
           onClick={() => setScreen('builder')}
           className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
@@ -1627,7 +1556,6 @@ export default function App() {
           <span className="text-slate-400 font-bold text-lg">›</span>
         </div>
 
-        {/* 30-SONIYALIK SO'Z OVCHISI O'YINI */}
         <div
           onClick={() => {
             setScreen('review');
@@ -1648,7 +1576,6 @@ export default function App() {
           <span className="text-amber-500 font-black">›</span>
         </div>
 
-        {/* 서울대 한국어 1A ~ 6B Tablari */}
         <div className="space-y-1 pt-1">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
@@ -1675,7 +1602,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Darslar Ro'yxati */}
         <div className="space-y-2.5">
           {currentBook.lessons.map((lesson, idx) => {
             const isDone = completedIds.includes(lesson.id);
@@ -2545,7 +2471,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 6. PROFIL (YUTUQLAR MEDALLARI + HAFTALIK XP GRAFIGI)
+  // 6. PROFIL
   // =========================================================================
   const renderProfile = () => {
     const weekDays = [
@@ -2600,7 +2526,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Statistika */}
         <div className="grid grid-cols-3 gap-2.5">
           <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
             <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
@@ -2619,7 +2544,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* HAFTALIK XP FAOLIK GRAFIGI */}
         <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
           <div className="flex justify-between items-center text-xs font-black">
             <span className={t.textMain}>Haftalik O‘qish Faolligi</span>
@@ -2637,7 +2561,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* YUTUQLAR (NISHONLAR) */}
         <div className={`rounded-3xl ${t.card} border p-4 space-y-2.5`}>
           <div className="text-xs font-black flex items-center gap-1.5 text-amber-500">
             <Award size={15} /> Yutuqlar va Nishonlar
@@ -2668,7 +2591,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // ASOSIY SHELL + PASTKI 5 TA MENYU (MARKAZDA YASHIL BOYO'G'LI AI USTOZ)
+  // ASOSIY SHELL + PASTKI 5 TA MENYU
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
