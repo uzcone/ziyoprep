@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, Bot, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, Clock, Target, Layers
+  Headphones, Mic, Clock, Target, Layers, Timer
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
@@ -198,140 +198,6 @@ export default function App() {
       u.rate = 0.85;
       window.speechSynthesis.speak(u);
     } catch {}
-  };
-
-  // --- AI USTOZ ---
-  const [aiMessages, setAiMessages] = useState([
-    {
-      role: 'ai',
-      ko: '안녕하세요! 저는 서울대 한국어 1A–6B AI 튜터예요.',
-      uz: 'Salom! Men Seul Milliy Universiteti (1A–6B) dasturi bo‘yicha AI ustozingizman. Qaysi grammatikani mashq qilamiz?'
-    }
-  ]);
-  const [aiInput, setAiInput] = useState('');
-
-  const handleAiSend = (preset) => {
-    const text = (preset || aiInput).trim();
-    if (!text) return;
-    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
-    setAiInput('');
-
-    setTimeout(() => {
-      let reply = {
-        ko: '아주 좋아요! 한국어 문장을 정확하게 사용하셨어요.',
-        uz: "Juda yaxshi! Koreyscha gapni to‘g‘ri tuzdingiz. Yana misol: '저는 매일 한국어를 열심히 공부해요'."
-      };
-
-      if (text.includes('예요') || text.includes('이에요')) {
-        reply = {
-          ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 써요!',
-          uz: "Undosh bilan tugasa '이에요' (학생이에요), unli bilan tugasa '예요' (가수예요) qo‘shiladi."
-        };
-      } else if (text.includes('아서') || text.includes('니까')) {
-        reply = {
-          ko: '명령문(세요)이나 청유문(읍시다) 앞에는 "-(으)니까"를 써야 해요! 예: 추우니까 옷을 입으세요.',
-          uz: "Buyruq (-세요) va taklif (-읍시다) gaplarda '-아서/어서' emas, '-(으)니까' ishlatiladi!"
-        };
-      } else if (text.includes('다고')) {
-        reply = {
-          ko: '간접화법: 동사에는 "-ㄴ/는다고 해요", 형용사에는 "-다고 해요"를 붙여요.',
-          uz: "Bilvosita nutqda fe'lga '-ㄴ/는다고 해요', sifatga '-다고 해요' qo‘shiladi."
-        };
-      } else if (text.includes('카페')) {
-        reply = {
-          ko: '카페에서: "아이스 아메리카노 한 잔 주세요."',
-          uz: "Kafeda buyurtma: 'Bitta muzli amerikano bering.' Sotuvchi: '영수증 드릴까요?' (Chek beraymi?)"
-        };
-      }
-
-      setAiMessages(prev => [...prev, { role: 'ai', ...reply }]);
-      speakKo(reply.ko);
-    }, 350);
-  };
-
-  // --- TAKRORLASH (FLASHCARDS + LISTENING + SPEAKING + TOPIK MOCK) ---
-  const [reviewMode, setReviewMode] = useState('cards'); // 'cards' | 'listen' | 'speak' | 'mock'
-  const [flashIdx, setFlashIdx] = useState(0);
-  const [flashFlipped, setFlashFlipped] = useState(false);
-
-  // Listening state
-  const [listenIdx, setListenIdx] = useState(0);
-  const [listenOpts, setListenOpts] = useState([]);
-  const [listenPick, setListenPick] = useState(null);
-
-  // Speaking state
-  const [speakIdx, setSpeakIdx] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [speechText, setSpeechText] = useState('');
-  const [speechStatus, setSpeechStatus] = useState(null);
-
-  // TOPIK Mock Test state
-  const [mockActive, setMockActive] = useState(false);
-  const [mockList, setMockList] = useState([]);
-  const [mockStep, setMockStep] = useState(0);
-  const [mockSelected, setMockSelected] = useState({});
-  const [mockSeconds, setMockSeconds] = useState(300);
-  const [mockDone, setMockDone] = useState(false);
-
-  useEffect(() => {
-    if (!mockActive || mockDone) return;
-    const timer = setInterval(() => {
-      setMockSeconds(s => {
-        if (s <= 1) {
-          clearInterval(timer);
-          setMockDone(true);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [mockActive, mockDone]);
-
-  // --- 글자 조립 ---
-  const [builderTab, setBuilderTab] = useState('no_batchim');
-  const [cho, setCho] = useState('ㄱ');
-  const [jung, setJung] = useState('ㅏ');
-  const [jong, setJong] = useState('ㄴ');
-  const [showDoubleCho, setShowDoubleCho] = useState(false);
-  const [showCompoundJung, setShowCompoundJung] = useState(false);
-  const [wordBuffer, setWordBuffer] = useState('');
-  const [randomChar, setRandomChar] = useState('흐');
-  const [practiceCount, setPracticeCount] = useState(0);
-
-  const basicCho = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-  const doubleCho = ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
-  const basicJung = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
-  const compoundJung = ['ㅐ','ㅒ','ㅔ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
-  const batchims = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅎ'];
-
-  const activeJong = (builderTab === 'with_batchim' || builderTab === 'word') ? jong : '';
-  const composedSyllable = composeHangul(cho, jung, activeJong);
-  const romanGuide = `${ROMAN_CHO[cho] || ''} + ${ROMAN_JUNG[jung] || ''}${activeJong ? ` + ${ROMAN_JONG[activeJong] || ''}` : ''}`;
-
-  const nextRandomSyllable = () => {
-    const c = basicCho[Math.floor(Math.random() * basicCho.length)];
-    const v = basicJung[Math.floor(Math.random() * basicJung.length)];
-    const b = Math.random() > 0.45 ? batchims[Math.floor(Math.random() * batchims.length)] : '';
-    setRandomChar(composeHangul(c, v, b));
-    setPracticeCount(p => p + 1);
-    setProfile(p => ({ ...p, xp: p.xp + 2, dailyXp: p.dailyXp + 2 }));
-  };
-
-  // --- DARS ICHIDAGI HOLATLAR ---
-  const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
-  const [doneSec, setDoneSec] = useState({ rule: false, struct: false });
-  const [revealed, setRevealed] = useState({});
-  const [editingMemo, setEditingMemo] = useState(false);
-  const [memoInput, setMemoInput] = useState('');
-
-  const [quizList, setQuizList] = useState([]);
-  const [qIdx, setQIdx] = useState(0);
-  const [qAnswer, setQAnswer] = useState(null);
-
-  const toggleItem = (key, ko) => {
-    speakKo(ko);
-    setRevealed(p => ({ ...p, [key]: !p[key] }));
   };
 
   // --- 서울대 한국어 1A ~ 6B ---
@@ -1136,6 +1002,249 @@ export default function App() {
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
+  // --- AQLLI AI USTOZ: 토히르벡 (HAR QANDAY SAVOLGA MOS JAVOB BERADI) ---
+  const [aiMessages, setAiMessages] = useState([
+    {
+      role: 'ai',
+      ko: '안녕하세요! 저는 AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
+      uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 (Tokhirbek) man. Menga istalgan savol bering, so‘z tarjimasini so‘rang yoki koreyscha suhbatlashing!'
+    }
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [aiMessages]);
+
+  const generateSmartAiReply = (rawText) => {
+    const q = rawText.toLowerCase().trim();
+
+    // 1. Salomlashish
+    if (/^(salom|assalom|hello|hi|안녕|반가워|하이)/.test(q)) {
+      return {
+        ko: `안녕하세요, ${profile.name} 씨! 오늘도 한국어 공부 화이팅해요!`,
+        uz: `Va alaykum assalom, ${profile.name}! Bugun kayfiyatlar qanday? Qaysi mavzuda suhbatlashamiz: Kafe, Universitet yoki TOPIK grammatikasi?`
+      };
+    }
+
+    // 2. "Men kimman" / Foydalanuvchi haqida savol
+    if (q.includes('kimman') || q.includes('men haqimda') || q.includes('프로필') || q.includes('내 이름')) {
+      return {
+        ko: `당신은 열심히 공부하는 ${profile.name} 학생이에요! 현재 ${profile.xp} XP를 모았어요.`,
+        uz: `Siz — tinimsiz izlanayotgan talaba ${profile.name}siz! Hozirgacha ${profile.xp} XP to‘pladingiz, ${profile.streak} kunlik streak va ${completedIds.length} ta darsni tugatdingiz. Barakalla!`
+      };
+    }
+
+    // 3. AI ismi / O'zi haqida savol
+    if (q.includes('isming') || q.includes('kimsan') || q.includes('토히르벡') || q.includes('누구')) {
+      return {
+        ko: '제 이름은 토히르벡이에요! 서울대 한국어 1A부터 6B까지 도와주는 AI 선생님입니다.',
+        uz: 'Mening ismim 토히르벡 (Tokhirbek)! Sizga Hangul alifbosidan tortib 서울대 한국어 1A–6B va TOPIK 6 gacha koreys tilini o‘rgatuvchi shaxsiy AI ustozingizman.'
+      };
+    }
+
+    // 4. Qanday yordam bera olasan / Nima qila olasan
+    if (q.includes('nima qila') || q.includes('yordam') || q.includes('qanday')) {
+      return {
+        ko: '단어 번역, 문법 설명, 한국어 대화 연습을 모두 도와줄 수 있어요!',
+        uz: "Men: 1) O‘zbekcha so‘zlarni koreyschaga tarjima qilaman (masalan: 'kutubxona koreyscha nima?'); 2) Grammatikani tushuntiraman; 3) Koreyscha suhbat quraman!"
+      };
+    }
+
+    // 5. Grammatika savollari
+    if (q.includes('예요') || q.includes('이에요')) {
+      return {
+        ko: '받침이 있으면 "이에요" (학생이에요), 없으면 "예요" (가수예요)를 사용해요!',
+        uz: "Qoida juda oson: So‘z oxiri undosh (받침) bilan tugasa '이에요' (학생이에요), unli bilan tugasa '예요' (가수예요) qo‘shiladi."
+      };
+    }
+    if (q.includes('아서') || q.includes('니까') || q.includes('sabab')) {
+      return {
+        ko: '명령문(세요)이나 청유문(읍시다) 앞에는 반드시 "-(으)니까"를 써야 해요!',
+        uz: "Farqi: Oddiy sababda '-아서/어서' (배가 아파서 병원에 갔어요), buyruq va taklif gaplarda esa '-(으)니까' (추우니까 옷을 입으세요) ishlatiladi!"
+      };
+    }
+    if (q.includes('다고') || q.includes('bilvosita')) {
+      return {
+        ko: '간접화법: 동사는 "-ㄴ/는다고 해요", 형용사는 "-다고 해요"를 붙여요.',
+        uz: "Bilvosita nutqda fe'lga '-ㄴ/는다고 해요' (온다고 했어요 — kelaman deb aytdi), sifatga '-다고 해요' qo‘shiladi."
+      };
+    }
+    if (q.includes('kafe') || q.includes('카페') || q.includes('kofe') || q.includes('커피')) {
+      return {
+        ko: '카페에서: "아이스 아메리카노 한 잔 주세요. 여기서 마실 거예요."',
+        uz: "Kafeda: 'Bitta muzli amerikano bering. Shu yerda ichaman.' Sotuvchi: '네, 진동벨 울리면 가져가세요!' (Xo‘p, qo‘ng‘iroq jiringlaganda olib keting!)"
+      };
+    }
+    if (q.includes('topik') || q.includes('imtihon')) {
+      return {
+        ko: 'TOPIK 시험을 잘 보려면 매일 단어를 외우고 듣기 연습을 해야 해요!',
+        uz: "TOPIK dan yuqori ball olish uchun pastdagi '복습 • Mashq' bo‘limidagi TOPIK Mock Test va Listening mashqlarini har kuni bajaring!"
+      };
+    }
+
+    // 6. Ichki lug'at bazasidan (1A-6B) avtomatik so'z qidirish va tarjima qilish!
+    const foundWord = allWords.find(
+      w => q.includes(w.uz.toLowerCase().split('/')[0].trim()) || q.includes(w.ko.toLowerCase())
+    );
+    if (foundWord) {
+      return {
+        ko: `"${foundWord.ko}" — 뜻: ${foundWord.uz}! 예문: 저는 ${foundWord.ko}에 대해 공부해요.`,
+        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}". Eshitish uchun xabar ustiga bosing!`
+      };
+    }
+
+    // 7. Agar foydalanuvchi koreyscha (Hangul) yozgan bo'lsa
+    if (/[가-힣]/.test(rawText)) {
+      return {
+        ko: `"${rawText}"라고 하셨군요! 정말 자연스러운 한국어예요. 계속 이야기해 볼까요?`,
+        uz: `Ajoyib! Siz "${rawText}" deb koreyscha yozdingiz — talaffuzi va tuzilishi juda tabiiy! Yana davom ettiring, men tinglayapman.`
+      };
+    }
+
+    // 8. Boshqa har qanday erkin savollar uchun kontekstli aqlli javob
+    return {
+      ko: `"${rawText}"에 대한 좋은 질문이에요! 한국어로 "저는 한국어를 배우고 싶어요"라고 연습해 보세요.`,
+      uz: `Qiziq savol ("${rawText}")! Men 토히르벡 (Tokhirbek AI) sifatida sizga koreys tilini o‘rgatishga tayyorman. Biror o‘zbekcha so‘z yozing (masalan: 'kutubxona', 'talaba', 'stipendiya') yoki koreyscha gap tuzib ko‘ring!`
+    };
+  };
+
+  const handleAiSend = (preset) => {
+    const text = (preset || aiInput).trim();
+    if (!text) return;
+    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
+    setAiInput('');
+
+    setTimeout(() => {
+      const reply = generateSmartAiReply(text);
+      setAiMessages(prev => [...prev, { role: 'ai', ...reply }]);
+      speakKo(reply.ko);
+    }, 350);
+  };
+
+  // --- TAKRORLASH (FLASHCARDS + LISTENING + SPEAKING + TOPIK MOCK + SPEED SPRINT) ---
+  const [reviewMode, setReviewMode] = useState('cards'); // 'cards' | 'listen' | 'speak' | 'mock' | 'sprint'
+  const [flashIdx, setFlashIdx] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+
+  // Listening state
+  const [listenIdx, setListenIdx] = useState(0);
+  const [listenOpts, setListenOpts] = useState([]);
+  const [listenPick, setListenPick] = useState(null);
+
+  // Speaking state
+  const [speakIdx, setSpeakIdx] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechText, setSpeechText] = useState('');
+  const [speechStatus, setSpeechStatus] = useState(null);
+
+  // TOPIK Mock Test state
+  const [mockActive, setMockActive] = useState(false);
+  const [mockList, setMockList] = useState([]);
+  const [mockStep, setMockStep] = useState(0);
+  const [mockSelected, setMockSelected] = useState({});
+  const [mockSeconds, setMockSeconds] = useState(300);
+  const [mockDone, setMockDone] = useState(false);
+
+  // YANGI O'YIN: 30 Soniyalik Speed Sprint
+  const [sprintRunning, setSprintRunning] = useState(false);
+  const [sprintTime, setSprintTime] = useState(30);
+  const [sprintScore, setSprintScore] = useState(0);
+  const [sprintWord, setSprintWord] = useState(null);
+  const [sprintChoices, setSprintChoices] = useState([]);
+
+  useEffect(() => {
+    if (!sprintRunning) return;
+    const tmr = setInterval(() => {
+      setSprintTime(prev => {
+        if (prev <= 1) {
+          clearInterval(tmr);
+          setSprintRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tmr);
+  }, [sprintRunning]);
+
+  const nextSprintRound = () => {
+    const target = allWords[Math.floor(Math.random() * allWords.length)];
+    const wrong = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setSprintWord(target);
+    setSprintChoices(shuffleArray([target.uz, ...wrong]));
+    speakKo(target.ko);
+  };
+
+  const startSprintGame = () => {
+    setSprintScore(0);
+    setSprintTime(30);
+    setSprintRunning(true);
+    nextSprintRound();
+  };
+
+  useEffect(() => {
+    if (!mockActive || mockDone) return;
+    const timer = setInterval(() => {
+      setMockSeconds(s => {
+        if (s <= 1) {
+          clearInterval(timer);
+          setMockDone(true);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [mockActive, mockDone]);
+
+  // --- 글자 조립 ---
+  const [builderTab, setBuilderTab] = useState('no_batchim');
+  const [cho, setCho] = useState('ㄱ');
+  const [jung, setJung] = useState('ㅏ');
+  const [jong, setJong] = useState('ㄴ');
+  const [showDoubleCho, setShowDoubleCho] = useState(false);
+  const [showCompoundJung, setShowCompoundJung] = useState(false);
+  const [wordBuffer, setWordBuffer] = useState('');
+  const [randomChar, setRandomChar] = useState('흐');
+  const [practiceCount, setPracticeCount] = useState(0);
+
+  const basicCho = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const doubleCho = ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
+  const basicJung = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+  const compoundJung = ['ㅐ','ㅒ','ㅔ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
+  const batchims = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅎ'];
+
+  const activeJong = (builderTab === 'with_batchim' || builderTab === 'word') ? jong : '';
+  const composedSyllable = composeHangul(cho, jung, activeJong);
+  const romanGuide = `${ROMAN_CHO[cho] || ''} + ${ROMAN_JUNG[jung] || ''}${activeJong ? ` + ${ROMAN_JONG[activeJong] || ''}` : ''}`;
+
+  const nextRandomSyllable = () => {
+    const c = basicCho[Math.floor(Math.random() * basicCho.length)];
+    const v = basicJung[Math.floor(Math.random() * basicJung.length)];
+    const b = Math.random() > 0.45 ? batchims[Math.floor(Math.random() * batchims.length)] : '';
+    setRandomChar(composeHangul(c, v, b));
+    setPracticeCount(p => p + 1);
+    setProfile(p => ({ ...p, xp: p.xp + 2, dailyXp: p.dailyXp + 2 }));
+  };
+
+  // --- DARS ICHIDAGI HOLATLAR ---
+  const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
+  const [doneSec, setDoneSec] = useState({ rule: false, struct: false });
+  const [revealed, setRevealed] = useState({});
+  const [editingMemo, setEditingMemo] = useState(false);
+  const [memoInput, setMemoInput] = useState('');
+
+  const [quizList, setQuizList] = useState([]);
+  const [qIdx, setQIdx] = useState(0);
+  const [qAnswer, setQAnswer] = useState(null);
+
+  const toggleItem = (key, ko) => {
+    speakKo(ko);
+    setRevealed(p => ({ ...p, [key]: !p[key] }));
+  };
+
   const startLesson = (lesson) => {
     setActiveLesson(lesson);
     setOpenSec({ rule: true, struct: true, words: true });
@@ -1153,7 +1262,6 @@ export default function App() {
     setScreen('lesson');
   };
 
-  // Listening yangi savol tayyorlash
   const prepareListening = (idx) => {
     const target = allWords[idx % allWords.length];
     const distractors = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
@@ -1162,7 +1270,6 @@ export default function App() {
     speakKo(target.ko);
   };
 
-  // Speaking (Mikrofon) tekshiruvi
   const handleSpeechTest = (targetKo) => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
@@ -1200,7 +1307,6 @@ export default function App() {
     }
   };
 
-  // TOPIK Mock Test boshlash
   const launchTopikMock = () => {
     const picked = shuffleArray(allQuizzesPool).slice(0, 8).map(q => ({
       ...q,
@@ -1251,7 +1357,7 @@ export default function App() {
                   Koreys tilini Hangul alifbosidan TOPIK 6 gacha o‘rganing!
                 </h1>
                 <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
-                  Bosilganda talaffuz va tarjima, bo‘g‘in konstruktori va AI ustoz bitta ilovada.
+                  Bosilganda talaffuz va tarjima, bo‘g‘in konstruktori va AI ustoz 토히르벡 bitta ilovada.
                 </p>
               </div>
               <div className="space-y-3 pt-2">
@@ -1414,17 +1520,25 @@ export default function App() {
           <span className="text-slate-400 font-bold text-lg">›</span>
         </div>
 
-        {/* KUNLIK KOREYS MAQOLI (오늘의 속담) */}
+        {/* YANGI: 30 SONIYALIK SO'Z OVCHISI O'YINI BANNER */}
         <div
-          onClick={() => speakKo('천 리 길도 한 걸음부터')}
-          className={`rounded-2xl ${isDark ? 'bg-indigo-950/40 border-indigo-800' : 'bg-[#f3f0fa] border-[#e0d7f5]'} border p-3.5 flex items-center justify-between cursor-pointer`}
+          onClick={() => {
+            setScreen('review');
+            setReviewMode('sprint');
+            startSprintGame();
+          }}
+          className={`rounded-2xl ${isDark ? 'bg-amber-950/40 border-amber-800' : 'bg-amber-50 border-amber-200'} border p-3.5 flex items-center justify-between cursor-pointer active:scale-99 transition`}
         >
-          <div>
-            <div className="text-[10px] font-black text-indigo-500 uppercase">오늘의 속담 • Kunlik Maqol</div>
-            <div className={`text-xs font-black mt-0.5 ${t.textMain}`}>천 리 길도 한 걸음부터</div>
-            <div className="text-[11px] text-slate-500">Ming chaqirimlik yo‘l ham bir qadamdan boshlanadi</div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black">
+              <Timer size={20} />
+            </div>
+            <div>
+              <div className={`text-xs font-black ${t.textMain}`}>⚡ 30-Soniyalik So‘z Ovchisi (Yangi o‘yin!)</div>
+              <div className="text-[11px] text-amber-600 dark:text-amber-400 font-bold">Vaqt tugamasidan so‘zlarni topib XP yig‘ing</div>
+            </div>
           </div>
-          <Volume2 size={18} className="text-indigo-500 shrink-0" />
+          <span className="text-amber-500 font-black">›</span>
         </div>
 
         {/* 서울대 한국어 1A ~ 6B Tablari */}
@@ -1961,24 +2075,24 @@ export default function App() {
   };
 
   // =========================================================================
-  // 4. AI USTOZ
+  // 4. AI USTOZ — 토히르벡 (HAR QANDAY SAVOLGA MOS AQLLI JAVOB BERADI)
   // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow">
-            <Bot size={24} />
+          <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow font-black text-sm">
+            토
           </div>
           <div>
-            <h2 className={`font-black text-sm ${t.textMain}`}>AI 한국어 튜터 (AI Ustoz)</h2>
-            <span className="text-[10px] font-bold text-emerald-500">● Online • Bosib talaffuzini eshiting</span>
+            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (AI Ustoz)</h2>
+            <span className="text-[10px] font-bold text-emerald-500">● Online • Istalgan savol bering yoki koreyscha yozing</span>
           </div>
         </div>
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
-        {['이에요 / 예요 farqi?', '-아서/어서 vs -(으)니까?', '-다고 하다 bilvosita nutq', '☕ 카페에서 buyurtma'].map(chip => (
+        {['Men kimman?', 'Isming nima?', 'kutubxona koreyscha nima?', '이에요 / 예요 farqi?', '☕ 카페에서 buyurtma'].map(chip => (
           <button
             key={chip}
             onClick={() => handleAiSend(chip)}
@@ -2000,11 +2114,15 @@ export default function App() {
                   : `${t.sub} ${t.textMain}`
               }`}
             >
+              {m.role === 'ai' && (
+                <div className="text-[10px] font-black text-rose-500">토히르벡 AI</div>
+              )}
               <div className="font-black leading-relaxed">{m.ko}</div>
-              {m.uz && <div className="text-[11px] opacity-80">{m.uz}</div>}
+              {m.uz && <div className="text-[11px] opacity-85 leading-relaxed">{m.uz}</div>}
             </div>
           </div>
         ))}
+        <div ref={chatEndRef} />
       </div>
 
       <div className="pt-3 flex gap-2">
@@ -2013,7 +2131,7 @@ export default function App() {
           value={aiInput}
           onChange={e => setAiInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAiSend()}
-          placeholder="Savol bering yoki koreyscha yozing..."
+          placeholder="토히르벡 ga savol yozing..."
           className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
         />
         <button
@@ -2027,7 +2145,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (KARTOCHKA • LISTENING • SPEAKING • TOPIK MOCK TEST)
+  // 5. TAKRORLASH (KARTOCHKA • LISTENING • SPEAKING • TOPIK TEST • SPRINT O'YIN)
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
@@ -2036,19 +2154,21 @@ export default function App() {
 
     return (
       <div className="space-y-4 pb-28 pt-2">
-        {/* 4 ta interaktiv mashq rejimi */}
-        <div className="grid grid-cols-4 gap-1.5">
+        {/* 5 ta mashq rejimi */}
+        <div className="grid grid-cols-5 gap-1">
           {[
             { id: 'cards', icon: Layers, label: 'Kartochka' },
             { id: 'listen', icon: Headphones, label: 'Listening' },
             { id: 'speak', icon: Mic, label: 'Speaking' },
-            { id: 'mock', icon: Clock, label: 'TOPIK Test' }
+            { id: 'sprint', icon: Timer, label: 'Sprint' },
+            { id: 'mock', icon: Clock, label: 'TOPIK' }
           ].map(m => (
             <button
               key={m.id}
               onClick={() => {
                 setReviewMode(m.id);
                 if (m.id === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
+                if (m.id === 'sprint' && !sprintWord) startSprintGame();
               }}
               className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[10px] font-black transition ${
                 reviewMode === m.id
@@ -2056,7 +2176,7 @@ export default function App() {
                   : `${t.card} ${t.textMuted}`
               }`}
             >
-              <m.icon size={17} />
+              <m.icon size={16} />
               <span>{m.label}</span>
             </button>
           ))}
@@ -2104,7 +2224,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. LISTENING (TINGLAB TUSHUNISH) */}
+        {/* 2. LISTENING */}
         {reviewMode === 'listen' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             <div className="text-xs font-black text-rose-500 uppercase">듣기 연습 • Tinglab Tushunish</div>
@@ -2153,7 +2273,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. SPEAKING (MIKROFON ORQALI TALAFFUZ) */}
+        {/* 3. SPEAKING */}
         {reviewMode === 'speak' && (
           <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
             <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase">
@@ -2199,7 +2319,54 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. TOPIK MOCK TEST */}
+        {/* 4. YANGI O'YIN: 30 SONIYALIK SPEED SPRINT */}
+        {reviewMode === 'sprint' && (
+          <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
+            <div className="flex justify-between items-center text-xs font-black">
+              <span className="text-amber-500">⚡ Ball: {sprintScore}</span>
+              <span className="text-rose-500">⏱ {sprintTime} soniya</span>
+            </div>
+
+            {sprintRunning && sprintWord ? (
+              <>
+                <div className={`text-3xl font-black py-3 ${t.textMain}`}>{sprintWord.ko}</div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {sprintChoices.map(ch => (
+                    <button
+                      key={ch}
+                      onClick={() => {
+                        if (ch === sprintWord.uz) {
+                          setSprintScore(s => s + 10);
+                          setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
+                        }
+                        nextSprintRound();
+                      }}
+                      className={`p-3.5 rounded-2xl ${t.sub} border hover:border-amber-500 text-xs font-black`}
+                    >
+                      {ch}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="py-4 space-y-3">
+                <div className="text-4xl">⚡</div>
+                <h3 className={`text-lg font-black ${t.textMain}`}>
+                  {sprintTime === 0 ? `Vaqt tugadi! Natija: ${sprintScore} XP` : '30-Soniyalik So‘z Ovchisi'}
+                </h3>
+                <p className="text-xs text-slate-400">30 soniya ichida iloji boricha ko‘proq koreyscha so‘z tarjimasini toping!</p>
+                <button
+                  onClick={startSprintGame}
+                  className="w-full py-3.5 rounded-2xl bg-amber-500 text-white font-black text-xs uppercase"
+                >
+                  O‘yinni Boshlash
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 5. TOPIK MOCK TEST */}
         {reviewMode === 'mock' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             {!mockActive ? (
@@ -2374,7 +2541,6 @@ export default function App() {
         {screen === 'profile' && renderProfile()}
       </main>
 
-      {/* KATTALASHTIRILGAN PASTKI 5 TA NAVIGATSIYA MENYUSI */}
       <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
           <button
@@ -2401,8 +2567,8 @@ export default function App() {
             onClick={() => setScreen('ai')}
             className="-mt-8 w-16 h-16 rounded-full bg-gradient-to-tr from-rose-600 to-pink-500 border-b-4 border-rose-800 text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition"
           >
-            <Bot size={29} strokeWidth={2.3} />
-            <span className="text-[9px] font-black leading-none mt-0.5">AI</span>
+            <Bot size={28} strokeWidth={2.3} />
+            <span className="text-[8px] font-black leading-none mt-0.5">토히르벡</span>
           </button>
 
           <button
