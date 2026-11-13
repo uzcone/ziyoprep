@@ -3,8 +3,14 @@ import {
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, Bot, RotateCcw, User, 
-  Flame, Zap, Send, Sun, Moon
+  Flame, Zap, Send, Sun, Moon, LogOut
 } from 'lucide-react';
+import { 
+  signInWithPopup, signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, updateProfile, 
+  signOut, onAuthStateChanged 
+} from 'firebase/auth';
+import { auth, googleProvider } from './firebase';
 
 // Unicode Hangul Bo'g'in Yig'uvchi Formula
 const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -33,8 +39,103 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState('home'); // 'home' | 'builder' | 'lesson' | 'ai' | 'review' | 'profile'
-  const [uiLang, setUiLang] = useState('uz'); // 'uz' | 'ko'
+  // --- 1. LOGIN / REGISTER / AKKAUNTSIZ KIRISH ---
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hs_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'login' | 'register'
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsub = onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        const u = {
+          uid: fbUser.uid,
+          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Talaba',
+          email: fbUser.email
+        };
+        setCurrentUser(u);
+        localStorage.setItem('hs_auth_user', JSON.stringify(u));
+        setProfile(p => ({ ...p, name: u.name }));
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleGuestLogin = () => {
+    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'talaba@hangulstudio.uz', isGuest: true };
+    setCurrentUser(guest);
+    localStorage.setItem('hs_auth_user', JSON.stringify(guest));
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      if (auth && googleProvider) {
+        await signInWithPopup(auth, googleProvider);
+      } else {
+        handleGuestLogin();
+      }
+    } catch (err) {
+      setAuthError("Google xatoligi: " + (err.code || err.message));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (!authForm.email.trim() || !authForm.password.trim()) {
+      return setAuthError("Email va parolni kiriting!");
+    }
+    setAuthLoading(true);
+    try {
+      if (auth) {
+        if (authMode === 'register') {
+          const res = await createUserWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
+          await updateProfile(res.user, { displayName: authForm.name.trim() || 'Talaba' });
+        } else {
+          await signInWithEmailAndPassword(auth, authForm.email.trim(), authForm.password);
+        }
+      } else {
+        handleGuestLogin();
+      }
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! 'Tizimga kiring' tugmasini bosing.");
+      } else if (err.code === 'auth/weak-password') {
+        setAuthError("Parol kamida 6 ta belgidan iborat bo‘lishi kerak.");
+      } else {
+        setAuthError("Email yoki parol noto‘g‘ri.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (auth) {
+      try { await signOut(auth); } catch {}
+    }
+    localStorage.removeItem('hs_auth_user');
+    setCurrentUser(null);
+    setAuthMode('welcome');
+    setScreen('home');
+  };
+
+  // --- 2. ASOSIY ILOVA HOLATLARI ---
+  const [screen, setScreen] = useState('home');
+  const [uiLang, setUiLang] = useState('uz');
   const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
@@ -190,9 +291,7 @@ export default function App() {
     setRevealed(p => ({ ...p, [key]: !p[key] }));
   };
 
-  // =========================================================================
-  // 서울대 한국어 1A ~ 6B (BARCHA 12 TA JILD — HAR BIRIDA BOY DARSLAR VA MISOLLAR)
-  // =========================================================================
+  // --- 서울대 한국어 1A ~ 6B ---
   const snuBooks = [
     {
       code: '1A',
@@ -384,15 +483,15 @@ export default function App() {
     {
       code: '1B',
       label: '서울대 한국어 1B',
-      range: 'TOPIK 1–2 · Boshlang‘ich 2 (6 dars)',
+      range: 'TOPIK 1–2 · Boshlang‘ich 2 (4 dars)',
       lessons: [
         {
           id: '1b-1', num: 1, week: '1B · 7과', emoji: '☀️', title: '날씨가 어때요? (Ob-havo)',
           heroKo: '오늘 날씨가 맑지만 조금 추워요', heroUz: 'Bugun havo ochiq, lekin biroz sovuq',
-          pinkTitle: 'A-지만 & ㅂ-노to‘g‘ri sifatlar (춥다 → 추워요)', pinkSub: 'Ob-havo va fasllarni tasvirlash',
+          pinkTitle: 'A-지만 & ㅂ-noto‘g‘ri sifatlar (춥다 → 추워요)', pinkSub: 'Ob-havo va fasllarni tasvirlash',
           pinkGroups: [
             {
-              cond: 'ㅂ bilan tugagan sifatlar: 춥다 → 추워요, 덥다 → 더워요, 어렵다 → 어려워요',
+              cond: '춥다 → 추워요, 덥다 → 더워요, 어렵다 → 어려워요',
               items: [
                 { ko: '겨울에는 눈이 오고 많이 추워요.', uz: 'Qishda qor yog‘adi va juda sovuq bo‘ladi.' },
                 { ko: '여름에는 덥지만 바다에 갈 수 있어요.', uz: 'Yozda issiq, lekin dengizga borish mumkin.' },
@@ -402,8 +501,7 @@ export default function App() {
           ],
           greenTitle: '문장 구조', greenFormula: '계절(Fasl) + 에는 + 날씨(Ob-havo)',
           greenRows: [
-            { parts: ['겨울에는', '날씨가', '추워요'], res: '겨울에는 날씨가 추워요.', uz: 'Qishda havo sovuq bo‘ladi.' },
-            { parts: ['여름에는', '날씨가', '더워요'], res: '여름에는 날씨가 더워요.', uz: 'Yozda havo issiq bo‘ladi.' }
+            { parts: ['겨울에는', '날씨가', '추워요'], res: '겨울에는 날씨가 추워요.', uz: 'Qishda havo sovuq bo‘ladi.' }
           ],
           words: [
             { ko: '맑다', uz: 'Ochiq / Musaffo' },
@@ -412,7 +510,7 @@ export default function App() {
             { ko: '가을 / 겨울', uz: 'Kuz / Qish' }
           ],
           quizzes: [
-            { q: "‘춥다’ (sovuq) sifatining hozirgi zamon shakli:", opts: ['추워요', '춥아요', '춥어요', '추웠어요'], ans: '추워요', exp: "‘ㅂ’ tushib qolib ‘우 + 어요 → 워요’ bo‘ladi." }
+            { q: "‘춥다’ (sovuq) sifatining hozirgi zamon shakli:", opts: ['추워요', '춥아요', '춥어요', '추웠어요'], ans: '추워요', exp: "‘ㅂ’ tushib qolib ‘워요’ bo‘ladi." }
           ]
         },
         {
@@ -449,7 +547,7 @@ export default function App() {
           pinkTitle: 'N에서 N까지 / N(으)로 가요', pinkSub: 'Masofa, transport vositasi va ketadigan vaqt',
           pinkGroups: [
             {
-              cond: 'Transport vositasi + (으)로 (bilan/orqali) | Vaqt + 걸리다 (ketmoq)',
+              cond: 'Transport vositasi + (으)로 | Vaqt + 걸리다 (ketmoq)',
               items: [
                 { ko: '버스나 지하철로 학교에 가요.', uz: 'Avtobus yoki metroda maktabga boraman.' },
                 { ko: '서울역에서 강남까지 20분쯤 걸려요.', uz: 'Seul vokzalidan Gangnamgacha 20 daqiqacha ketadi.' },
@@ -468,39 +566,11 @@ export default function App() {
             { ko: '빠르다', uz: 'Tez' }
           ],
           quizzes: [
-            { q: "‘Metro orqali (metroda) boraman’ — to‘g‘ri qo‘shimcha:", opts: ['지하철로 가요', '지하철에서 가요', '지하철을 가요', '지하철에 가요'], ans: '지하철로 가요', exp: "Transport vositasi uchun ‘-(으)로’ ishlatiladi (ㄹ dan keyin 로)." }
+            { q: "‘Metro orqali (metroda) boraman’ — to‘g‘ri qo‘shimcha:", opts: ['지하철로 가요', '지하철에서 가요', '지하철을 가요', '지하철에 가요'], ans: '지하철로 가요', exp: "Transport vositasi uchun ‘-(으)로’ ishlatiladi." }
           ]
         },
         {
-          id: '1b-4', num: 4, week: '1B · 10과', emoji: '📞', title: '지금 통화할 수 있어요? (Telefon)',
-          heroKo: '죄송하지만 다시 한 번 말씀해 주세요', heroUz: 'Uzr, yana bir marta aytib bering',
-          pinkTitle: 'V-(으)ㄹ 수 있다/없다 & V-아/어 주세요', pinkSub: 'Imkoniyat va xushmuomala iltimos',
-          pinkGroups: [
-            {
-              cond: 'Iltimos: V-아/어 주세요 | Qobiliyat: V-(으)ㄹ 수 있어요',
-              items: [
-                { ko: '지금 회의 중이라서 통화할 수 없어요.', uz: 'Hozir majlisda bo‘lganim uchun gaplasha olmayman.' },
-                { ko: '문자를 보내 주세요.', uz: 'SMS xabar yuboring.' },
-                { ko: '한국어로 이메일을 쓸 수 있어요.', uz: 'Koreys tilida email yoza olaman.' }
-              ]
-            }
-          ],
-          greenTitle: '문장 구조', greenFormula: '동사 + 아/어 주세요 (Iltimos qilmoq)',
-          greenRows: [
-            { parts: ['창문을', '열어', '주세요'], res: '창문을 열어 주세요.', uz: 'Derazani ochib bering.' }
-          ],
-          words: [
-            { ko: '통화하다', uz: 'Telefonda gaplashmoq' },
-            { ko: '문자', uz: 'SMS xabar' },
-            { ko: '다시', uz: 'Qaytadan / Yana' },
-            { ko: '도와주다', uz: 'Yordam bermoq' }
-          ],
-          quizzes: [
-            { q: "‘Derazani ochib bering’ — to‘g‘ri iltimos shakli:", opts: ['창문을 열어 주세요', '창문을 열었어요', '창문을 열 거예요', '창문을 열지만'], ans: '창문을 열어 주세요', exp: "Iltimos uchun ‘-아/어 주세요’ qo‘shiladi." }
-          ]
-        },
-        {
-          id: '1b-5', num: 5, week: '1B · 11과', emoji: '🏥', title: '어디가 아프세요? (Salomatlik)',
+          id: '1b-4', num: 4, week: '1B · 10과', emoji: '🏥', title: '어디가 아프세요? (Salomatlik)',
           heroKo: '감기에 걸려서 약을 먹어야 돼요', heroUz: 'Shamollab qolganim uchun dori ichishim kerak',
           pinkTitle: 'V-아야/어야 되다 & V-(으)면 안 되다', pinkSub: 'Majburiyat (-ish kerak) va taqiq (-ish mumkin emas)',
           pinkGroups: [
@@ -526,44 +596,16 @@ export default function App() {
           quizzes: [
             { q: "‘Sovuq suv ichish mumkin emas’ — to‘g‘ri taqiq:", opts: ['찬물을 마시면 안 돼요', '찬물을 마셔야 돼요', '찬물을 마시고 싶어요', '찬물을 마실 거예요'], ans: '찬물을 마시면 안 돼요', exp: "Taqiq shakli: ‘-(으)면 안 되다’." }
           ]
-        },
-        {
-          id: '1b-6', num: 6, week: '1B · 12과', emoji: '✈️', title: '방학에 뭐 할 거예요? (Rejalar)',
-          heroKo: '이번 방학에 고향에 돌아갈 거예요', heroUz: 'Bu ta’tilda vatanimga qaytmoqchiman',
-          pinkTitle: 'V-(으)ㄹ 거예요 & V-(으)러 가다', pinkSub: 'Kelajak reja va biror maqsadda borish',
-          pinkGroups: [
-            {
-              cond: 'Maqsad bilan borish: -(으)러 가다/오다 | Reja: -(으)ㄹ 거예요',
-              items: [
-                { ko: '친구 선물을 사러 백화점에 갔어요.', uz: 'Do‘stimga sovg‘a olish uchun univermagga bordim.' },
-                { ko: '방학 동안 가족들과 여행을 할 거예요.', uz: 'Ta’til davomida oilam bilan sayohat qilaman.' },
-                { ko: '한국어를 배우러 한국에 왔어요.', uz: 'Koreys tilini o‘rganish uchun Koreyaga keldim.' }
-              ]
-            }
-          ],
-          greenTitle: '문장 구조', greenFormula: '목적(Maqsad) + -(으)러 + 장소에 가다/오다',
-          greenRows: [
-            { parts: ['한국어를 배우러', '한국에', '왔어요'], res: '한국어를 배우러 한국에 왔어요.', uz: 'Koreys tilini o‘rganish uchun Koreyaga keldim.' }
-          ],
-          words: [
-            { ko: '방학', uz: 'Ta’til' },
-            { ko: '고향', uz: 'Vatan / Tug‘ilgan joy' },
-            { ko: '돌아가다', uz: 'Qaytib ketmoq' },
-            { ko: '백화점', uz: 'Univermag' }
-          ],
-          quizzes: [
-            { q: "‘Kitob o‘qish uchun kutubxonaga boraman’:", opts: ['책을 읽으러 도서관에 가요', '책을 읽어서 도서관에 가요', '책을 읽지만 도서관에 가요', '책을 읽은 적이 가요'], ans: '책을 읽으러 도서관에 가요', exp: "‘가다/오다’ bilan maqsad ‘-(으)러’ orqali aytiladi." }
-          ]
         }
       ]
     },
     {
       code: '2A',
       label: '서울대 한국어 2A',
-      range: 'TOPIK 2 · O‘rta-boshlang‘ich 1 (4 dars)',
+      range: 'TOPIK 2 · O‘rta-boshlang‘ich 1 (3 dars)',
       lessons: [
         {
-          id: '2a-1', num: 1, week: '2A · 1과', emoji: '🤝', title: '새 친구를 사귀었어요 (Tanishuv)',
+          id: '2a-1', num: 1, week: '2A · 1과', emoji: '🤝', title: '새 친구를 사귀었어요 (Sabab)',
           heroKo: '성격이 활발해서 친구가 많아요', heroUz: 'Xarakteri quvnoq bo‘lgani uchun do‘stlari ko‘p',
           pinkTitle: 'A/V-아서 / 어서 (Sabab) & N처럼', pinkSub: 'Sabab-natija va o‘xshatish (-dek)',
           pinkGroups: [
@@ -591,7 +633,7 @@ export default function App() {
           ]
         },
         {
-          id: '2a-2', num: 2, week: '2A · 2과', emoji: '🏠', title: '집을 구하고 있어요 (Uy-joy)',
+          id: '2a-2', num: 2, week: '2A · 2과', emoji: '🏠', title: '깨끗한 방을 찾고 있어요 (Sifatdosh)',
           heroKo: '학교에서 가깝고 깨끗한 방을 찾고 있어요', heroUz: 'Maktabga yaqin va toza xona qidiryapman',
           pinkTitle: 'A-(으)ㄴ N (Sifatdosh) & V-고 있다', pinkSub: 'Otni sifat bilan ta’riflash va davomiy zamon',
           pinkGroups: [
@@ -599,8 +641,7 @@ export default function App() {
               cond: 'Sifat + -(으)ㄴ + Ot (조용한 집, 큰 방, 깨끗한 거리)',
               items: [
                 { ko: '조용하고 교통이 편리한 집을 구하고 있어요.', uz: 'Tinch va transporti qulay uy qidiryapman.' },
-                { ko: '창문이 커서 햇빛이 잘 들어와요.', uz: 'Derazasi katta bo‘lgani uchun quyosh nuri yaxshi tushadi.' },
-                { ko: '지금 부동산에서 집을 보고 있어요.', uz: 'Hozir rieltorlik idorasida uy ko‘ryapman.' }
+                { ko: '창문이 커서 햇빛이 잘 들어와요.', uz: 'Derazasi katta bo‘lgani uchun quyosh nuri yaxshi tushadi.' }
               ]
             }
           ],
@@ -619,7 +660,7 @@ export default function App() {
           ]
         },
         {
-          id: '2a-3', num: 3, week: '2A · 3과', emoji: '🧳', title: '제주도에 가 봤어요? (Tajriba)',
+          id: '2a-3', num: 3, week: '2A · 3과', emoji: '🧳', title: '제주도에 가 본 적이 있어요 (Tajriba)',
           heroKo: '한국에서 한복을 입어 본 적이 있어요', heroUz: 'Koreyada hanbok kiyib ko‘rganman',
           pinkTitle: 'V-아/어 보다 & V-(으)ㄴ 적이 있다', pinkSub: 'Sinab ko‘rish va hayotiy tajriba',
           pinkGroups: [
@@ -627,8 +668,7 @@ export default function App() {
               cond: 'Sinab ko‘rish: -아/어 보다 | Tajriba: -(으)ㄴ 적이 있다/없다',
               items: [
                 { ko: '제주도에서 말을 타 본 적이 있어요.', uz: 'Jeju orolida ot minib ko‘rganman.' },
-                { ko: '이 음식은 처음인데 한번 먹어 보세요.', uz: 'Bu taom birinchi marta ekan, bir tatib ko‘ring.' },
-                { ko: '아직 KTX를 타 본 적이 없어요.', uz: 'Hali tezyurar poyezd (KTX) ga chiqib ko‘rmaganman.' }
+                { ko: '이 음식은 처음인데 한번 먹어 보세요.', uz: 'Bu taom birinchi marta ekan, bir tatib ko‘ring.' }
               ]
             }
           ],
@@ -645,41 +685,13 @@ export default function App() {
           quizzes: [
             { q: "‘Bir tatib ko‘ring’ — to‘g‘ri ibora:", opts: ['한번 먹어 보세요', '한번 먹은 적이 있어요', '한번 먹을 거예요', '한번 먹어야 돼요'], ans: '한번 먹어 보세요', exp: "Sinab ko‘rish buyrug‘i: ‘-아/어 보세요’." }
           ]
-        },
-        {
-          id: '2a-4', num: 4, week: '2A · 4과', emoji: '🎁', title: '선물을 고르고 있어요 (Sovg‘a)',
-          heroKo: '부모님께 드릴 선물을 사고 싶어요', heroUz: 'Ota-onamga beradigan sovg‘a olmoqchiman',
-          pinkTitle: 'V-(으)ㄹ N (Kelajak sifatdosh) & N께 드리다', pinkSub: 'Kattalarga hurmat fe’li (드리다) va maqsad',
-          pinkGroups: [
-            {
-              cond: '주다 → 드리다 (Kattalarga bermoq) | 에게 → 께',
-              items: [
-                { ko: '선생님께 드릴 꽃을 샀어요.', uz: 'Ustozimga beradigan gul sotib oldim.' },
-                { ko: '주말에 읽을 책을 빌렸어요.', uz: 'Dam olish kuni o‘qiydigan kitobimni ijaraga oldim.' },
-                { ko: '할머니께 생신 선물을 드렸어요.', uz: 'Buvimga tug‘ilgan kun sovg‘asini berdim.' }
-              ]
-            }
-          ],
-          greenTitle: '문장 구조', greenFormula: '어른(Katta kishi) + 께 + 선물을 드리다',
-          greenRows: [
-            { parts: ['부모님께', '선물을', '드렸어요'], res: '부모님께 선물을 드렸어요.', uz: 'Ota-onamga sovg‘a berdim.' }
-          ],
-          words: [
-            { ko: '드리다', uz: 'Bermoq (hurmat)' },
-            { ko: '고르다', uz: 'Tanlamoq' },
-            { ko: '빌리다', uz: 'Qarzga / Ijaraga olmoq' },
-            { ko: '생신', uz: 'Tug‘ilgan kun (hurmat)' }
-          ],
-          quizzes: [
-            { q: "Ota-onaga yoki ustozga sovg‘a berganda ‘주다’ o‘rniga nima ishlatiladi?", opts: ['드리다', '드시다', '주무시다', '계시다'], ans: '드리다', exp: "‘주다’ fe’lining hurmat shakli ‘드리다’." }
-          ]
         }
       ]
     },
     {
       code: '2B',
       label: '서울대 한국어 2B',
-      range: 'TOPIK 2–3 · O‘rta-boshlang‘ich 2 (4 dars)',
+      range: 'TOPIK 2–3 · O‘rta-boshlang‘ich 2 (3 dars)',
       lessons: [
         {
           id: '2b-1', num: 1, week: '2B · 1과', emoji: '🎯', title: '한국 회사에 취직하려고 해요',
@@ -690,8 +702,7 @@ export default function App() {
               cond: 'Niyat: -(으)려고 하다 | Keyin: -(으)ㄴ 후에',
               items: [
                 { ko: '방학에 운전면허를 따려고 해요.', uz: 'Ta’tilda haydovchilik guvohnomasini olmoqchiman.' },
-                { ko: '수업이 끝난 후에 같이 밥을 먹어요.', uz: 'Dars tugagandan keyin birga ovqatlanamiz.' },
-                { ko: '한국어를 잘하기 위해 매일 연습해요.', uz: 'Koreys tilini yaxshi bilish uchun har kuni mashq qilaman.' }
+                { ko: '수업이 끝난 후에 같이 밥을 먹어요.', uz: 'Dars tugagandan keyin birga ovqatlanamiz.' }
               ]
             }
           ],
@@ -718,8 +729,7 @@ export default function App() {
               cond: 'Sabab + (으)니까 → Buyruq / Taklif / Savol',
               items: [
                 { ko: '비가 오니까 우산을 가지고 가세요.', uz: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting.' },
-                { ko: '시간이 없으니까 지하철을 탑시다.', uz: 'Vaqt yo‘qligi sababli metroga chiqaylik.' },
-                { ko: '이 식당은 음식이 맛있으니까 손님이 많아요.', uz: 'Bu oshxonaning taomi mazali bo‘lgani uchun mijozlari ko‘p.' }
+                { ko: '시간이 없으니까 지하철을 탑시다.', uz: 'Vaqt yo‘qligi sababli metroga chiqaylik.' }
               ]
             }
           ],
@@ -743,11 +753,10 @@ export default function App() {
           pinkTitle: 'A-아/어지다 (Holat o‘zgarishi)', pinkSub: 'Sifatning vaqt o‘tishi bilan o‘zgarishi (-lashmoq)',
           pinkGroups: [
             {
-              cond: '좋다 → 좋아지다 (yaxshilanmoq) | 예쁘다 → 예뻐지다 | 맑다 → 맑아지다',
+              cond: '좋다 → 좋아지다 (yaxshilanmoq) | 따뜻하다 → 따뜻해지다',
               items: [
                 { ko: '어제보다 날씨가 훨씬 따뜻해졌어요.', uz: 'Kechagidan ko‘ra havo ancha ilidi.' },
-                { ko: '한국 친구가 생겨서 생활이 즐거워졌어요.', uz: 'Koreys do‘stim paydo bo‘lgani uchun hayot quvnoqlashdi.' },
-                { ko: '건강을 위해 운동을 시작해서 몸이 건강해졌어요.', uz: 'Sog‘liq uchun sport boshlaganim uchun tanam sog‘lomlashdi.' }
+                { ko: '한국 친구가 생겨서 생활이 즐거워졌어요.', uz: 'Koreys do‘stim paydo bo‘lgani uchun hayot quvnoqlashdi.' }
               ]
             }
           ],
@@ -763,34 +772,6 @@ export default function App() {
           ],
           quizzes: [
             { q: "‘Havo ilidi (iliq bo‘lib qoldi)’ — to‘g‘ri shakl:", opts: ['날씨가 따뜻해졌어요', '날씨가 따뜻했어요', '날씨가 따뜻할 거예요', '날씨가 따뜻하지만'], ans: '날씨가 따뜻해졌어요', exp: "Holat o‘zgarishi: ‘-아/어지다’." }
-          ]
-        },
-        {
-          id: '2b-4', num: 4, week: '2B · 4과', emoji: '🎭', title: '한국 문화를 배우는 게 재미있어요',
-          heroKo: '한국 드라마를 보는 것이 취미예요', heroUz: 'Koreys serialini ko‘rish mening hobbiyim',
-          pinkTitle: 'V-는 것 (Fe’ldan ot yasash)', pinkSub: 'Harakatni otga aylantirish (-ish / -moq)',
-          pinkGroups: [
-            {
-              cond: 'V-는 것 (qisqacha: V-는 게, V-는 걸, V-는 건)',
-              items: [
-                { ko: '저는 요리하는 것을 아주 좋아해요.', uz: 'Men ovqat pishirishni juda yaxshi ko‘raman.' },
-                { ko: '새벽에 일찍 일어나는 게 힘들어요.', uz: 'Saharda erta uyg‘onish qiyin.' },
-                { ko: '한국 노래를 듣는 것이 한국어 공부에 도움이 돼요.', uz: 'Koreys qo‘shiqlarini tinglash koreys tilini o‘rganishga yordam beradi.' }
-              ]
-            }
-          ],
-          greenTitle: '문장 구조', greenFormula: '동사 + -는 것(게/걸) + 이/가 + 형용사',
-          greenRows: [
-            { parts: ['요리하는', '것을', '좋아해요'], res: '요리하는 것을 좋아해요.', uz: 'Ovqat pishirishni yaxshi ko‘raman.' }
-          ],
-          words: [
-            { ko: '취미', uz: 'Hobbi / Qiziqish' },
-            { ko: '새벽', uz: 'Sahar / Tong' },
-            { ko: '힘들다', uz: 'Qiyin / Mashaqqatli' },
-            { ko: '도움이 되다', uz: 'Foydasi tegmoq' }
-          ],
-          quizzes: [
-            { q: "‘Erta uyg‘onish qiyin’ — to‘g‘ri grammatika:", opts: ['일찍 일어나는 게 힘들어요', '일찍 일어난 게 힘들어요', '일찍 일어날 게 힘들어요', '일찍 일어나서 힘들어요'], ans: '일찍 일어나는 게 힘들어요', exp: "Hozirgi umumiy harakatni otga aylantirish: ‘-는 것(게)’." }
           ]
         }
       ]
@@ -837,7 +818,6 @@ export default function App() {
               cond: 'O‘tgan: -(으)ㄴ 것 같다 | Hozirgi: -는 것 같다 | Kelajak: -(으)ㄹ 것 같다',
               items: [
                 { ko: '지금은 길이 많이 막히는 것 같아요.', uz: 'Hozir yo‘l ancha tirbandga o‘xshaydi.' },
-                { ko: '어제 밤에 눈이 많이 온 것 같아요.', uz: 'Kecha tunda qor ko‘p yog‘ganga o‘xshaydi.' },
                 { ko: '내일은 오늘보다 더 추울 것 같아요.', uz: 'Ertaga bugungidan sovuqroq bo‘ladiganga o‘xshaydi.' }
               ]
             }
@@ -865,7 +845,6 @@ export default function App() {
               cond: 'Doim o‘tgan zamonda (뻔했어요) ishlatiladi!',
               items: [
                 { ko: '길이 미끄러워서 넘어질 뻔했어요.', uz: 'Yo‘l sirpanchiq bo‘lgani uchun yiqilib tushishimga sal qoldi.' },
-                { ko: '지갑을 지하철에 두고 내릴 뻔했어요.', uz: 'Hamyonimni metroda qoldirib tushib ketishimga sal qoldi.' },
                 { ko: '알람을 못 들어서 지각할 뻔했어요.', uz: 'Budilnikni eshitmay qolib kech qolishimga sal qoldi.' }
               ]
             }
@@ -1150,6 +1129,124 @@ export default function App() {
   };
 
   // =========================================================================
+  // 0. KIRISH EKRANI (LOGIN / REGISTER / AKKAUNTSIZ KIRISH)
+  // =========================================================================
+  if (!currentUser) {
+    return (
+      <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 font-sans`}>
+        <div className="max-w-md w-full mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className={`font-black text-lg tracking-tight ${t.textMain}`}>한글 스튜디오</span>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500">서울대 1A–6B</span>
+          </div>
+          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
+            {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
+          </button>
+        </div>
+
+        <div className="max-w-md w-full mx-auto my-auto text-center space-y-6">
+          {authMode === 'welcome' ? (
+            <>
+              <div className="w-28 h-28 mx-auto rounded-[32px] bg-[#fdf2f4] dark:bg-rose-950/50 border-2 border-[#f8d7de] flex flex-col items-center justify-center shadow-lg">
+                <span className="text-4xl font-black text-slate-900 dark:text-white">가나다</span>
+                <span className="text-[10px] font-black text-rose-500 mt-1">서울대 1A–6B</span>
+              </div>
+              <div className="space-y-2">
+                <h1 className={`text-2xl font-black ${t.textMain}`}>
+                  Koreys tilini Hangul alifbosidan TOPIK 6 gacha o‘rganing!
+                </h1>
+                <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                  Bosilganda talaffuz va tarjima, bo‘g‘in konstruktori va AI ustoz bitta ilovada.
+                </p>
+              </div>
+              <div className="space-y-3 pt-2">
+                <button
+                  onClick={handleGuestLogin}
+                  className="w-full py-4 rounded-2xl bg-[#e11d48] hover:bg-rose-600 text-white font-black text-sm uppercase shadow-lg"
+                >
+                  Akkauntsiz Boshlash (Tezkor kirish)
+                </button>
+                <button
+                  onClick={handleGoogleLogin}
+                  className={`w-full py-4 rounded-2xl ${t.card} border-2 font-black text-sm ${t.textMain}`}
+                >
+                  Google bilan davom etish
+                </button>
+                <button
+                  onClick={() => { setAuthError(''); setAuthMode('login'); }}
+                  className="text-xs font-bold text-rose-500 hover:underline"
+                >
+                  Email va Parol orqali kirish
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
+              <div className="flex items-center justify-between">
+                <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${t.sub} border`}>
+                  <ArrowLeft size={16} />
+                </button>
+                <h2 className={`font-black text-base ${t.textMain}`}>
+                  {authMode === 'login' ? 'Tizimga kirish' : 'Ro‘yxatdan o‘tish'}
+                </h2>
+                <div className="w-8" />
+              </div>
+
+              {authError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold text-center">
+                  {authError}
+                </div>
+              )}
+
+              <form onSubmit={handleEmailAuth} className="space-y-3">
+                {authMode === 'register' && (
+                  <input
+                    type="text"
+                    placeholder="Ismingiz"
+                    value={authForm.name}
+                    onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="Email manzilingiz"
+                  value={authForm.email}
+                  onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                  className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                />
+                <input
+                  type="password"
+                  placeholder="Parol (kamida 6 ta belgi)"
+                  value={authForm.password}
+                  onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                  className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                />
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-3.5 rounded-2xl bg-[#e11d48] text-white font-black text-xs uppercase"
+                >
+                  {authLoading ? 'Yuklanmoqda...' : authMode === 'login' ? 'Kirish' : 'Akkaunt yaratish'}
+                </button>
+              </form>
+
+              <button
+                onClick={() => { setAuthError(''); setAuthMode(authMode === 'login' ? 'register' : 'login'); }}
+                className="w-full text-center text-xs font-bold text-rose-500"
+              >
+                {authMode === 'login' ? "Akkauntingiz yo‘qmi? Ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="text-center text-[11px] text-slate-400">한글 스튜디오 • 서울대 한국어 1A–6B</div>
+      </div>
+    );
+  }
+
+  // =========================================================================
   // 1. ASOSIY EKRAN — "한글 스튜디오"
   // =========================================================================
   const renderHome = () => (
@@ -1170,7 +1267,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* ▶ 이어서 공부하기 */}
       <button
         onClick={() => startLesson(nextLesson)}
         className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-rose-300 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
@@ -1183,7 +1279,6 @@ export default function App() {
         </span>
       </button>
 
-      {/* Yashil Karta: 글자 조립 */}
       <div
         onClick={() => setScreen('builder')}
         className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
@@ -1206,7 +1301,6 @@ export default function App() {
         <span className="text-slate-400 font-bold text-lg">›</span>
       </div>
 
-      {/* 서울대 한국어 1A ~ 6B Tablari */}
       <div className="space-y-1 pt-1">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
@@ -1233,7 +1327,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Darslar Ro'yxati */}
       <div className="space-y-2.5">
         {currentBook.lessons.map((lesson, idx) => {
           const isDone = completedIds.includes(lesson.id);
@@ -1852,7 +1945,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // 6. PROFIL
+  // 6. PROFIL (TIZIMDAN CHIQISH TUGMASI BILAN)
   // =========================================================================
   const renderProfile = () => (
     <div className="space-y-4 pb-24 pt-2">
@@ -1883,7 +1976,7 @@ export default function App() {
                 <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-0.5">한글 스튜디오 • 서울대 1A–6B</p>
+            <p className="text-xs text-slate-400 mt-0.5">{currentUser?.email}</p>
           </div>
         </div>
         <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>
@@ -1921,6 +2014,14 @@ export default function App() {
           Almashtirish
         </button>
       </div>
+
+      {/* TIZIMDAN CHIQISH (LOGOUT) */}
+      <button
+        onClick={handleLogout}
+        className="w-full py-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 font-black text-xs flex items-center justify-center gap-2"
+      >
+        <LogOut size={16} /> Akkauntdan chiqish (Login sahifaga qaytish)
+      </button>
     </div>
   );
 
