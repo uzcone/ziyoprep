@@ -3,7 +3,8 @@ import {
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, Bot, RotateCcw, User, 
-  Flame, Zap, Send, Sun, Moon, LogOut
+  Flame, Zap, Send, Sun, Moon, LogOut,
+  Headphones, Mic, Clock, Target, Layers
 } from 'lucide-react';
 import { 
   signInWithPopup, signInWithEmailAndPassword, 
@@ -48,7 +49,7 @@ export default function App() {
       return null;
     }
   });
-  const [authMode, setAuthMode] = useState('welcome'); // 'welcome' | 'login' | 'register'
+  const [authMode, setAuthMode] = useState('welcome');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -147,11 +148,12 @@ export default function App() {
       return {
         name: saved?.name || 'Tokhirbek',
         xp: saved?.xp ?? 1450,
+        dailyXp: saved?.dailyXp ?? 60,
         streak: saved?.streak ?? 12,
         hearts: saved?.hearts ?? 5
       };
     } catch {
-      return { name: 'Tokhirbek', xp: 1450, streak: 12, hearts: 5 };
+      return { name: 'Tokhirbek', xp: 1450, dailyXp: 60, streak: 12, hearts: 5 };
     }
   });
   const [editingName, setEditingName] = useState(false);
@@ -235,6 +237,11 @@ export default function App() {
           ko: '간접화법: 동사에는 "-ㄴ/는다고 해요", 형용사에는 "-다고 해요"를 붙여요.',
           uz: "Bilvosita nutqda fe'lga '-ㄴ/는다고 해요', sifatga '-다고 해요' qo‘shiladi."
         };
+      } else if (text.includes('카페')) {
+        reply = {
+          ko: '카페에서: "아이스 아메리카노 한 잔 주세요."',
+          uz: "Kafeda buyurtma: 'Bitta muzli amerikano bering.' Sotuvchi: '영수증 드릴까요?' (Chek beraymi?)"
+        };
       }
 
       setAiMessages(prev => [...prev, { role: 'ai', ...reply }]);
@@ -242,8 +249,44 @@ export default function App() {
     }, 350);
   };
 
+  // --- TAKRORLASH (FLASHCARDS + LISTENING + SPEAKING + TOPIK MOCK) ---
+  const [reviewMode, setReviewMode] = useState('cards'); // 'cards' | 'listen' | 'speak' | 'mock'
   const [flashIdx, setFlashIdx] = useState(0);
   const [flashFlipped, setFlashFlipped] = useState(false);
+
+  // Listening state
+  const [listenIdx, setListenIdx] = useState(0);
+  const [listenOpts, setListenOpts] = useState([]);
+  const [listenPick, setListenPick] = useState(null);
+
+  // Speaking state
+  const [speakIdx, setSpeakIdx] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechText, setSpeechText] = useState('');
+  const [speechStatus, setSpeechStatus] = useState(null);
+
+  // TOPIK Mock Test state
+  const [mockActive, setMockActive] = useState(false);
+  const [mockList, setMockList] = useState([]);
+  const [mockStep, setMockStep] = useState(0);
+  const [mockSelected, setMockSelected] = useState({});
+  const [mockSeconds, setMockSeconds] = useState(300);
+  const [mockDone, setMockDone] = useState(false);
+
+  useEffect(() => {
+    if (!mockActive || mockDone) return;
+    const timer = setInterval(() => {
+      setMockSeconds(s => {
+        if (s <= 1) {
+          clearInterval(timer);
+          setMockDone(true);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [mockActive, mockDone]);
 
   // --- 글자 조립 ---
   const [builderTab, setBuilderTab] = useState('no_batchim');
@@ -272,7 +315,7 @@ export default function App() {
     const b = Math.random() > 0.45 ? batchims[Math.floor(Math.random() * batchims.length)] : '';
     setRandomChar(composeHangul(c, v, b));
     setPracticeCount(p => p + 1);
-    setProfile(p => ({ ...p, xp: p.xp + 2 }));
+    setProfile(p => ({ ...p, xp: p.xp + 2, dailyXp: p.dailyXp + 2 }));
   };
 
   // --- DARS ICHIDAGI HOLATLAR ---
@@ -381,8 +424,7 @@ export default function App() {
           ],
           greenTitle: '문장 구조', greenFormula: '장소 + 에서 + 목적어 + 을/를 + V-아요/어요',
           greenRows: [
-            { parts: ['식당에서', '비빔밥을', '먹어요'], res: '식당에서 비빔밥을 먹어요.', uz: 'Oshxonada bibimbap yeyman.' },
-            { parts: ['집에서', '숙제를', '해요'], res: '집에서 숙제를 해요.', uz: 'Uyda uy vazifasini qilaman.' }
+            { parts: ['식당에서', '비빔밥을', '먹어요'], res: '식당에서 비빔밥을 먹어요.', uz: 'Oshxonada bibimbap yeyman.' }
           ],
           words: [
             { ko: '식당', uz: 'Oshxona / Restoran' },
@@ -403,8 +445,7 @@ export default function App() {
               cond: 'Soat (Asl koreys: 한 시, 두 시) + 분 (Xitoy-koreys: 십 분, 삼십 분)',
               items: [
                 { ko: '아침 7시 30분에 일어나요.', uz: 'Ertalab 7:30 da uyg‘onaman.' },
-                { ko: '토요일에 친구를 만나요.', uz: 'Shanba kuni do‘stim bilan uchrashaman.' },
-                { ko: '점심시간에 커피를 마셔요.', uz: 'Tushlik vaqtida kofe ichaman.' }
+                { ko: '토요일에 친구를 만나요.', uz: 'Shanba kuni do‘stim bilan uchrashaman.' }
               ]
             }
           ],
@@ -431,8 +472,7 @@ export default function App() {
               cond: 'Buyum (개), Shisha (병), Stakan (잔) — Asl koreys sonlari (한, 두, 세, 네)',
               items: [
                 { ko: '아메리카노 두 잔 주세요.', uz: 'Ikkita amerikano bering.' },
-                { ko: '이 운동화는 오만 원이에요.', uz: 'Bu krossovka 50,000 von.' },
-                { ko: '모두 얼마예요?', uz: 'Hammasi necha pul?' }
+                { ko: '이 운동화는 오만 원이에요.', uz: 'Bu krossovka 50,000 von.' }
               ]
             }
           ],
@@ -459,8 +499,7 @@ export default function App() {
               cond: 'ㅏ, ㅗ → 았어요  |  Boshqa unlilar → 었어요  |  하다 → 했어요',
               items: [
                 { ko: '어제 친구하고 영화를 봤어요.', uz: 'Kecha do‘stim bilan kino ko‘rdim.' },
-                { ko: '주말에 집에서 쉬었어요.', uz: 'Dam olish kuni uyda dam oldim.' },
-                { ko: '어제 한국 음식을 요리했어요.', uz: 'Kecha koreys taomini pishirdim.' }
+                { ko: '주말에 집에서 쉬었어요.', uz: 'Dam olish kuni uyda dam oldim.' }
               ]
             }
           ],
@@ -494,8 +533,7 @@ export default function App() {
               cond: '춥다 → 추워요, 덥다 → 더워요, 어렵다 → 어려워요',
               items: [
                 { ko: '겨울에는 눈이 오고 많이 추워요.', uz: 'Qishda qor yog‘adi va juda sovuq bo‘ladi.' },
-                { ko: '여름에는 덥지만 바다에 갈 수 있어요.', uz: 'Yozda issiq, lekin dengizga borish mumkin.' },
-                { ko: '한국의 가을 날씨가 정말 시원해요.', uz: 'Koreyaning kuzgi ob-havosi juda salqin.' }
+                { ko: '여름에는 덥지만 바다에 갈 수 있어요.', uz: 'Yozda issiq, lekin dengizga borish mumkin.' }
               ]
             }
           ],
@@ -522,8 +560,7 @@ export default function App() {
               cond: 'Istak: -고 싶어요 | Taklif: -(으)ㄹ까요? (...-aylikmi?)',
               items: [
                 { ko: '이번 주말에 같이 영화를 볼까요?', uz: 'Shu dam olish kuni birga kino ko‘raylikmi?' },
-                { ko: '저는 매운 떡볶이를 먹고 싶어요.', uz: 'Men achchiq ttokpokki yemoqchiman.' },
-                { ko: '몇 시에 어디에서 만날까요?', uz: 'Soat nechada va qayerda uchrashaylik?' }
+                { ko: '저는 매운 떡볶이를 먹고 싶어요.', uz: 'Men achchiq ttokpokki yemoqchiman.' }
               ]
             }
           ],
@@ -550,8 +587,7 @@ export default function App() {
               cond: 'Transport vositasi + (으)로 | Vaqt + 걸리다 (ketmoq)',
               items: [
                 { ko: '버스나 지하철로 학교에 가요.', uz: 'Avtobus yoki metroda maktabga boraman.' },
-                { ko: '서울역에서 강남까지 20분쯤 걸려요.', uz: 'Seul vokzalidan Gangnamgacha 20 daqiqacha ketadi.' },
-                { ko: '길이 막혀서 택시보다 지하철이 빨라요.', uz: 'Yo‘l tirband bo‘lgani uchun taksidan ko‘ra metro tezroq.' }
+                { ko: '서울역에서 강남까지 20분쯤 걸려요.', uz: 'Seul vokzalidan Gangnamgacha 20 daqiqacha ketadi.' }
               ]
             }
           ],
@@ -578,8 +614,7 @@ export default function App() {
               cond: 'Majburiyat: -아야/어야 돼요 | Taqiq: -(으)면 안 돼요',
               items: [
                 { ko: '열이 나면 병원에 가야 돼요.', uz: 'Isitma chiqsa, kasalxonaga borish kerak.' },
-                { ko: '오늘은 찬물을 마시면 안 돼요.', uz: 'Bugun sovuq suv ichish mumkin emas.' },
-                { ko: '푹 쉬어야 빨리 나아요.', uz: 'Yaxshi dam olsangiz tez tuzalasiz.' }
+                { ko: '오늘은 찬물을 마시면 안 돼요.', uz: 'Bugun sovuq suv ichish mumkin emas.' }
               ]
             }
           ],
@@ -610,10 +645,9 @@ export default function App() {
           pinkTitle: 'A/V-아서 / 어서 (Sabab) & N처럼', pinkSub: 'Sabab-natija va o‘xshatish (-dek)',
           pinkGroups: [
             {
-              cond: 'Sabab (-gani uchun) → 아서/어서 (Buyruq gapda ishlatilmaydi!)',
+              cond: 'Sabab (-gani uchun) → 아서/어서',
               items: [
                 { ko: '한국 생활이 재미있어서 시간이 빨리 가요.', uz: 'Koreyadagi hayot qiziqarli bo‘lgani uchun vaqt tez o‘tyapti.' },
-                { ko: '그 친구는 친동생처럼 가까워요.', uz: 'U do‘stim o‘z ukamdek yaqin.' },
                 { ko: '도움을 주셔서 진심으로 감사해요.', uz: 'Yordam berganingiz uchun chin dildan rahmat.' }
               ]
             }
@@ -790,7 +824,6 @@ export default function App() {
               cond: 'Fe’l: -ㄴ/는다고 하다 | Sifat: -다고 하다 | Ot: -(이)라고 하다',
               items: [
                 { ko: '민수 씨가 다음 주에 결혼한다고 했어요.', uz: 'Minsu kelasi hafta turmush quraman deb aytdi.' },
-                { ko: '선생님께서 시험이 어렵지 않다고 하셨어요.', uz: 'Ustoz imtihon qiyin emas deb aytdilar.' },
                 { ko: '그 식당 음식이 아주 맛있다고 해요.', uz: 'O‘sha oshxonaning ovqati juda mazali deyishyapti.' }
               ]
             }
@@ -1100,6 +1133,7 @@ export default function App() {
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons);
   const allWords = allLessons.flatMap(l => l.words);
+  const allQuizzesPool = allLessons.flatMap(l => l.quizzes);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
   const startLesson = (lesson) => {
@@ -1117,6 +1151,67 @@ export default function App() {
     setQIdx(0);
     setQAnswer(null);
     setScreen('lesson');
+  };
+
+  // Listening yangi savol tayyorlash
+  const prepareListening = (idx) => {
+    const target = allWords[idx % allWords.length];
+    const distractors = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setListenOpts(shuffleArray([target.uz, ...distractors]));
+    setListenPick(null);
+    speakKo(target.ko);
+  };
+
+  // Speaking (Mikrofon) tekshiruvi
+  const handleSpeechTest = (targetKo) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setSpeechText("Brauzeringiz mikrofonni qo‘llab-quvvatlamaydi (Chrome/Safari da sinab ko‘ring).");
+      return;
+    }
+    try {
+      const rec = new SR();
+      rec.lang = 'ko-KR';
+      rec.interimResults = false;
+      setIsRecording(true);
+      setSpeechText('');
+      setSpeechStatus(null);
+
+      rec.onresult = (e) => {
+        const spoken = e.results[0][0].transcript;
+        setSpeechText(spoken);
+        const cleanSpoken = spoken.replace(/\s+/g, '');
+        const cleanTarget = targetKo.split('/')[0].replace(/\s+/g, '');
+        if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken)) {
+          setSpeechStatus({ ok: true, msg: "Ajoyib talaffuz! To‘g‘ri! 🎉 (+20 XP)" });
+          setProfile(p => ({ ...p, xp: p.xp + 20, dailyXp: p.dailyXp + 20 }));
+        } else {
+          setSpeechStatus({ ok: false, msg: "Yana bir bor aniqroq talaffuz qilib ko‘ring!" });
+        }
+        setIsRecording(false);
+      };
+      rec.onerror = () => {
+        setIsRecording(false);
+        setSpeechText("Ovoz eshitilmadi. Mikrofon ruxsatini tekshiring.");
+      };
+      rec.start();
+    } catch {
+      setIsRecording(false);
+    }
+  };
+
+  // TOPIK Mock Test boshlash
+  const launchTopikMock = () => {
+    const picked = shuffleArray(allQuizzesPool).slice(0, 8).map(q => ({
+      ...q,
+      opts: shuffleArray(q.opts)
+    }));
+    setMockList(picked);
+    setMockStep(0);
+    setMockSelected({});
+    setMockSeconds(300);
+    setMockDone(false);
+    setMockActive(true);
   };
 
   const t = {
@@ -1249,154 +1344,188 @@ export default function App() {
   // =========================================================================
   // 1. ASOSIY EKRAN — "한글 스튜디오"
   // =========================================================================
-  const renderHome = () => (
-    <div className="space-y-4 pb-24">
-      <div className="flex items-center justify-between pt-2">
-        <h1 className={`text-[22px] font-black tracking-tight ${t.textMain}`}>한글 스튜디오</h1>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
-            className={`px-3 py-1.5 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1.5`}
-          >
-            <Globe size={14} className="text-sky-500" />
-            <span>{uiLang === 'uz' ? "O'zbekcha" : '한국어'}</span>
-          </button>
-          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
-            {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
-          </button>
-        </div>
-      </div>
+  const renderHome = () => {
+    const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
 
-      <button
-        onClick={() => startLesson(nextLesson)}
-        className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-rose-300 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
-      >
-        <Play size={13} className="text-[#e11d48] fill-[#e11d48]" />
-        <span>
-          {uiLang === 'uz'
-            ? `${nextLesson.week} Davom etish (${nextLesson.title})`
-            : `${nextLesson.week} 이어서 공부하기`}
-        </span>
-      </button>
-
-      <div
-        onClick={() => setScreen('builder')}
-        className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
-      >
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center shadow-xs">
-            abc
+    return (
+      <div className="space-y-4 pb-28">
+        <div className="flex items-center justify-between pt-2">
+          <h1 className={`text-[22px] font-black tracking-tight ${t.textMain}`}>한글 스튜디오</h1>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
+              className={`px-3 py-1.5 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1.5`}
+            >
+              <Globe size={14} className="text-sky-500" />
+              <span>{uiLang === 'uz' ? "O'zbekcha" : '한국어'}</span>
+            </button>
+            <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
+              {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
+            </button>
           </div>
+        </div>
+
+        {/* KUNLIK MAQSAD PROGRESS */}
+        <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
+          <div className="flex justify-between items-center text-[11px] font-black">
+            <span className="flex items-center gap-1.5 text-amber-500">
+              <Target size={14} /> Kunlik maqsad
+            </span>
+            <span className={t.textMuted}>{profile.dailyXp} / 100 XP ({dailyPct}%)</span>
+          </div>
+          <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full bg-rose-500 rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
+          </div>
+        </div>
+
+        {/* ▶ 이어서 공부하기 */}
+        <button
+          onClick={() => startLesson(nextLesson)}
+          className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-rose-300 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
+        >
+          <Play size={13} className="text-[#e11d48] fill-[#e11d48]" />
+          <span>
+            {uiLang === 'uz'
+              ? `${nextLesson.week} Davom etish (${nextLesson.title})`
+              : `${nextLesson.week} 이어서 공부하기`}
+          </span>
+        </button>
+
+        {/* Yashil Karta: 글자 조립 */}
+        <div
+          onClick={() => setScreen('builder')}
+          className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-4 flex items-center justify-between cursor-pointer active:scale-99 transition`}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center shadow-xs">
+              abc
+            </div>
+            <div>
+              <div className={`font-black text-sm ${t.textMain}`}>
+                글자 조립 {uiLang === 'uz' && <span className="text-xs font-bold text-emerald-600">(Harf yig‘ish)</span>}
+              </div>
+              <div className={`text-[11px] ${t.textMuted} mt-0.5`}>
+                {uiLang === 'uz'
+                  ? 'Undosh va unlini bosib bo‘g‘in yasang va talaffuzini eshiting'
+                  : '자음·모음을 눌러 글자 만들고 발음 듣기'}
+              </div>
+            </div>
+          </div>
+          <span className="text-slate-400 font-bold text-lg">›</span>
+        </div>
+
+        {/* KUNLIK KOREYS MAQOLI (오늘의 속담) */}
+        <div
+          onClick={() => speakKo('천 리 길도 한 걸음부터')}
+          className={`rounded-2xl ${isDark ? 'bg-indigo-950/40 border-indigo-800' : 'bg-[#f3f0fa] border-[#e0d7f5]'} border p-3.5 flex items-center justify-between cursor-pointer`}
+        >
           <div>
-            <div className={`font-black text-sm ${t.textMain}`}>
-              글자 조립 {uiLang === 'uz' && <span className="text-xs font-bold text-emerald-600">(Harf yig‘ish)</span>}
-            </div>
-            <div className={`text-[11px] ${t.textMuted} mt-0.5`}>
-              {uiLang === 'uz'
-                ? 'Undosh va unlini bosib bo‘g‘in yasang va talaffuzini eshiting'
-                : '자음·모음을 눌러 글자 만들고 발음 듣기'}
-            </div>
+            <div className="text-[10px] font-black text-indigo-500 uppercase">오늘의 속담 • Kunlik Maqol</div>
+            <div className={`text-xs font-black mt-0.5 ${t.textMain}`}>천 리 길도 한 걸음부터</div>
+            <div className="text-[11px] text-slate-500">Ming chaqirimlik yo‘l ham bir qadamdan boshlanadi</div>
+          </div>
+          <Volume2 size={18} className="text-indigo-500 shrink-0" />
+        </div>
+
+        {/* 서울대 한국어 1A ~ 6B Tablari */}
+        <div className="space-y-1 pt-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
+            {snuBooks.map((b) => {
+              const active = b.code === selectedBookCode;
+              return (
+                <button
+                  key={b.code}
+                  onClick={() => setSelectedBookCode(b.code)}
+                  className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 transition ${
+                    active
+                      ? isDark ? 'bg-slate-800 border-2 border-rose-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
+                      : isDark ? 'bg-rose-950/60 text-rose-200' : 'bg-[#f8dce2] text-[#7f2d3f]'
+                  }`}
+                >
+                  {b.code}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-[11px] font-bold text-slate-400 px-0.5">
+            <span>{currentBook.label}</span>
+            <span>{currentBook.range}</span>
           </div>
         </div>
-        <span className="text-slate-400 font-bold text-lg">›</span>
-      </div>
 
-      <div className="space-y-1 pt-1">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
-          {snuBooks.map((b) => {
-            const active = b.code === selectedBookCode;
+        {/* Darslar Ro'yxati */}
+        <div className="space-y-2.5">
+          {currentBook.lessons.map((lesson, idx) => {
+            const isDone = completedIds.includes(lesson.id);
+            const prev = idx > 0 ? currentBook.lessons[idx - 1] : null;
+            const isOpen = isUnlockedAll || idx === 0 || isDone || (prev && completedIds.includes(prev.id));
+
             return (
-              <button
-                key={b.code}
-                onClick={() => setSelectedBookCode(b.code)}
-                className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 transition ${
-                  active
-                    ? isDark ? 'bg-slate-800 border-2 border-rose-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
-                    : isDark ? 'bg-rose-950/60 text-rose-200' : 'bg-[#f8dce2] text-[#7f2d3f]'
+              <div
+                key={lesson.id}
+                onClick={() => {
+                  if (!isOpen) {
+                    alert(uiLang === 'uz' ? "Avval oldingi darsni tugating!" : "이전 과를 먼저 완료하세요!");
+                    return;
+                  }
+                  startLesson(lesson);
+                }}
+                className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer transition ${
+                  isOpen ? 'hover:border-rose-300' : 'opacity-65'
                 }`}
               >
-                {b.code}
-              </button>
+                <div className="flex items-center gap-3">
+                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${
+                    isDone
+                      ? 'bg-emerald-500 text-white'
+                      : isOpen
+                        ? 'bg-[#dbeafe] text-[#1d4ed8]'
+                        : 'bg-[#fce7eb] text-[#be123c]'
+                  }`}>
+                    {lesson.num}
+                  </span>
+                  <span className="text-base">{lesson.emoji}</span>
+                  <div>
+                    <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
+                    {uiLang === 'uz' && <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>}
+                  </div>
+                </div>
+
+                <div>
+                  {isDone ? (
+                    <CheckCircle2 size={17} className="text-emerald-500" />
+                  ) : !isOpen ? (
+                    <Lock size={15} className="text-slate-300" />
+                  ) : (
+                    <span className="text-[10px] font-black text-rose-500">›</span>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
-        <div className="flex justify-between text-[11px] font-bold text-slate-400 px-0.5">
-          <span>{currentBook.label}</span>
-          <span>{currentBook.range}</span>
-        </div>
+
+        {!isUnlockedAll && (
+          <button
+            onClick={() => {
+              setIsUnlockedAll(true);
+              localStorage.setItem('hs_unlocked', 'true');
+            }}
+            className="w-full py-3.5 rounded-2xl bg-[#e11d48] hover:bg-rose-600 text-white font-black text-xs tracking-wide shadow-md mt-2"
+          >
+            {uiLang === 'uz' ? '전체 코스 열기 (Barcha darslarni ochish)' : '전체 코스 열기'}
+          </button>
+        )}
       </div>
-
-      <div className="space-y-2.5">
-        {currentBook.lessons.map((lesson, idx) => {
-          const isDone = completedIds.includes(lesson.id);
-          const prev = idx > 0 ? currentBook.lessons[idx - 1] : null;
-          const isOpen = isUnlockedAll || idx === 0 || isDone || (prev && completedIds.includes(prev.id));
-
-          return (
-            <div
-              key={lesson.id}
-              onClick={() => {
-                if (!isOpen) {
-                  alert(uiLang === 'uz' ? "Avval oldingi darsni tugating!" : "이전 과를 먼저 완료하세요!");
-                  return;
-                }
-                startLesson(lesson);
-              }}
-              className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer transition ${
-                isOpen ? 'hover:border-rose-300' : 'opacity-65'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${
-                  isDone
-                    ? 'bg-emerald-500 text-white'
-                    : isOpen
-                      ? 'bg-[#dbeafe] text-[#1d4ed8]'
-                      : 'bg-[#fce7eb] text-[#be123c]'
-                }`}>
-                  {lesson.num}
-                </span>
-                <span className="text-base">{lesson.emoji}</span>
-                <div>
-                  <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
-                  {uiLang === 'uz' && <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>}
-                </div>
-              </div>
-
-              <div>
-                {isDone ? (
-                  <CheckCircle2 size={17} className="text-emerald-500" />
-                ) : !isOpen ? (
-                  <Lock size={15} className="text-slate-300" />
-                ) : (
-                  <span className="text-[10px] font-black text-rose-500">›</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {!isUnlockedAll && (
-        <button
-          onClick={() => {
-            setIsUnlockedAll(true);
-            localStorage.setItem('hs_unlocked', 'true');
-          }}
-          className="w-full py-3.5 rounded-2xl bg-[#e11d48] hover:bg-rose-600 text-white font-black text-xs tracking-wide shadow-md mt-2"
-        >
-          {uiLang === 'uz' ? '전체 코스 열기 (Barcha darslarni ochish)' : '전체 코스 열기'}
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   // =========================================================================
   // 2. "글자 조립"
   // =========================================================================
   const renderBuilder = () => (
-    <div className="space-y-3.5 pb-24">
+    <div className="space-y-3.5 pb-28">
       <div className="flex items-center justify-between pt-2">
         <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
           <ArrowLeft size={16} /> <span>글자 조립</span>
@@ -1578,7 +1707,7 @@ export default function App() {
     const currentQ = quizList[qIdx];
 
     return (
-      <div className="space-y-3.5 pb-24">
+      <div className="space-y-3.5 pb-28">
         <div className="flex items-center justify-between pt-2">
           <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-xs font-black ${t.textMuted}`}>
             <ArrowLeft size={15} /> <span>{activeLesson.week}</span>
@@ -1816,7 +1945,7 @@ export default function App() {
                     setQAnswer(null);
                   } else {
                     setCompletedIds(p => [...new Set([...p, activeLesson.id])]);
-                    setProfile(p => ({ ...p, xp: p.xp + 50 }));
+                    setProfile(p => ({ ...p, xp: p.xp + 50, dailyXp: p.dailyXp + 50 }));
                     setScreen('home');
                   }
                 }}
@@ -1835,11 +1964,11 @@ export default function App() {
   // 4. AI USTOZ
   // =========================================================================
   const renderAiTutor = () => (
-    <div className="flex flex-col h-[80vh] pb-20 pt-2">
+    <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow">
-            <Bot size={22} />
+          <div className="w-11 h-11 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow">
+            <Bot size={24} />
           </div>
           <div>
             <h2 className={`font-black text-sm ${t.textMain}`}>AI 한국어 튜터 (AI Ustoz)</h2>
@@ -1849,7 +1978,7 @@ export default function App() {
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
-        {['이에요 / 예요 farqi?', '-아서/어서 vs -(으)니까?', '-다고 하다 bilvosita nutq'].map(chip => (
+        {['이에요 / 예요 farqi?', '-아서/어서 vs -(으)니까?', '-다고 하다 bilvosita nutq', '☕ 카페에서 buyurtma'].map(chip => (
           <button
             key={chip}
             onClick={() => handleAiSend(chip)}
@@ -1891,64 +2020,271 @@ export default function App() {
           onClick={() => handleAiSend()}
           className="px-4 rounded-2xl bg-rose-500 text-white font-black flex items-center justify-center"
         >
-          <Send size={17} />
+          <Send size={18} />
         </button>
       </div>
     </div>
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (FLASHCARDS)
+  // 5. TAKRORLASH (KARTOCHKA • LISTENING • SPEAKING • TOPIK MOCK TEST)
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
+    const listenWord = allWords[listenIdx % allWords.length];
+    const speakWord = allWords[speakIdx % allWords.length];
+
     return (
-      <div className="space-y-4 pb-24 pt-2">
-        <div className="flex items-center justify-between">
-          <h2 className={`text-lg font-black ${t.textMain}`}>복습 • So‘zlarni Takrorlash</h2>
-          <span className="text-xs font-bold text-slate-400">{(flashIdx % allWords.length) + 1} / {allWords.length}</span>
+      <div className="space-y-4 pb-28 pt-2">
+        {/* 4 ta interaktiv mashq rejimi */}
+        <div className="grid grid-cols-4 gap-1.5">
+          {[
+            { id: 'cards', icon: Layers, label: 'Kartochka' },
+            { id: 'listen', icon: Headphones, label: 'Listening' },
+            { id: 'speak', icon: Mic, label: 'Speaking' },
+            { id: 'mock', icon: Clock, label: 'TOPIK Test' }
+          ].map(m => (
+            <button
+              key={m.id}
+              onClick={() => {
+                setReviewMode(m.id);
+                if (m.id === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
+              }}
+              className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[10px] font-black transition ${
+                reviewMode === m.id
+                  ? 'bg-rose-500 text-white border-rose-600 shadow'
+                  : `${t.card} ${t.textMuted}`
+              }`}
+            >
+              <m.icon size={17} />
+              <span>{m.label}</span>
+            </button>
+          ))}
         </div>
 
-        <div
-          onClick={() => { setFlashFlipped(!flashFlipped); speakKo(card.ko); }}
-          className={`rounded-3xl ${t.card} border-2 p-8 min-h-[250px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
-        >
-          <span className="text-[10px] font-black uppercase text-rose-500">
-            {flashFlipped ? 'Tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
-          </span>
-          {!flashFlipped ? (
-            <>
-              <div className={`text-4xl font-black ${t.textMain}`}>{card.ko}</div>
-              <Volume2 size={24} className="text-emerald-500" />
-            </>
-          ) : (
-            <div className="text-2xl font-black text-emerald-500">{card.uz}</div>
-          )}
-        </div>
+        {/* 1. KARTOCHKALAR */}
+        {reviewMode === 'cards' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-base font-black ${t.textMain}`}>단어 카드 • So‘z Kartochkalari</h2>
+              <span className="text-xs font-bold text-slate-400">{(flashIdx % allWords.length) + 1} / {allWords.length}</span>
+            </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            onClick={() => { setFlashFlipped(false); setFlashIdx(Math.floor(Math.random() * allWords.length)); }}
-            className={`py-3.5 rounded-2xl ${t.card} border font-black text-xs flex items-center justify-center gap-1.5`}
-          >
-            <Shuffle size={15} /> Tasodifiy so‘z
-          </button>
-          <button
-            onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); setProfile(p => ({ ...p, xp: p.xp + 5 })); }}
-            className="py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
-          >
-            Yodladim (+5 XP) →
-          </button>
-        </div>
+            <div
+              onClick={() => { setFlashFlipped(!flashFlipped); speakKo(card.ko); }}
+              className={`rounded-3xl ${t.card} border-2 p-8 min-h-[240px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
+            >
+              <span className="text-[10px] font-black uppercase text-rose-500">
+                {flashFlipped ? 'Tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
+              </span>
+              {!flashFlipped ? (
+                <>
+                  <div className={`text-4xl font-black ${t.textMain}`}>{card.ko}</div>
+                  <Volume2 size={24} className="text-emerald-500" />
+                </>
+              ) : (
+                <div className="text-2xl font-black text-emerald-500">{card.uz}</div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={() => { setFlashFlipped(false); setFlashIdx(Math.floor(Math.random() * allWords.length)); }}
+                className={`py-3.5 rounded-2xl ${t.card} border font-black text-xs flex items-center justify-center gap-1.5`}
+              >
+                <Shuffle size={15} /> Tasodifiy so‘z
+              </button>
+              <button
+                onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); setProfile(p => ({ ...p, xp: p.xp + 5, dailyXp: p.dailyXp + 5 })); }}
+                className="py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
+              >
+                Yodladim (+5 XP) →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 2. LISTENING (TINGLAB TUSHUNISH) */}
+        {reviewMode === 'listen' && (
+          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
+            <div className="text-xs font-black text-rose-500 uppercase">듣기 연습 • Tinglab Tushunish</div>
+            <button
+              onClick={() => speakKo(listenWord.ko)}
+              className="w-full py-6 rounded-2xl bg-indigo-500/15 border-2 border-indigo-500 text-indigo-500 font-black text-sm flex items-center justify-center gap-2"
+            >
+              <Volume2 size={26} /> Audioni Eshitish (Bosing)
+            </button>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {(listenOpts.length > 0 ? listenOpts : [listenWord.uz]).map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setListenPick(opt);
+                    if (opt === listenWord.uz) {
+                      setProfile(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
+                    }
+                  }}
+                  className={`p-3.5 rounded-2xl border text-xs font-bold transition ${
+                    listenPick !== null
+                      ? opt === listenWord.uz
+                        ? 'bg-emerald-500 text-white border-emerald-600'
+                        : listenPick === opt
+                          ? 'bg-rose-500 text-white border-rose-600'
+                          : `${t.sub} opacity-50`
+                      : `${t.sub} ${t.textMain}`
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                const next = listenIdx + 1;
+                setListenIdx(next);
+                prepareListening(next);
+              }}
+              className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs"
+            >
+              Keyingi audio (+15 XP) →
+            </button>
+          </div>
+        )}
+
+        {/* 3. SPEAKING (MIKROFON ORQALI TALAFFUZ) */}
+        {reviewMode === 'speak' && (
+          <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
+            <span className="px-3 py-1 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase">
+              말하기 연습 • AI Talaffuz Tekshiruvi
+            </span>
+            <div className={`text-3xl font-black ${t.textMain}`}>{speakWord.ko}</div>
+            <div className="text-xs text-slate-400 font-bold">{speakWord.uz}</div>
+
+            <div className="flex justify-center gap-2.5 pt-2">
+              <button
+                onClick={() => speakKo(speakWord.ko)}
+                className={`px-4 py-3 rounded-2xl ${t.sub} border font-black text-xs flex items-center gap-1.5`}
+              >
+                <Volume2 size={16} /> Eshitish
+              </button>
+              <button
+                onClick={() => handleSpeechTest(speakWord.ko)}
+                className={`px-5 py-3 rounded-2xl text-white font-black text-xs flex items-center gap-2 ${
+                  isRecording ? 'bg-rose-600 animate-pulse' : 'bg-emerald-500'
+                }`}
+              >
+                <Mic size={16} /> {isRecording ? 'Eshitilmoqda...' : 'Mikrofonga gapiring'}
+              </button>
+            </div>
+
+            {speechText && <div className="text-xs font-bold text-indigo-500">Eshitildi: "{speechText}"</div>}
+            {speechStatus && (
+              <div className={`p-3 rounded-2xl text-xs font-black ${speechStatus.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'}`}>
+                {speechStatus.msg}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setSpeechText('');
+                setSpeechStatus(null);
+                setSpeakIdx(i => i + 1);
+              }}
+              className="w-full py-3 rounded-2xl bg-slate-900 text-white font-black text-xs"
+            >
+              Keyingi so‘z →
+            </button>
+          </div>
+        )}
+
+        {/* 4. TOPIK MOCK TEST */}
+        {reviewMode === 'mock' && (
+          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
+            {!mockActive ? (
+              <div className="text-center py-4 space-y-3">
+                <div className="text-5xl">📝</div>
+                <h3 className={`text-lg font-black ${t.textMain}`}>TOPIK I & II Mock Test</h3>
+                <p className="text-xs text-slate-400">
+                  8 ta aralash imtihon savoli • 05:00 daqiqa vaqt chegarasi • Real natija tahlili.
+                </p>
+                <button
+                  onClick={launchTopikMock}
+                  className="w-full py-4 rounded-2xl bg-rose-500 text-white font-black text-xs uppercase shadow"
+                >
+                  Imtihonni Boshlash
+                </button>
+              </div>
+            ) : !mockDone ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xs font-black">
+                  <span className="text-rose-500">Savol {mockStep + 1} / {mockList.length}</span>
+                  <span className="text-indigo-500 flex items-center gap-1">
+                    <Clock size={14} /> {Math.floor(mockSeconds / 60)}:{String(mockSeconds % 60).padStart(2, '0')}
+                  </span>
+                </div>
+                <div className={`text-sm font-black ${t.textMain}`}>{mockList[mockStep]?.q}</div>
+                <div className="space-y-2">
+                  {mockList[mockStep]?.opts.map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => setMockSelected({ ...mockSelected, [mockStep]: opt })}
+                      className={`w-full p-3.5 rounded-2xl text-left border text-xs font-bold ${
+                        mockSelected[mockStep] === opt ? 'border-rose-500 bg-rose-500/15 text-rose-500' : `${t.sub} ${t.textMain}`
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                {mockStep + 1 < mockList.length ? (
+                  <button
+                    onClick={() => setMockStep(s => s + 1)}
+                    className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs"
+                  >
+                    Keyingi savol →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMockDone(true);
+                      setProfile(p => ({ ...p, xp: p.xp + 80, dailyXp: p.dailyXp + 80 }));
+                    }}
+                    className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-black text-xs"
+                  >
+                    Imtihonni Yakunlash (+80 XP)
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-4 space-y-3">
+                <div className="text-5xl">🎓</div>
+                <h3 className={`text-xl font-black ${t.textMain}`}>
+                  Natija: {mockList.filter((q, i) => mockSelected[i] === q.ans).length} / {mockList.length}
+                </h3>
+                <p className="text-xs font-bold text-emerald-500">
+                  Taxminiy daraja: {mockList.filter((q, i) => mockSelected[i] === q.ans).length >= 6 ? 'TOPIK 3–4급 (A’lo!)' : 'TOPIK 1–2급'}
+                </p>
+                <button
+                  onClick={launchTopikMock}
+                  className="w-full py-3.5 rounded-2xl bg-rose-500 text-white font-black text-xs"
+                >
+                  Qayta topshirish
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
 
   // =========================================================================
-  // 6. PROFIL (TIZIMDAN CHIQISH TUGMASI BILAN)
+  // 6. PROFIL
   // =========================================================================
   const renderProfile = () => (
-    <div className="space-y-4 pb-24 pt-2">
+    <div className="space-y-4 pb-28 pt-2">
       <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
         <div className="flex items-center gap-3.5">
           <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white font-black text-xl flex items-center justify-center">
@@ -2015,7 +2351,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* TIZIMDAN CHIQISH (LOGOUT) */}
       <button
         onClick={handleLogout}
         className="w-full py-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 font-black text-xs flex items-center justify-center gap-2"
@@ -2026,7 +2361,7 @@ export default function App() {
   );
 
   // =========================================================================
-  // ASOSIY SHELL + PASTKI 5 TA MENYU
+  // ASOSIY SHELL + KATTALASHTIRILGAN PASTKI 5 TA MENYU
   // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
@@ -2039,45 +2374,58 @@ export default function App() {
         {screen === 'profile' && renderProfile()}
       </main>
 
-      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 py-2 backdrop-blur-xl`}>
+      {/* KATTALASHTIRILGAN PASTKI 5 TA NAVIGATSIYA MENYUSI */}
+      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
           <button
             onClick={() => setScreen('home')}
-            className={`flex flex-col items-center ${screen === 'home' || screen === 'lesson' ? 'text-rose-500' : t.textMuted}`}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'home' || screen === 'lesson' ? 'text-rose-500' : t.textMuted
+            }`}
           >
-            <BookOpen size={21} />
-            <span className="text-[10px] font-black mt-1">학습 • Darslar</span>
+            <BookOpen size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">학습 • Dars</span>
           </button>
 
           <button
             onClick={() => setScreen('builder')}
-            className={`flex flex-col items-center ${screen === 'builder' ? 'text-emerald-600' : t.textMuted}`}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'builder' ? 'text-emerald-600' : t.textMuted
+            }`}
           >
-            <Sparkles size={21} />
-            <span className="text-[10px] font-black mt-1">조립 • Harflar</span>
+            <Sparkles size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">조립 • Harf</span>
           </button>
 
           <button
             onClick={() => setScreen('ai')}
-            className="-mt-6 w-13 h-13 rounded-full bg-rose-500 border-b-4 border-rose-700 text-white flex items-center justify-center shadow-lg active:translate-y-0.5"
+            className="-mt-8 w-16 h-16 rounded-full bg-gradient-to-tr from-rose-600 to-pink-500 border-b-4 border-rose-800 text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition"
           >
-            <Bot size={25} />
+            <Bot size={29} strokeWidth={2.3} />
+            <span className="text-[9px] font-black leading-none mt-0.5">AI</span>
           </button>
 
           <button
-            onClick={() => setScreen('review')}
-            className={`flex flex-col items-center ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}
+            onClick={() => {
+              setScreen('review');
+              if (reviewMode === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
+            }}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'review' ? 'text-amber-500' : t.textMuted
+            }`}
           >
-            <RotateCcw size={21} />
-            <span className="text-[10px] font-black mt-1">복습 • Mashq</span>
+            <RotateCcw size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">복습 • Mashq</span>
           </button>
 
           <button
             onClick={() => setScreen('profile')}
-            className={`flex flex-col items-center ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'profile' ? 'text-indigo-500' : t.textMuted
+            }`}
           >
-            <User size={21} />
-            <span className="text-[10px] font-black mt-1">프로필 • Profil</span>
+            <User size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">프로필 • Profil</span>
           </button>
         </div>
       </nav>
