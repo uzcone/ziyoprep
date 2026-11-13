@@ -7,6 +7,64 @@
     <meta name="apple-mobile-web-app-title" content="ZiyoPrep" />
     <script src="https://cdn.tailwindcss.com"></script>
     <title>ZiyoPrep • 한글 스튜디오</title>
+    <script>
+      // iPhone Home Screen uchun avtomatik PNG ikonka yaratish (Vite build xatosiz)
+      (function () {
+        const c = document.createElement('canvas');
+        c.width = 180;
+        c.height = 180;
+        const ctx = c.getContext('2d');
+
+        // Yashil ZiyoPrep foni
+        const g = ctx.createLinearGradient(0, 0, 0, 180);
+        g.addColorStop(0, '#76e026');
+        g.addColorStop(1, '#48b808');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 180, 180);
+
+        // Oq bosh bog'ich
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(18, 36, 144, 24);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '900 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ZiyoPrep', 90, 54);
+
+        // Katta ko'zlar
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(62, 92, 22, 0, Math.PI * 2);
+        ctx.arc(118, 92, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(66, 92, 11, 0, Math.PI * 2);
+        ctx.arc(114, 92, 11, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sariq tumshuq
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(80, 106);
+        ctx.lineTo(100, 106);
+        ctx.lineTo(90, 122);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ko'k 한국어 kitobi
+        ctx.fillStyle = '#1e40af';
+        ctx.fillRect(36, 126, 108, 44);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 18px sans-serif';
+        ctx.fillText('한국어', 90, 154);
+
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        link.href = c.toDataURL('image/png');
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
