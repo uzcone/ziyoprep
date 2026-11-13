@@ -4,14 +4,9 @@ import {
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Mic, Clock, Layers, Timer,
+  Headphones, Mic, Clock, Layers, Timer,
   MessageSquare, Keyboard, ShoppingBag, Trophy
 } from 'lucide-react';
-
-import { snu1A } from './data/snu1A';
-import { snu1B } from './data/snu1B';
-import { snu2A, snu2B } from './data/snu2AB';
-import { snu3AB, snu4AB, snu56 } from './data/snu3_6';
 
 // ZiyoPrep Yashil Boyo'g'li Maskot (Kiyiladigan aksessuarlar: TOPIK qalpoqchasi, ko'zoynak, toj bilan)
 function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
@@ -295,8 +290,970 @@ export default function App() {
     } catch {}
   };
 
-  // --- BARCHA KITOBLAR (1A ~ 6B) ---
-  const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3AB, snu4AB, snu56];
+  // --- 서울대 한국어 1A ~ 6B TO'LIQ DARSLIKLAR, LUG'ATLAR VA UYGA VAZIFALAR ---
+  const snuBooks = [
+    {
+      code: '1A',
+      label: '서울대 한국어 1A',
+      range: 'TOPIK 1 · Boshlang‘ich 1 (1과–8과 To‘liq)',
+      lessons: [
+        {
+          id: '1a-1', num: 1, week: '1A · 1과', emoji: '👋', title: '안녕하세요? (Tanishuv)',
+          heroKo: '저는 우즈베키스탄 사람이에요', heroUz: 'Men O‘zbekistonlikman',
+          pinkTitle: 'N은/는 N이에요 / 예요', pinkSub: 'Millat, kasb va ismni tanishtirish',
+          pinkGroups: [
+            {
+              cond: '받침이 없으면 (Unli bilan tugasa) → 예요',
+              items: [
+                { ko: '저는 유나예요.', uz: 'Men Yunaman.' },
+                { ko: '저는 가수예요.', uz: 'Men qo‘shiqchiman.' },
+                { ko: '저는 의사예요.', uz: 'Men shifokorman.' }
+              ]
+            },
+            {
+              cond: '받침이 있으면 (Undosh bilan tugasa) → 이에요',
+              items: [
+                { ko: '저는 학생이에요.', uz: 'Men talabaman.' },
+                { ko: '저는 회사원이에요.', uz: 'Men kompaniya xodimiman.' },
+                { ko: '저는 선생님이에요.', uz: 'Men o‘qituvchiman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '저는 + 명사 + 예요 / 이에요',
+          greenRows: [
+            { parts: ['저는', '학생', '이에요'], res: '저는 학생이에요.', uz: 'Men talabaman.' },
+            { parts: ['저는', '가수', '예요'], res: '저는 가수예요.', uz: 'Men qo‘shiqchiman.' }
+          ],
+          words: [
+            { ko: '한국 / 우즈베키스탄', uz: 'Koreya / O‘zbekiston' },
+            { ko: '학생 / 선생님', uz: 'Talaba / O‘qituvchi' },
+            { ko: '회사원 / 의사', uz: 'Kompaniya xodimi / Shifokor' },
+            { ko: '이름 / 국적', uz: 'Ism / Millat' },
+            { ko: '만나서 반갑습니다', uz: 'Tanishganimdan xursandman' }
+          ],
+          homework: {
+            taskUz: "O‘zingizni tanishtiring: 'Men talabaman' deb koreyscha yozing.",
+            sampleKo: '저는 학생이에요',
+            hint: '저는 + 학생 + 이에요'
+          },
+          quizzes: [
+            { q: "‘저는 학생___’ — to‘g‘ri qo‘shimchani tanlang:", opts: ['이에요', '예요', '을', '를'], ans: '이에요', exp: "‘학생’ undosh bilan tugagani uchun ‘이에요’ qo‘shiladi." },
+            { q: "‘저는 의사___’ — to‘g‘ri qo‘shimcha:", opts: ['예요', '이에요', '에', '에서'], ans: '예요', exp: "‘의사’ unli bilan tugagani uchun ‘예요’ qo‘shiladi." }
+          ]
+        },
+        {
+          id: '1a-2', num: 2, week: '1A · 2과', emoji: '🎒', title: '이거 뭐예요? (Buyumlar va Inkor)',
+          heroKo: '이것은 한국어 사전이에요', heroUz: 'Bu koreys tili lug‘ati',
+          pinkTitle: '이것 / 그것 / 저것 & N이/가 아니에요', pinkSub: 'Ko‘rsatish olmoshlari va inkor shakli (-emas)',
+          pinkGroups: [
+            {
+              cond: '이거 (bu), 그거 (u), 저거 (anavi) | Inkor: 이/가 아니에요',
+              items: [
+                { ko: '이거는 핸드폰이에요.', uz: 'Bu telefon.' },
+                { ko: '저거는 시계가 아니에요. 카메라예요.', uz: 'Anavi soat emas. Kamera.' },
+                { ko: '그거는 제 우산이에요.', uz: 'U mening soyabonim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '이거는 + 명사 + 이/가 아니에요',
+          greenRows: [
+            { parts: ['이거는', '책이', '아니에요'], res: '이거는 책이 아니에요.', uz: 'Bu kitob emas.' }
+          ],
+          words: [
+            { ko: '책 / 공책', uz: 'Kitob / Daftar' },
+            { ko: '사전 / 연필', uz: 'Lug‘at / Qalam' },
+            { ko: '시계 / 안경', uz: 'Soat / Ko‘zoynak' },
+            { ko: '우산 / 모자', uz: 'Soyabon / Bosh kiyim' }
+          ],
+          homework: {
+            taskUz: "Inkor gap yozing: 'Bu kitob emas' (이거는 ...).",
+            sampleKo: '이거는 책이 아니에요',
+            hint: '이거는 + 책이 + 아니에요'
+          },
+          quizzes: [
+            { q: "‘Bu soat emas’ — to‘g‘ri tarjima:", opts: ['이거는 시계가 아니에요', '이거는 시계예요', '이거는 시계 있어요', '이거는 시계를 아니에요'], ans: '이거는 시계가 아니에요', exp: "Inkor shaklida ‘이/가 아니에요’ ishlatiladi." }
+          ]
+        },
+        {
+          id: '1a-3', num: 3, week: '1A · 3과', emoji: '📚', title: '한국어를 공부해요 (Kundalik ishlar)',
+          heroKo: '도서관에서 한국어를 공부해요', heroUz: 'Kutubxonada koreys tilini o‘rganaman',
+          pinkTitle: 'V-아요 / 어요 & N에서', pinkSub: 'Hozirgi zamon fe’li va harakat joyi',
+          pinkGroups: [
+            {
+              cond: 'ㅏ, ㅗ → 아요  |  Boshqa unlilar → 어요  |  하다 → 해요',
+              items: [
+                { ko: '카페에서 친구를 만나요.', uz: 'Kafeda do‘stim bilan uchrashaman.' },
+                { ko: '식당에서 비빔밥을 먹어요.', uz: 'Oshxonada bibimbap yeyman.' },
+                { ko: '집에서 숙제를 해요.', uz: 'Uyda uy vazifasini qilaman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '장소 + 에서 + 목적어 + 을/를 + V-아요/어요',
+          greenRows: [
+            { parts: ['도서관에서', '한국어를', '공부해요'], res: '도서관에서 한국어를 공부해요.', uz: 'Kutubxonada koreys tilini o‘rganaman.' }
+          ],
+          words: [
+            { ko: '도서관 / 식당', uz: 'Kutubxona / Oshxona' },
+            { ko: '공부하다 / 일하다', uz: 'O‘qimoq / Ishlamoq' },
+            { ko: '먹다 / 마시다', uz: 'Yemoq / Ichmoq' },
+            { ko: '보다 / 읽다', uz: 'Ko‘rmoq / O‘qimoq' }
+          ],
+          homework: {
+            taskUz: "Harakat joyini yozing: 'Kutubxonada koreys tilini o‘rganaman'.",
+            sampleKo: '도서관에서 한국어를 공부해요',
+            hint: '도서관에서 + 한국어를 + 공부해요'
+          },
+          quizzes: [
+            { q: "Harakat sodir bo‘lgan joyga qaysi qo‘shimcha qo‘shiladi?", opts: ['에서', '에', '와', '도'], ans: '에서', exp: "Harakat fe’li bilan joyga ‘-에서’ qo‘shiladi." }
+          ]
+        },
+        {
+          id: '1a-4', num: 4, week: '1A · 4과', emoji: '📍', title: '어디에 있어요? (Joylashuv)',
+          heroKo: '은행은 병원 옆에 있어요', heroUz: 'Bank kasalxonaning yonida joylashgan',
+          pinkTitle: 'N에 있어요 / 없어요 & Joy otlari', pinkSub: '위 (ustida), 아래 (ostida), 앞 (oldida), 뒤 (orqasida), 옆 (yonida)',
+          pinkGroups: [
+            {
+              cond: 'Narsa + 이/가 + Joy + 에 있어요',
+              items: [
+                { ko: '가방이 의자 위에 있어요.', uz: 'Sumka stulning ustida turibdi.' },
+                { ko: '약국이 은행하고 병원 사이에 있어요.', uz: 'Dorixona bank va kasalxona orasida joylashgan.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사1 + 은/는 + 명사2 + 앞/뒤/옆 + 에 있어요',
+          greenRows: [
+            { parts: ['은행은', '병원 옆', '에 있어요'], res: '은행은 병원 옆에 있어요.', uz: 'Bank kasalxona yonida.' }
+          ],
+          words: [
+            { ko: '은행 / 병원 / 약국', uz: 'Bank / Kasalxona / Dorixona' },
+            { ko: '위 / 아래 / 밑', uz: 'Ustida / Ostida / Tagida' },
+            { ko: '앞 / 뒤 / 옆', uz: 'Oldida / Orqasida / Yonida' },
+            { ko: '안 / 밖 / 사이', uz: 'Ichida / Tashqarisida / Orasida' }
+          ],
+          homework: {
+            taskUz: "Joylashuvni yozing: 'Sumka stul ustida bor' (가방이 의자 ...).",
+            sampleKo: '가방이 의자 위에 있어요',
+            hint: '가방이 + 의자 위에 + 있어요'
+          },
+          quizzes: [
+            { q: "‘Kasalxona yonida’ koreys tilida qanday bo‘ladi?", opts: ['병원 옆에', '병원 위에', '병원 안에', '병원 밑에'], ans: '병원 옆에', exp: "‘옆’ — yonida." }
+          ]
+        },
+        {
+          id: '1a-5', num: 5, week: '1A · 5과', emoji: '📅', title: '주말에 친구를 만났어요 (O‘tgan zamon)',
+          heroKo: '어제 친구하고 영화를 봤어요', heroUz: 'Kecha do‘stim bilan kino ko‘rdim',
+          pinkTitle: 'V-았어요 / 었어요 & N하고', pinkSub: 'O‘tgan zamon va birgalik (-bilan)',
+          pinkGroups: [
+            {
+              cond: 'ㅏ, ㅗ → 았어요 | Boshqa unlilar → 었어요 | 하다 → 했어요',
+              items: [
+                { ko: '토요일에 백화점에서 쇼핑했어요.', uz: 'Shanba kuni univermagda xarid qildim.' },
+                { ko: '일요일에 집에서 책을 읽었어요.', uz: 'Yakshanba kuni uyda kitob o‘qidim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '언제 + 누구하고 + 무엇을 + V-았/었어요',
+          greenRows: [
+            { parts: ['어제', '친구하고 영화를', '봤어요'], res: '어제 친구하고 영화를 봤어요.', uz: 'Kecha do‘stim bilan kino ko‘rdim.' }
+          ],
+          words: [
+            { ko: '어제 / 오늘 / 내일', uz: 'Kecha / Bugun / Ertaga' },
+            { ko: '월요일 ~ 일요일', uz: 'Dushanba ~ Yakshanba' },
+            { ko: '쇼핑하다 / 운동하다', uz: 'Xarid qilmoq / Sport qilmoq' },
+            { ko: '산책하다 / 쉬다', uz: 'Sayr qilmoq / Dam olmoq' }
+          ],
+          homework: {
+            taskUz: "O‘tgan zamonda yozing: 'Kecha kino ko‘rdim'.",
+            sampleKo: '어제 영화를 봤어요',
+            hint: '어제 + 영화를 + 봤어요'
+          },
+          quizzes: [
+            { q: "‘먹다’ (yemoq) fe’lining o‘tgan zamon shakli:", opts: ['먹었어요', '먹았어요', '먹해요', '먹을 거예요'], ans: '먹었어요', exp: "‘ㅓ’ unlisidan keyin ‘-었어요’ qo‘shiladi." }
+          ]
+        },
+        {
+          id: '1a-6', num: 6, week: '1A · 6과', emoji: '🍎', title: '얼마예요? (Xarid va Sonlar)',
+          heroKo: '사과 다섯 개하고 오렌지 두 개 주세요', heroUz: 'Beshta olma va ikkita apelsin bering',
+          pinkTitle: 'Asl Koreys Sonlari + 개, 병, 잔, 명, 권', pinkSub: '하나(한), 둘(두), 셋(세), 넷(네), 다섯...',
+          pinkGroups: [
+            {
+              cond: 'Buyum: 개 | Shisha: 병 | Stakan: 잔 | Odam: 명 | Kitob: 권',
+              items: [
+                { ko: '아이스 아메리카노 두 잔 주세요.', uz: 'Ikkita muzli amerikano bering.' },
+                { ko: '학생이 모두 열 명 있어요.', uz: 'Jami o‘n nafar talaba bor.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사 + 수량(한/두/세) + 단위(개/잔) + 주세요',
+          greenRows: [
+            { parts: ['사과', '다섯 개', '주세요'], res: '사과 다섯 개 주세요.', uz: 'Beshta olma bering.' }
+          ],
+          words: [
+            { ko: '하나 / 둘 / 셋 / 넷 / 다섯', uz: '1 / 2 / 3 / 4 / 5 (Asl koreys)' },
+            { ko: '일 / 이 / 삼 / 사 / 오', uz: '1 / 2 / 3 / 4 / 5 (Xitoy-koreys)' },
+            { ko: '얼마예요? / 싸다 / 비싸다', uz: 'Qancha? / Arzon / Qimmat' },
+            { ko: '깎아 주세요', uz: 'Narxini tushirib bering' }
+          ],
+          homework: {
+            taskUz: "Do‘konda so‘rang: 'Ikki stakan kofe bering'.",
+            sampleKo: '커피 두 잔 주세요',
+            hint: '커피 + 두 잔 + 주세요'
+          },
+          quizzes: [
+            { q: "Odamlarni sanashda qaysi hisob so‘zi ishlatiladi?", opts: ['명', '개', '잔', '권'], ans: '명', exp: "Odamlar ‘명’ bilan sanaladi." }
+          ]
+        },
+        {
+          id: '1a-7', num: 7, week: '1A · 7과', emoji: '☀️', title: '날씨가 어때요? (Ob-havo va Fasllar)',
+          heroKo: '한국은 봄에 따뜻하고 꽃이 많이 펴요', heroUz: 'Koreyada bahorda havo iliq bo‘ladi va gullar ko‘p ochiladi',
+          pinkTitle: 'A/V-고 (Va) & ㅂ-noto‘g‘ri sifatlar', pinkSub: '춥다 → 추워요, 덥다 → 더워요, 아름답다 → 아름다워요',
+          pinkGroups: [
+            {
+              cond: 'Bog‘lovchi (-va): -고 | ㅂ tushishi: 춥다 → 추워요',
+              items: [
+                { ko: '오늘은 날씨가 맑고 시원해요.', uz: 'Bugun havo ochiq va salqin.' },
+                { ko: '겨울에는 눈이 오고 아주 추워요.', uz: 'Qishda qor yog‘adi va juda sovuq bo‘ladi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '계절 + 에는 + 형용사1-고 + 형용사2-아요/어요',
+          greenRows: [
+            { parts: ['오늘은', '맑고', '시원해요'], res: '오늘은 맑고 시원해요.', uz: 'Bugun havo ochiq va salqin.' }
+          ],
+          words: [
+            { ko: '봄 / 여름 / 가을 / 겨울', uz: 'Bahor / Yoz / Kuz / Qish' },
+            { ko: '따뜻하다 / 덥다', uz: 'Iliq / Issiq' },
+            { ko: '시원하다 / 춥다', uz: 'Salqin / Sovuq' },
+            { ko: '비가 오다 / 눈이 오다', uz: 'Yomg‘ir yog‘moq / Qor yog‘moq' }
+          ],
+          homework: {
+            taskUz: "Ob-havoni tasvirlang: 'Bugun havo sovuq' (오늘 날씨가 ...).",
+            sampleKo: '오늘 날씨가 추워요',
+            hint: '오늘 날씨가 + 추워요'
+          },
+          quizzes: [
+            { q: "‘덥다’ (issiq) sifatining hozirgi zamon shakli:", opts: ['더워요', '덥아요', '덥어요', '더웠어요'], ans: '더워요', exp: "‘ㅂ’ undoshi ‘우’ ga aylanib ‘더워요’ bo‘ladi." }
+          ]
+        },
+        {
+          id: '1a-8', num: 8, week: '1A · 8과', emoji: '🎬', title: '주말에 같이 영화 볼까요? (Taklif)',
+          heroKo: '토요일 오후에 같이 등산할까요?', heroUz: 'Shanba tushdan keyin birga toqqa chiqaylikmi?',
+          pinkTitle: 'V-(으)ㄹ까요? & V-고 싶다', pinkSub: 'Taklif bildirish (-aylikmi?) va istak (-moqchi)',
+          pinkGroups: [
+            {
+              cond: 'Taklif: -(으)ㄹ까요? | Istak: -고 싶어요',
+              items: [
+                { ko: '우리 내일 같이 점심 먹을까요?', uz: 'Ertaga birga tushlik qilaylikmi?' },
+                { ko: '저는 한국 음식을 만들고 싶어요.', uz: 'Men koreys taomini tayyorlamoqchiman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '같이 + 명사 + 을/를 + V-(으)ㄹ까요?',
+          greenRows: [
+            { parts: ['같이', '영화를', '볼까요?'], res: '같이 영화를 볼까요?', uz: 'Birga kino ko‘raylikmi?' }
+          ],
+          words: [
+            { ko: '등산하다 / 수영하다', uz: 'Toqqa chiqmoq / Suzmoq' },
+            { ko: '노래방에 가다', uz: 'Karaokega bormoq' },
+            { ko: '시간이 있다 / 없다', uz: 'Vaqti bor / yo‘q' },
+            { ko: '미안하지만 / 좋아요', uz: 'Kechirasiz-u, lekin / Yaxshi, mayli' }
+          ],
+          homework: {
+            taskUz: "Do‘stingizga taklif qiling: 'Birga tushlik qilaylikmi?'.",
+            sampleKo: '같이 점심을 먹을까요?',
+            hint: '같이 + 점심을 + 먹을까요?'
+          },
+          quizzes: [
+            { q: "‘Kino ko‘rmoqchiman’ — to‘g‘ri istak shakli:", opts: ['영화를 보고 싶어요', '영화를 볼까요', '영화를 봤어요', '영화를 보세요'], ans: '영화를 보고 싶어요', exp: "Istak qo‘shimchasi: ‘V-고 싶다’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '1B',
+      label: '서울대 한국어 1B',
+      range: 'TOPIK 1–2 · Boshlang‘ich 2 (9과–16과 To‘liq)',
+      lessons: [
+        {
+          id: '1b-1', num: 9, week: '1B · 9과', emoji: '👨‍👩‍👧‍👦', title: '가족이 몇 명이에요? (Oila va Hurmat)',
+          heroKo: '부모님께서 고향에 계세요', heroUz: 'Ota-onam vatanimda yashaydilar',
+          pinkTitle: 'N께서 / V-(으)세요 / 계시다 · 드시다 · 주무시다', pinkSub: 'Kattalarga hurmat shakli (높임말)',
+          pinkGroups: [
+            {
+              cond: '있다 → 계시다 | 먹다 → 드시다 | 자다 → 주무시다 | 말하다 → 말씀하시다',
+              items: [
+                { ko: '할아버지께서 신문을 읽으세요.', uz: 'Bobom gazeta o‘qiyaptilar.' },
+                { ko: '어머니께서 부엌에서 요리하세요.', uz: 'Onam oshxonada ovqat pishiryaptilar.' },
+                { ko: '부모님께서 지금 주무세요.', uz: 'Ota-onam hozir uxlayaptilar.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '가족(Hurmat) + 께서 + 동사-(으)세요',
+          greenRows: [
+            { parts: ['부모님께서', '고향에', '계세요'], res: '부모님께서 고향에 계세요.', uz: 'Ota-onam vatanimda yashaydilar.' }
+          ],
+          words: [
+            { ko: '할아버지 / 할머니', uz: 'Bobo / Buvi' },
+            { ko: '아버지 / 어머니', uz: 'Ota / Ona' },
+            { ko: '형 / 오빠 / 누나 / 언니', uz: 'Aka / Opa' },
+            { ko: '동생 / 남동생 / 여동생', uz: 'Uka / Singil' },
+            { ko: '연세 / 성함 / 댁', uz: 'Yosh / Ism / Uy (hurmat)' }
+          ],
+          homework: {
+            taskUz: "Hurmat shaklida yozing: 'Ota-onam vatanimda yashaydilar' (부모님께서 ...).",
+            sampleKo: '부모님께서 고향에 계세요',
+            hint: '부모님께서 + 고향에 + 계세요'
+          },
+          quizzes: [
+            { q: "‘자다’ (uxlamoq) fe’lining kattalarga nisbatan hurmat shakli:", opts: ['주무시다', '계시다', '드시다', '편찮으시다'], ans: '주무시다', exp: "Hurmat shaklida ‘자다’ → ‘주무시다’ bo‘ladi." }
+          ]
+        },
+        {
+          id: '1b-2', num: 10, week: '1B · 10과', emoji: '⏰', title: '지금 몇 시예요? (Vaqt va Kun tartibi)',
+          heroKo: '오전 9시에 한국어 수업이 시작해요', heroUz: 'Ertalab soat 9 da koreys tili darsi boshlanadi',
+          pinkTitle: 'Soat (Asl koreys) + 분 (Xitoy-koreys) & N부터 N까지', pinkSub: 'Boshlanish (부터) va tugash (까지) vaqti',
+          pinkGroups: [
+            {
+              cond: '한 시, 두 시, 세 시, 네 시 + 십 분, 이십 분, 반 (yarim)',
+              items: [
+                { ko: '아침 7시 반에 일어나요.', uz: 'Ertalab 7:30 da uyg‘onaman.' },
+                { ko: '9시부터 1시까지 수업이 있어요.', uz: '9 dan 1 gacha darsim bor.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '시간1 + 부터 + 시간2 + 까지',
+          greenRows: [
+            { parts: ['9시부터', '1시까지', '공부해요'], res: '9시부터 1시까지 공부해요.', uz: '9 dan 1 gacha o‘qiyman.' }
+          ],
+          words: [
+            { ko: '새벽 / 아침 / 점심 / 저녁 / 밤', uz: 'Tong / Ertalab / Tushlik / Kechqurun / Tun' },
+            { ko: '일어나다 / 세수하다 / 씻다', uz: 'Uyg‘onmoq / Yuz-qo‘l yuvmoq / Yuvinmoq' },
+            { ko: '출근하다 / 퇴근하다', uz: 'Ishga bormoq / Ishdan qaytmoq' },
+            { ko: '시작하다 / 끝나다', uz: 'Boshlanmoq / Tugamoq' }
+          ],
+          homework: {
+            taskUz: "Vaqt oralig‘ini yozing: '9 dan 1 gacha o‘qiyman' (9시부터 ...).",
+            sampleKo: '9시부터 1시까지 공부해요',
+            hint: '9시부터 + 1시까지 + 공부해요'
+          },
+          quizzes: [
+            { q: "Soat 2:30 koreys tilida qanday aytiladi?", opts: ['두 시 반', '이 시 반', '두 시 이', '이 시 삼십'], ans: '두 시 반', exp: "Soat asl koreys soni (두 시) bilan aytiladi." }
+          ]
+        },
+        {
+          id: '1b-3', num: 11, week: '1B · 11과', emoji: '🏥', title: '감기에 걸렸어요 (Salomatlik)',
+          heroKo: '열이 나고 목이 아파서 병원에 갔어요', heroUz: 'Isitmam chiqib tomog‘im og‘rigani uchun kasalxonaga bordim',
+          pinkTitle: 'A/V-아서/어서 (Sabab) & V-(으)면 안 되다 (Taqiq)', pinkSub: 'Kasal bo‘lganda sabab aytish va shifokor tavsiyasi',
+          pinkGroups: [
+            {
+              cond: 'Sabab: -아서/어서 | Taqiq (-ish mumkin emas): -(으)면 안 돼요',
+              items: [
+                { ko: '배가 아파서 약을 먹었어요.', uz: 'Qornim og‘rigani uchun dori ichdim.' },
+                { ko: '오늘은 찬물을 마시면 안 돼요.', uz: 'Bugun sovuq suv ichish mumkin emas.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '증상(Alomat) + -아서/어서 + 병원에 갔어요',
+          greenRows: [
+            { parts: ['머리가 아파서', '약을', '먹었어요'], res: '머리가 아파서 약을 먹었어요.', uz: 'Boshim og‘rigani uchun dori ichdim.' }
+          ],
+          words: [
+            { ko: '머리 / 눈 / 코 / 입 / 귀', uz: 'Bosh / Ko‘z / Burun / Og‘iz / Quloq' },
+            { ko: '목 / 배 / 손 / 발 / 다리', uz: 'Tomoq / Qorin / Qo‘l / Oyoq panjasi / Oyoq' },
+            { ko: '감기에 걸리다 / 열이 나다', uz: 'Shamollab qolmoq / Isitmasi chiqmoq' },
+            { ko: '기침을 하다 / 콧물이 나다', uz: 'Yo‘talmoq / Burni oqmoq' },
+            { ko: '푹 쉬다 / 약을 먹다', uz: 'To‘yib dam olmoq / Dori ichmoq' }
+          ],
+          homework: {
+            taskUz: "Sabab gap yozing: 'Boshim og‘rigani uchun dori ichdim'.",
+            sampleKo: '머리가 아파서 약을 먹었어요',
+            hint: '머리가 아파서 + 약을 먹었어요'
+          },
+          quizzes: [
+            { q: "‘Sovuq suv ichish mumkin emas’ — to‘g‘ri taqiq shakli:", opts: ['찬물을 마시면 안 돼요', '찬물을 마셔서 안 돼요', '찬물을 마시고 싶어요', '찬물을 마실 거예요'], ans: '찬물을 마시면 안 돼요', exp: "Taqiq shakli: ‘V-(으)면 안 되다’." }
+          ]
+        },
+        {
+          id: '1b-4', num: 12, week: '1B · 12과', emoji: '📞', title: '여보세요? (Telefon suhbati)',
+          heroKo: '지금 통화 중이니까 나중에 다시 걸게요', heroUz: 'Hozir band bo‘lgani uchun keyinroq qayta qo‘ng‘iroq qilaman',
+          pinkTitle: 'V-(으)ㄹ게요 (Va’da/Niyat) & V-고 있다 (Davomiy zamon)', pinkSub: 'Telefonda gaplashish va hozir davom etayotgan ish',
+          pinkGroups: [
+            {
+              cond: 'Hozir davom etmoqda: -고 있어요 | O‘z qarori/va’da: -(으)ㄹ게요',
+              items: [
+                { ko: '민수 씨는 지금 회의하고 있어요.', uz: 'Minsu hozir majlis o‘tkazyapti.' },
+                { ko: '알겠습니다. 제가 다시 전화할게요.', uz: 'Tushunarli. Men qayta qo‘ng‘iroq qilaman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '주어 + 는 + 지금 + V-고 있어요',
+          greenRows: [
+            { parts: ['저는 지금', '한국어를 공부하고', '있어요'], res: '저는 지금 한국어를 공부하고 있어요.', uz: 'Men hozir koreys tilini o‘rganyapman.' }
+          ],
+          words: [
+            { ko: '여보세요 / 실례지만', uz: 'Allo / Kechirasiz-u' },
+            { ko: '전화를 걸다 / 받다 / 끊다', uz: 'Qo‘ng‘iroq qilmoq / Olmoq / Qo‘ymoq' },
+            { ko: '통화 중이다 / 문자를 보내다', uz: 'Band bo‘lmoq / SMS yubormoq' },
+            { ko: '나중에 / 다시 / 메모를 남기다', uz: 'Keyinroq / Qayta / Xabar qoldirmoq' }
+          ],
+          homework: {
+            taskUz: "Hozirgi davomiy zamonda yozing: 'Men hozir koreys tilini o‘rganyapman'.",
+            sampleKo: '저는 지금 한국어를 공부하고 있어요',
+            hint: '저는 지금 + 한국어를 + 공부하고 있어요'
+          },
+          quizzes: [
+            { q: "Hozir ayni damda davom etayotgan harakat qo‘shimchasi:", opts: ['-고 있다', '-았/었다', '-(으)ㄹ게요', '-(으)러 가다'], ans: '-고 있다', exp: "Davomiy zamon: ‘V-고 있다’." }
+          ]
+        },
+        {
+          id: '1b-5', num: 13, week: '1B · 13과', emoji: '🚇', title: '서울역까지 어떻게 가요? (Transport)',
+          heroKo: '집에서 학교까지 지하철로 30분 걸려요', heroUz: 'Uydan maktabgacha metroda 30 daqiqa ketadi',
+          pinkTitle: 'N(으)로 (Vosita/Yo‘nalish) & N에서 N까지', pinkSub: 'Transport turlari va yo‘l tushuntirish',
+          pinkGroups: [
+            {
+              cond: 'Transport + (으)로 | Masofa: A에서 B까지 + 시간 걸리다',
+              items: [
+                { ko: '시청역에서 2호선으로 갈아타세요.', uz: 'Shichong bekatida 2-liniyaga almashing.' },
+                { ko: '걸어서 10분쯤 걸려요.', uz: 'Piyoda 10 daqiqacha ketadi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: 'A에서 B까지 + 교통수단(으)로 + 시간 걸려요',
+          greenRows: [
+            { parts: ['집에서 학교까지', '지하철로', '30분 걸려요'], res: '집에서 학교까지 지하철로 30분 걸려요.', uz: 'Uydan maktabgacha metroda 30 daqiqa ketadi.' }
+          ],
+          words: [
+            { ko: '지하철 / 버스 / 택시 / 비행기', uz: 'Metro / Avtobus / Taksi / Samolyot' },
+            { ko: '타다 / 내리다 / 갈아타다', uz: 'Minmoq / Tushmoq / Almashtirmoq' },
+            { ko: '걸어서 가다 / 길을 건너다', uz: 'Piyoda bormoq / Yo‘ldan o‘tmoq' },
+            { ko: '오른쪽 / 왼쪽 / 똑바로', uz: 'O‘ngga / Chapga / To‘g‘riga' }
+          ],
+          homework: {
+            taskUz: "Transportni yozing: 'Metroda maktabga boraman' (지하철로 ...).",
+            sampleKo: '지하철로 학교에 가요',
+            hint: '지하철로 + 학교에 + 가요'
+          },
+          quizzes: [
+            { q: "‘2-liniyaga almashing’ — to‘g‘ri ibora:", opts: ['2호선으로 갈아타세요', '2호선에서 내리세요', '2호선을 걸어가세요', '2호선에 있어요'], ans: '2호선으로 갈아타세요', exp: "Transport almashtirish: ‘-(으)로 갈아타다’." }
+          ]
+        },
+        {
+          id: '1b-6', num: 14, week: '1B · 14과', emoji: '👕', title: '이 옷을 입어 봐도 돼요? (Kiyim do‘koni)',
+          heroKo: '이 코트가 더 따뜻하고 잘 어울려요', heroUz: 'Bu palto issiqroq va yaxshi yarashadi',
+          pinkTitle: 'V-아/어 보다 & V-아/어도 되다 (Ruxsat)', pinkSub: 'Kiyib ko‘rish (-아/어 보다) va ruxsat so‘rash (-어도 돼요?)',
+          pinkGroups: [
+            {
+              cond: 'Sinab ko‘rish: -아/어 보다 | Ruxsat: -아/어도 되다 (...-sam maylimi?)',
+              items: [
+                { ko: '이 바지를 한번 입어 봐도 돼요?', uz: 'Bu shimni bir kiyib ko‘rsam maylimi?' },
+                { ko: '네, 탈의실은 저쪽에 있어요.', uz: 'Ha, kiyinish xonasi anavi tomonda.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사 + 을/를 + V-아/어 봐도 돼요?',
+          greenRows: [
+            { parts: ['이 옷을', '입어 봐도', '돼요?'], res: '이 옷을 입어 봐도 돼요?', uz: 'Bu kiyimni kiyib ko‘rsam maylimi?' }
+          ],
+          words: [
+            { ko: '옷 / 바지 / 치마 / 코트 / 구두', uz: 'Kiyim / Shim / Yubka / Palto / Tufli' },
+            { ko: '입다 / 신다 / 쓰다 / 끼다', uz: 'Kiymoq (kiyim / poyabzal / bosh kiyim / qo‘lqop)' },
+            { ko: '크다 / 작다 / 길다 / 짧다', uz: 'Katta / Kichik / Uzun / Kalta' },
+            { ko: '어울리다 / 편하다 / 불편하다', uz: 'Yarashmoq / Qulay / Noqulay' }
+          ],
+          homework: {
+            taskUz: "Do‘konda ruxsat so‘rang: 'Bu kiyimni kiyib ko‘rsam maylimi?'.",
+            sampleKo: '이 옷을 입어 봐도 돼요?',
+            hint: '이 옷을 + 입어 봐도 + 돼요?'
+          },
+          quizzes: [
+            { q: "Poyabzal (운동화, 구두) kiyish uchun qaysi fe’l ishlatiladi?", opts: ['신다', '입다', '쓰다', '하다'], ans: '신다', exp: "Oyoq kiyimlar uchun ‘신다’ ishlatiladi." }
+          ]
+        },
+        {
+          id: '1b-7', num: 15, week: '1B · 15과', emoji: '✈️', title: '여행을 가고 싶어요 (Sayohat va Tajriba)',
+          heroKo: '제주도에 가 본 적이 있어요', heroUz: 'Jeju oroliga borib ko‘rganman',
+          pinkTitle: 'V-(으)ㄴ 적이 있다/없다 & V-(으)ㄹ 수 있다/없다', pinkSub: 'Hayotiy tajriba va imkoniyat (-a olmoq)',
+          pinkGroups: [
+            {
+              cond: 'Tajriba: -(으)ㄴ 적이 있다 | Imkoniyat: -(으)ㄹ 수 있다',
+              items: [
+                { ko: '저는 김치를 만들어 본 적이 있어요.', uz: 'Men kimchi tayyorlab ko‘rganman.' },
+                { ko: '저는 운전할 수 있어요.', uz: 'Men mashina hayday olaman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '장소 + 에 + 가 본 적이 있어요',
+          greenRows: [
+            { parts: ['제주도에', '가 본 적이', '있어요'], res: '제주도에 가 본 적이 있어요.', uz: 'Jeju oroliga borib ko‘rganman.' }
+          ],
+          words: [
+            { ko: '여행 / 관광지 / 바다 / 산 / 섬', uz: 'Sayohat / Turistik joy / Dengiz / Tog‘ / Orol' },
+            { ko: '사진을 찍다 / 구경하다', uz: 'Rasmga olmoq / Tomosha qilmoq' },
+            { ko: '기념품 / 비행기 표 / 호텔', uz: 'Esdalik sovg‘a / Samolyot chiptasi / Mehmonxona' },
+            { ko: '기억에 남다 / 즐겁다', uz: 'Xotirada qolmoq / Maroqli' }
+          ],
+          homework: {
+            taskUz: "Tajribangizni yozing: 'Koreyaga borib ko‘rganman' (한국에 ...).",
+            sampleKo: '한국에 가 본 적이 있어요',
+            hint: '한국에 + 가 본 적이 + 있어요'
+          },
+          quizzes: [
+            { q: "‘Mashina hayday olaman’ — imkoniyat qo‘shimchasi:", opts: ['운전할 수 있어요', '운전한 적이 있어요', '운전하면 안 돼요', '운전하고 있어요'], ans: '운전할 수 있어요', exp: "Imkoniyat: ‘V-(으)ㄹ 수 있다’." }
+          ]
+        },
+        {
+          id: '1b-8', num: 16, week: '1B · 16과', emoji: '🎉', title: '우리 집에 놀러 오세요 (Taklif va Uy)',
+          heroKo: '집들이 선물로 휴지하고 세제를 샀어요', heroUz: 'Uy to‘yi sovg‘asi sifatida salfetka va kir yuvish kukuni sotib oldim',
+          pinkTitle: 'V-(으)려고 하다 & V-아야/어야 되다', pinkSub: 'Reja va niyat (-moqchi) hamda majburiyat (-ish kerak)',
+          pinkGroups: [
+            {
+              cond: 'Niyat: -(으)려고 해요 | Majburiyat: -아야/어야 돼요',
+              items: [
+                { ko: '주말에 친구들을 집에 초대하려고 해요.', uz: 'Dam olish kuni do‘stlarimni uyga taklif qilmoqchiman.' },
+                { ko: '손님이 오기 전에 청소를 해야 돼요.', uz: 'Mehmon kelishidan oldin tozalash kerak.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사 + 을/를 + V-(으)려고 해요',
+          greenRows: [
+            { parts: ['불고기를', '만들려고', '해요'], res: '불고기를 만들려고 해요.', uz: 'Bulgogi tayyorlamoqchiman.' }
+          ],
+          words: [
+            { ko: '초대하다 / 방문하다 / 집들이', uz: 'Taklif qilmoq / Tashrif buyurmoq / Uy to‘yi' },
+            { ko: '청소하다 / 준비하다 / 선물', uz: 'Tozalamoq / Tayyorlamoq / Sovg‘a' },
+            { ko: '거실 / 부엌 / 방 / 화장실', uz: 'Mehmonxona / Oshxona / Xona / Hojatxona' },
+            { ko: '감사합니다 / 잘 먹겠습니다', uz: 'Rahmat / Yoqimli ishtaha (ovqatdan oldin)' }
+          ],
+          homework: {
+            taskUz: "Majburiyat gap yozing: 'Uy vazifasini qilishim kerak' (숙제를 ...).",
+            sampleKo: '숙제를 해야 돼요',
+            hint: '숙제를 + 해야 + 돼요'
+          },
+          quizzes: [
+            { q: "‘Ovqat tayyorlamoqchiman’ — reja/niyat shakli:", opts: ['요리하려고 해요', '요리한 적이 있어요', '요리하면 안 돼요', '요리했어요'], ans: '요리하려고 해요', exp: "Reja/niyat: ‘V-(으)려고 하다’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '2A',
+      label: '서울대 한국어 2A',
+      range: 'TOPIK 2 · O‘rta-boshlang‘ich 1 (To‘liq)',
+      lessons: [
+        {
+          id: '2a-1', num: 1, week: '2A · 1과', emoji: '🤝', title: '새 학기가 시작되었어요 (Fe’l-atvor)',
+          heroKo: '성격이 활발하고 친절해서 인기가 많아요', heroUz: 'Xarakteri quvnoq va mehribon bo‘lgani uchun mashhur',
+          pinkTitle: 'A-(으)ㄴ 편이다 & N처럼', pinkSub: 'Moyillikni bildirish (-ga moyil / -roq) va o‘xshatish (-dek)',
+          pinkGroups: [
+            {
+              cond: 'Sifat + -(으)ㄴ 편이에요 | Ot + 처럼',
+              items: [
+                { ko: '저는 키가 큰 편이에요.', uz: 'Men bo‘yim balandroq.' },
+                { ko: '가수처럼 노래를 아주 잘 불러요.', uz: 'Qo‘shiqchidek qo‘shiqni juda yaxshi aytadi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '주어 + 는 + 형용사-(으)ㄴ 편이에요',
+          greenRows: [
+            { parts: ['한국어가', '재미있는', '편이에요'], res: '한국어가 재미있는 편이에요.', uz: 'Koreys tili qiziqarliroq.' }
+          ],
+          words: [
+            { ko: '성격 / 활발하다 / 조용하다', uz: 'Xarakter / Quvnoq / Sokin' },
+            { ko: '친절하다 / 부지런하다 / 게으르다', uz: 'Mehribon / Mehnatkash / Dangasa' },
+            { ko: '인기가 많다 / 사귀다', uz: 'Mashhur bo‘lmoq / Do‘stlashmoq' }
+          ],
+          homework: {
+            taskUz: "O‘zingizni tasvirlang: 'Men mehnatkashroqman' (저는 부지런한 ...).",
+            sampleKo: '저는 부지런한 편이에요',
+            hint: '저는 + 부지런한 + 편이에요'
+          },
+          quizzes: [
+            { q: "‘Qo‘shiqchidek kuylaydi’ — o‘xshatish qo‘shimchasi:", opts: ['가수처럼', '가수 덕분에', '가수 탓에', '가수밖에'], ans: '가수처럼', exp: "Otga o‘xshatish uchun ‘-처럼’ qo‘shiladi." }
+          ]
+        },
+        {
+          id: '2a-2', num: 2, week: '2A · 2과', emoji: '🏠', title: '깨끗한 방을 구하고 있어요 (Uy-joy)',
+          heroKo: '학교에서 가깝고 교통이 편리한 집을 찾고 있어요', heroUz: 'Maktabga yaqin va transporti qulay uy qidiryapman',
+          pinkTitle: 'A-(으)ㄴ N & V-는 N (Sifatdoshlar)', pinkSub: 'Otni sifat yoki harakat fe’li bilan ta’riflash',
+          pinkGroups: [
+            {
+              cond: 'Sifat: -(으)ㄴ N (큰 방) | Fe’l (Hozirgi): -는 N (사는 집)',
+              items: [
+                { ko: '창문이 커서 햇빛이 잘 들어오는 방이에요.', uz: 'Derazasi katta bo‘lgani uchun quyosh nuri yaxshi tushadigan xona.' },
+                { ko: '제가 지금 사는 하숙집은 아주 깨끗해요.', uz: 'Men hozir yashayotgan yotoqxona juda toza.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '형용사-(으)ㄴ + 명사 + 을/를 구하고 있어요',
+          greenRows: [
+            { parts: ['조용한', '방을', '구하고 있어요'], res: '조용한 방을 구하고 있어요.', uz: 'Tinch xona qidiryapman.' }
+          ],
+          words: [
+            { ko: '하숙집 / 원룸 / 기숙사 / 아파트', uz: 'Pansionat / Bir xonali uy / Yotoqxona / Kvartira' },
+            { ko: '보증금 / 월세 / 관리비', uz: 'Kafolat puli / Oylik ijara / Kommunal to‘lov' },
+            { ko: '편리하다 / 햇빛이 잘 들다', uz: 'Qulay / Quyosh nuri yaxshi tushmoq' }
+          ],
+          homework: {
+            taskUz: "Uy qidirish gapini yozing: 'Toza xona qidiryapman'.",
+            sampleKo: '깨끗한 방을 구하고 있어요',
+            hint: '깨끗한 + 방을 + 구하고 있어요'
+          },
+          quizzes: [
+            { q: "‘Men yashayotgan uy’ (fe’lning hozirgi zamon sifatdoshi):", opts: ['제가 사는 집', '제가 산 집', '제가 살 집', '제가 살던 집'], ans: '제가 사는 집', exp: "Fe’l + ‘-는’ + Ot hozirgi zamonni bildiradi." }
+          ]
+        },
+        {
+          id: '2a-3', num: 3, week: '2A · 3과', emoji: '📦', title: '우체국에서 소포를 보냈어요 (Xizmatlar)',
+          heroKo: '고향에 선물을 보내려고 우체국에 갔어요', heroUz: 'Vatanimga sovg‘a yuborish uchun pochtaga bordim',
+          pinkTitle: 'V-(으)려고 & V-아/어 주다', pinkSub: 'Maqsad (-ish uchun) va biror kishi uchun bajarilgan ish',
+          pinkGroups: [
+            {
+              cond: 'Maqsad: -(으)려고 | Birov uchun: -아/어 주다 (yordam bermoq: 도와주다)',
+              items: [
+                { ko: '한국 돈을 환전하려고 은행에 갔어요.', uz: 'Koreya pulini almashtirish uchun bankka bordim.' },
+                { ko: '친구에게 한국어 숙제를 도와줬어요.', uz: 'Do‘stimga koreys tili uy vazifasida yordam berdim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '목적(V-(으)려고) + 장소에 갔어요',
+          greenRows: [
+            { parts: ['소포를 보내려고', '우체국에', '갔어요'], res: '소포를 보내려고 우체국에 갔어요.', uz: 'Posilka yuborish uchun pochtaga bordim.' }
+          ],
+          words: [
+            { ko: '우체국 / 소포 / 편지 / 우표 / 주소', uz: 'Pochta / Posilka / Xat / Marka / Manzil' },
+            { ko: '환전하다 / 계좌를 만들다 / 송금하다', uz: 'Pul almashtirmoq / Hisob ochmoq / Pul o‘tkazmoq' },
+            { ko: '항공편 / 배편 / 무게를 재다', uz: 'Havo pochtasi / Dengiz pochtasi / Og‘irligini o‘lchamoq' }
+          ],
+          homework: {
+            taskUz: "Maqsad gap yozing: 'Pul almashtirish uchun bankka bordim'.",
+            sampleKo: '환전하려고 은행에 갔어요',
+            hint: '환전하려고 + 은행에 + 갔어요'
+          },
+          quizzes: [
+            { q: "‘Posilka yuborish uchun’ — maqsad qo‘shimchasi:", opts: ['소포를 보내려고', '소포를 보내지만', '소포를 보낸 후에', '소포를 보내거든요'], ans: '소포를 보내려고', exp: "Maqsad: ‘V-(으)려고’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '2B',
+      label: '서울대 한국어 2B',
+      range: 'TOPIK 2–3 · O‘rta-boshlang‘ich 2 (To‘liq)',
+      lessons: [
+        {
+          id: '2b-1', num: 1, week: '2B · 1과', emoji: '🎯', title: '취직 준비를 하고 있어요 (Karyera)',
+          heroKo: '졸업한 후에 한국 회사에 취직하려고 해요', heroUz: 'Bitirganimdan keyin Koreya kompaniyasiga ishga kirmoqchiman',
+          pinkTitle: 'V-(으)ㄴ 후에 & V-기 전에', pinkSub: 'Biror ishdan keyin (후에) va oldin (전에)',
+          pinkGroups: [
+            {
+              cond: 'Keyin: -(으)ㄴ 후에 | Oldin: -기 전에',
+              items: [
+                { ko: '밥을 먹기 전에 손을 씻으세요.', uz: 'Ovqatlanishdan oldin qo‘lingizni yuving.' },
+                { ko: '수업이 끝난 후에 도서관에서 복습해요.', uz: 'Dars tugagandan keyin kutubxonada takrorlayman.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: 'V1-(으)ㄴ 후에 + V2',
+          greenRows: [
+            { parts: ['수업이 끝난 후에', '도서관에', '가요'], res: '수업이 끝난 후에 도서관에 가요.', uz: 'Dars tugagandan keyin kutubxonaga boraman.' }
+          ],
+          words: [
+            { ko: '졸업하다 / 취직하다 / 면접을 보다', uz: 'Bitirmoq / Ishga kirmoq / Suhbatdan o‘tmoq' },
+            { ko: '이력서 / 자기소개서 / 자격증', uz: 'Rezyume / Tarjimai hol / Sertifikat' },
+            { ko: '전공 / 경험 / 합격하다', uz: 'Mutaxassislik / Tajriba / Imtihondan o‘tmoq' }
+          ],
+          homework: {
+            taskUz: "Oldin/Keyin gap yozing: 'Ovqatlanishdan oldin qo‘l yuving'.",
+            sampleKo: '밥을 먹기 전에 손을 씻으세요',
+            hint: '밥을 먹기 전에 + 손을 씻으세요'
+          },
+          quizzes: [
+            { q: "‘Uxlashdan oldin’ — to‘g‘ri qo‘shimcha:", opts: ['자기 전에', '잔 후에', '자려고', '자니까'], ans: '자기 전에', exp: "‘-기 전에’ — ...-dan oldin." }
+          ]
+        },
+        {
+          id: '2b-2', num: 2, week: '2B · 2과', emoji: '🧥', title: '날씨가 추우니까 따뜻하게 입으세요',
+          heroKo: '길이 미끄러우니까 조심해서 가세요', heroUz: 'Yo‘l sirpanchiq bo‘lgani uchun ehtiyot bo‘lib boring',
+          pinkTitle: 'A/V-(으)니까 & A-게 (Ravish yasovchi)', pinkSub: 'Buyruq/taklif oldidan sabab va sifatdan ravish yasash',
+          pinkGroups: [
+            {
+              cond: 'Sabab + (으)니까 → Buyruq (-세요) | Sifat + -게 (따뜻하게, 맛있게)',
+              items: [
+                { ko: '비가 오니까 우산을 가지고 가세요.', uz: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting.' },
+                { ko: '음식을 아주 맛있게 먹었어요.', uz: 'Ovqatni juda mazali qilib yedim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '이유 + -(으)니까 + 명령문(-세요)',
+          greenRows: [
+            { parts: ['비가 오니까', '우산을', '가지고 가세요'], res: '비가 오니까 우산을 가지고 가세요.', uz: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting.' }
+          ],
+          words: [
+            { ko: '미끄럽다 / 조심하다 / 따뜻하게', uz: 'Sirpanchiq / Ehtiyot bo‘lmoq / Iliq qilib' },
+            { ko: '일기 예보 / 우산 / 장갑 / 목도리', uz: 'Ob-havo ma’lumoti / Soyabon / Qo‘lqop / Sharf' }
+          ],
+          homework: {
+            taskUz: "Sabab va buyruq gap yozing: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting'.",
+            sampleKo: '비가 오니까 우산을 가지고 가세요',
+            hint: '비가 오니까 + 우산을 + 가지고 가세요'
+          },
+          quizzes: [
+            { q: "Buyruq gap (-세요) oldidan qaysi sabab qo‘shimchasi ishlatiladi?", opts: ['-(으)니까', '-아서/어서', '-지만', '-거나'], ans: '-(으)니까', exp: "Buyruq va taklif gaplarda ‘-(으)니까’ ishlatiladi." }
+          ]
+        },
+        {
+          id: '2b-3', num: 3, week: '2B · 3과', emoji: '📈', title: '한국어 실력이 많이 좋아졌어요',
+          heroKo: '매일 연습해서 한국어가 쉬워졌어요', heroUz: 'Har kuni mashq qilganim uchun koreys tili osonlashdi',
+          pinkTitle: 'A-아/어지다 (Holat o‘zgarishi) & V-게 되다', pinkSub: 'Vaqt o‘tishi bilan o‘zgarish (-lashmoq / -adigan bo‘lmoq)',
+          pinkGroups: [
+            {
+              cond: 'Sifat: -아/어지다 (좋아지다) | Fe’l: -게 되다 (먹게 되다)',
+              items: [
+                { ko: '한국에 온 후에 매운 음식을 잘 먹게 되었어요.', uz: 'Koreyaga kelganimdan keyin achchiq ovqatni yaxshi yeydigan bo‘ldim.' },
+                { ko: '어제보다 날씨가 훨씬 따뜻해졌어요.', uz: 'Kechagidan ko‘ra havo ancha ilidi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사 + 이/가 + 형용사-아/어졌어요',
+          greenRows: [
+            { parts: ['한국어 실력이', '많이', '좋아졌어요'], res: '한국어 실력이 많이 좋아졌어요.', uz: 'Koreys tili darajam ancha yaxshilandi.' }
+          ],
+          words: [
+            { ko: '실력 / 습관 / 생활 / 적응하다', uz: 'Mahorat / Odat / Hayot / Moslashmoq' },
+            { ko: '훨씬 / 점점 / 예전보다', uz: 'Ancha / Asta-sekin / Oldingidan ko‘ra' }
+          ],
+          homework: {
+            taskUz: "O‘zgarish gapini yozing: 'Koreys tili darajam yaxshilandi'.",
+            sampleKo: '한국어 실력이 좋아졌어요',
+            hint: '한국어 실력이 + 좋아졌어요'
+          },
+          quizzes: [
+            { q: "‘Havo ilidi’ — holat o‘zgarishi shakli:", opts: ['날씨가 따뜻해졌어요', '날씨가 따뜻했어요', '날씨가 따뜻할 거예요', '날씨가 따뜻하지만'], ans: '날씨가 따뜻해졌어요', exp: "Holat o‘zgarishi: ‘A-아/어지다’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '3A-3B',
+      label: '서울대 한국어 3A & 3B',
+      range: 'TOPIK 3–4 · O‘rta Bosqich (To‘liq)',
+      lessons: [
+        {
+          id: '3a-1', num: 1, week: '3A · 1과', emoji: '🗣️', title: '친구가 내일 온다고 했어요 (Bilvosita nutq)',
+          heroKo: '일기 예보에서 내일 비가 온다고 했어요', heroUz: 'Ob-havo ma’lumotida ertaga yomg‘ir yog‘adi deb aytdi',
+          pinkTitle: 'A/V-다고 하다 · -(으)라고 하다 · -자고 하다', pinkSub: 'Darak, buyruq va taklif gaplarni yetkazish',
+          pinkGroups: [
+            {
+              cond: 'Darak: -ㄴ/는다고 하다 | Buyruq: -(으)라고 하다 | Taklif: -자고 하다',
+              items: [
+                { ko: '선생님께서 숙제를 꼭 하라고 하셨어요.', uz: 'O‘qituvchi uy vazifasini albatta qiling deb aytdilar.' },
+                { ko: '친구가 주말에 같이 등산하자고 했어요.', uz: 'Do‘stim dam olish kuni birga toqqa chiqaylik deb aytdi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: 'Ega + 이/가 + V-ㄴ/는다고 했어요',
+          greenRows: [
+            { parts: ['친구가', '내일 온다고', '했어요'], res: '친구가 내일 온다고 했어요.', uz: 'Do‘stim ertaga kelaman deb aytdi.' }
+          ],
+          words: [
+            { ko: '전하다 / 소식 / 일기 예보 / 약속', uz: 'Yetkazmoq / Xabar / Ob-havo ma’lumoti / Va’da' }
+          ],
+          homework: {
+            taskUz: "Bilvosita nutq yozing: 'Do‘stim ertaga kelaman deb aytdi'.",
+            sampleKo: '친구가 내일 온다고 했어요',
+            hint: '친구가 + 내일 온다고 + 했어요'
+          },
+          quizzes: [
+            { q: "‘Birga ovqatlanaylik deb aytdi’ (taklif bilvosita nutqi):", opts: ['같이 밥을 먹자고 했어요', '같이 밥을 먹는다고 했어요', '같이 밥을 먹으라고 했어요', '같이 밥을 먹냐고 했어요'], ans: '같이 밥을 먹자고 했어요', exp: "Taklif gap: ‘-자고 하다’." }
+          ]
+        },
+        {
+          id: '3a-2', num: 2, week: '3A · 2과', emoji: '🤔', title: '밖에 비가 올 것 같아요 (Taxmin)',
+          heroKo: '하늘이 흐린 걸 보니까 비가 올 것 같아요', heroUz: 'Osmon bulutligiga qaraganda yomg‘ir yog‘adiganga o‘xshaydi',
+          pinkTitle: 'A/V-(으)ㄴ/는/(으)ㄹ 것 같다', pinkSub: 'O‘z fikri va taxminini yumshoq ifodalash',
+          pinkGroups: [
+            {
+              cond: 'O‘tgan: -(으)ㄴ 것 같다 | Hozirgi: -는 것 같다 | Kelajak: -(으)ㄹ 것 같다',
+              items: [
+                { ko: '지금은 길이 많이 막히는 것 같아요.', uz: 'Hozir yo‘l ancha tirbandga o‘xshaydi.' },
+                { ko: '내일은 오늘보다 더 추울 것 같아요.', uz: 'Ertaga bugungidan sovuqroq bo‘ladiganga o‘xshaydi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '문장 + -(으)ㄹ 것 같아요',
+          greenRows: [
+            { parts: ['비가', '올 것', '같아요'], res: '비가 올 것 같아요.', uz: 'Yomg‘ir yog‘adiganga o‘xshaydi.' }
+          ],
+          words: [
+            { ko: '흐리다 / 아마 / 분위기 / 어울리다', uz: 'Bulutli / Ehtimol / Muhit / Mos kelmoq' }
+          ],
+          homework: {
+            taskUz: "Taxmin gap yozing: 'Ertaga yomg‘ir yog‘adiganga o‘xshaydi'.",
+            sampleKo: '내일 비가 올 것 같아요',
+            hint: '내일 + 비가 올 것 + 같아요'
+          },
+          quizzes: [
+            { q: "‘Hozir yo‘l tirbandga o‘xshaydi’ (hozirgi zamon taxmini):", opts: ['길이 막히는 것 같아요', '길이 막힌 것 같아요', '길이 막힐 것 같아요', '길이 막혔거든요'], ans: '길이 막히는 것 같아요', exp: "Hozirgi zamon taxmini: ‘-는 것 같다’." }
+          ]
+        },
+        {
+          id: '3b-1', num: 3, week: '3B · 1과', emoji: '😱', title: '비행기를 놓칠 뻔했어요 (Sal qolish)',
+          heroKo: '늦잠을 자서 중요한 면접에 늦을 뻔했어요', heroUz: 'Uxlab qolib muhim suhbatga kech qolishimga sal qoldi',
+          pinkTitle: 'V-(으)ㄹ 뻔하다 & V-기로 하다', pinkSub: 'Salbiy hodisaga bir bahya qolish va qat’iy qaror',
+          pinkGroups: [
+            {
+              cond: 'Sal qolish: -(으)ㄹ 뻔했어요 | Qaror: -기로 했어요',
+              items: [
+                { ko: '길이 미끄러워서 넘어질 뻔했어요.', uz: 'Yo‘l sirpanchiq bo‘lgani uchun yiqilib tushishimga sal qoldi.' },
+                { ko: '매일 아침 운동하기로 했어요.', uz: 'Har kuni ertalab sport bilan shug‘ullanishga qaror qildim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '원인 + V-(으)ㄹ 뻔했어요',
+          greenRows: [
+            { parts: ['늦잠을 자서', '지각할', '뻔했어요'], res: '늦잠을 자서 지각할 뻔했어요.', uz: 'Uxlab qolib kech qolishimga sal qoldi.' }
+          ],
+          words: [
+            { ko: '놓치다 / 넘어지다 / 지각하다 / 결심하다', uz: 'O‘tkazib yubormoq / Yiqilmoq / Kech qolmoq / Qaror qilmoq' }
+          ],
+          homework: {
+            taskUz: "Sal qolish gapini yozing: 'Yiqilib tushishimga sal qoldi'.",
+            sampleKo: '넘어질 뻔했어요',
+            hint: '넘어질 + 뻔했어요'
+          },
+          quizzes: [
+            { q: "‘Yiqilishimga sal qoldi’ — to‘g‘ri grammatika:", opts: ['넘어질 뻔했어요', '넘어지기로 했어요', '넘어진 적이 있어요', '넘어질 수 있어요'], ans: '넘어질 뻔했어요', exp: "Sal qolish holati: ‘-(으)ㄹ 뻔하다’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '4A-4B',
+      label: '서울대 한국어 4A & 4B',
+      range: 'TOPIK 4–5 · Yuqori-o‘rta (To‘liq)',
+      lessons: [
+        {
+          id: '4a-1', num: 1, week: '4A · 1과', emoji: '⚖️', title: '편리한 반면에 물가가 비싸요',
+          heroKo: '도시 생활은 편리한 반면에 스트레스가 많아요', heroUz: 'Shahar hayoti qulay bo‘lgani holda, stress ko‘p',
+          pinkTitle: 'V-는 반면에 & N뿐만 아니라', pinkSub: 'Qiyosiy tahlil va qo‘shimcha ma’lumot',
+          pinkGroups: [
+            {
+              cond: 'Qiyoslash: -는 반면에 | Nafaqat ... balki: -뿐만 아니라',
+              items: [
+                { ko: '그는 한국어뿐만 아니라 영어도 유창하게 구사해요.', uz: 'U nafaqat koreys, balki ingliz tilida ham ravon gapiradi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '장점 + -는 반면에 + 단점',
+          greenRows: [
+            { parts: ['편리한 반면에', '물가가', '비싸요'], res: '편리한 반면에 물가가 비싸요.', uz: 'Qulay bo‘lgani holda narxlar qimmat.' }
+          ],
+          words: [
+            { ko: '물가 / 장단점 / 구사하다 / 직접', uz: 'Narx-navo / Yutuq-kamchilik / Ravon gapirmoq / Bevosita' }
+          ],
+          homework: {
+            taskUz: "Qiyosiy gap yozing: 'Qulay bo‘lgani holda narxlar qimmat'.",
+            sampleKo: '편리한 반면에 물가가 비싸요',
+            hint: '편리한 반면에 + 물가가 비싸요'
+          },
+          quizzes: [
+            { q: "‘Nafaqat koreys, balki ingliz tilini ham biladi’:", opts: ['한국어뿐만 아니라 영어도', '한국어 덕분에 영어도', '한국어 탓에 영어도', '한국어 대신에 영어도'], ans: '한국어뿐만 아니라 영어도', exp: "‘N뿐만 아니라’ — nafaqat ..., balki ... ham." }
+          ]
+        },
+        {
+          id: '4b-1', num: 2, week: '4B · 1과', emoji: '🏆', title: '선생님 덕분에 장학금을 받았어요',
+          heroKo: '열심히 도와준 친구들 덕분에 성공할 수 있었어요', heroUz: 'Astoydil yordam bergan do‘stlarim sharofati bilan muvaffaqiyatga erishdim',
+          pinkTitle: 'N 덕분에 vs V-는 바람에', pinkSub: 'Ijobiy sabab (덕분에) va kutilmagan salbiy sabab (-는 바람에)',
+          pinkGroups: [
+            {
+              cond: 'Ijobiy natija → 덕분에 | Salbiy natija → -는 바람에',
+              items: [
+                { ko: '갑자기 비가 쏟아지는 바람에 옷이 다 젖었어요.', uz: 'To‘satdan jala quygani sababli kiyimlarim hammasi ho‘l bo‘ldi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '긍정 원인 + 덕분에',
+          greenRows: [
+            { parts: ['선생님 덕분에', '장학금을', '받았어요'], res: '선생님 덕분에 장학금을 받았어요.', uz: 'Ustozim sharofati bilan stipendiya oldim.' }
+          ],
+          words: [
+            { ko: '장학금 / 응원 / 이겨내다 / 쏟아지다', uz: 'Stipendiya / Qo‘llab-quvvatlash / Yengib o‘tmoq / Jala quymoq' }
+          ],
+          homework: {
+            taskUz: "Ijobiy sabab yozing: 'Ustozim sharofati bilan stipendiya oldim'.",
+            sampleKo: '선생님 덕분에 장학금을 받았어요',
+            hint: '선생님 덕분에 + 장학금을 받았어요'
+          },
+          quizzes: [
+            { q: "Kutilmagan salbiy sababni ifodalovchi qo‘shimcha:", opts: ['-는 바람에', '덕분에', '뿐만 아니라', '기로 하다'], ans: '-는 바람에', exp: "Salbiy kutilmagan sabab: ‘-는 바람에’." }
+          ]
+        }
+      ]
+    },
+    {
+      code: '5A-6B',
+      label: '서울대 한국어 5A ~ 6B',
+      range: 'TOPIK 5–6 · Oliy Akademik (To‘liq)',
+      lessons: [
+        {
+          id: '5a-1', num: 1, week: '5A · 1과', emoji: '📊', title: '이 정도면 성공한 셈이에요',
+          heroKo: '수출이 증가한 데 반해 내수 시장은 위축되었다', heroUz: 'Eksport oshgan bir paytda ichki bozor qisqardi',
+          pinkTitle: 'A/V-(으)ㄴ/는 셈이다 & V-는 데 반해', pinkSub: 'TOPIK 5 rasmiy xulosa va keskin qiyoslash',
+          pinkGroups: [
+            {
+              cond: 'Xulosa: -(으)ㄴ/는 셈이다 | Keskin qarama-qarshilik: -는 데 반해',
+              items: [
+                { ko: '1년 만에 TOPIK 5급을 땄으니 대단한 셈이다.', uz: '1 yil ichida TOPIK 5-darajani olgani uchun katta yutuq hisoblanadi.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '결과 + -(으)ㄴ/는 셈이다',
+          greenRows: [
+            { parts: ['이 정도면', '성공한', '셈이에요'], res: '이 정도면 성공한 셈이에요.', uz: 'Bu daraja bo‘lsa muvaffaqiyatga erishilgan hisoblanadi.' }
+          ],
+          words: [
+            { ko: '수출 / 수입 / 급성장하다 / 위축되다', uz: 'Eksport / Import / Tez o‘smoq / Qisqarmoq' }
+          ],
+          homework: {
+            taskUz: "TOPIK 5 xulosasi: 'Deyarli tugatgan hisoblanamiz'.",
+            sampleKo: '다 끝낸 셈이에요',
+            hint: '다 끝낸 + 셈이에요'
+          },
+          quizzes: [
+            { q: "‘Deyarli tugatgan hisoblanamiz’ — TOPIK 5 shakli:", opts: ['다 끝낸 셈이에요', '다 끝낼 뻔했어요', '다 끝내거든요', '다 끝내러 가요'], ans: '다 끝낸 셈이에요', exp: "Umumiy xulosa: ‘-(으)ㄴ/는 셈이다’." }
+          ]
+        },
+        {
+          id: '6a-1', num: 2, week: '6A · 1과', emoji: '🎓', title: '남녀노소를 막론하고 참여할 수 있다',
+          heroKo: '본 연구는 AI 교육의 효율성을 규명한 바이다', heroUz: 'Ushbu tadqiqot AI ta’limi samaradorligini isbotlab berdi',
+          pinkTitle: 'N을/를 막론하고 & V-는 바이다 & V-다시피 하다', pinkSub: 'TOPIK 6 oliy rasmiy uslub va ilmiy maqolalar tili',
+          pinkGroups: [
+            {
+              cond: 'Qat’i nazar: -을/를 막론하고 | Deyarli ... qilmoq: -다시피 하다',
+              items: [
+                { ko: '시험 기간에는 하루 종일 도서관에서 살다시피 했어요.', uz: 'Imtihon paytida kun bo‘yi kutubxonada yashagandek bo‘ldim.' }
+              ]
+            }
+          ],
+          greenTitle: '문장 구조', greenFormula: '명사 + 을/를 막론하고',
+          greenRows: [
+            { parts: ['남녀노소를', '막론하고', '참여할 수 있다'], res: '남녀노소를 막론하고 참여할 수 있다.', uz: 'Yoshu qaridan qat’i nazar hamma qatnasha oladi.' }
+          ],
+          words: [
+            { ko: '막론하다 / 규명하다 / 인재 / 전환되다', uz: 'Qat’i nazar / Isbotlamoq / Iqtidorli kadr / O‘zgarmoq' }
+          ],
+          homework: {
+            taskUz: "TOPIK 6 iborasi: 'Kutubxonada yashagandek bo‘ldim'.",
+            sampleKo: '도서관에서 살다시피 했어요',
+            hint: '도서관에서 + 살다시피 + 했어요'
+          },
+          quizzes: [
+            { q: "‘Yoshu qaridan qat’i nazar’ — TOPIK 6 iborasi:", opts: ['남녀노소를 막론하고', '남녀노소 덕분에', '남녀노소 탓에', '남녀노소지만'], ans: '남녀노소를 막론하고', exp: "‘N을/를 막론하고’ — ...-dan qat’i nazar." }
+          ]
+        }
+      ]
+    }
+  ];
 
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons);
@@ -506,10 +1463,14 @@ export default function App() {
     }, 350);
   };
 
-  // --- TAKRORLASH ---
+  // --- TAKRORLASH (KARTOCHKA, TINGLASH, DIALOG, YOZISH, NUTQ, SPRINT, TOPIK) ---
   const [reviewMode, setReviewMode] = useState('cards');
   const [flashIdx, setFlashIdx] = useState(0);
   const [flashFlipped, setFlashFlipped] = useState(false);
+
+  const [listenIdx, setListenIdx] = useState(0);
+  const [listenOpts, setListenOpts] = useState([]);
+  const [listenPick, setListenPick] = useState(null);
 
   const [speakIdx, setSpeakIdx] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -639,6 +1600,14 @@ export default function App() {
     setQIdx(0);
     setQAnswer(null);
     setScreen('lesson');
+  };
+
+  const prepareListening = (idx) => {
+    const target = allWords[idx % allWords.length];
+    const distractors = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setListenOpts(shuffleArray([target.uz, ...distractors]));
+    setListenPick(null);
+    speakKo(target.ko);
   };
 
   const handleSpeechTest = (targetKo) => {
@@ -1374,7 +2343,7 @@ export default function App() {
           )}
         </div>
 
-        {/* 4-BLOK: UYGA VAZIFA (오늘의 숙제) */}
+        {/* 4-BLOK: INTERAKTIV UYGA VAZIFA (오늘의 숙제) */}
         {activeLesson.homework && (
           <div className={`rounded-3xl ${isDark ? 'bg-amber-950/35 border-amber-800' : 'bg-amber-50 border-amber-200'} border p-4 space-y-2.5`}>
             <div className="flex justify-between items-center text-xs font-black text-amber-600 dark:text-amber-400">
@@ -1555,19 +2524,21 @@ export default function App() {
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (KARTOCHKA, DIALOG, YOZISH, SPEAKING, SPRINT, TOPIK)
+  // 5. TAKRORLASH (KARTOCHKA, TINGLASH, DIALOG, YOZISH, NUTQ, SPRINT, TOPIK)
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
+    const listenWord = allWords[listenIdx % allWords.length];
     const speakWord = allWords[speakIdx % allWords.length];
     const writeItem = writingPrompts[writeIdx % writingPrompts.length];
     const currentDialogObj = activeDialog.steps[dialogStep];
 
     return (
       <div className="space-y-4 pb-28 pt-2">
-        <div className="grid grid-cols-6 gap-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: 'cards', icon: Layers, label: 'So‘z' },
+            { id: 'listen', icon: Headphones, label: 'Tinglash' },
             { id: 'dialog', icon: MessageSquare, label: 'Dialog' },
             { id: 'write', icon: Keyboard, label: 'Yozish' },
             { id: 'speak', icon: Mic, label: 'Nutq' },
@@ -1578,15 +2549,16 @@ export default function App() {
               key={m.id}
               onClick={() => {
                 setReviewMode(m.id);
+                if (m.id === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
                 if (m.id === 'sprint' && !sprintWord) startSprintGame();
               }}
-              className={`py-2.5 px-1 rounded-2xl border flex flex-col items-center gap-1 text-[9px] font-black transition ${
+              className={`shrink-0 py-2.5 px-3 rounded-2xl border flex items-center gap-1.5 text-[11px] font-black transition ${
                 reviewMode === m.id
                   ? 'bg-[#58cc02] text-white border-emerald-600 shadow'
                   : `${t.card} ${t.textMuted}`
               }`}
             >
-              <m.icon size={15} />
+              <m.icon size={14} />
               <span>{m.label}</span>
             </button>
           ))}
@@ -1634,7 +2606,63 @@ export default function App() {
           </div>
         )}
 
-        {/* 2. REAL HAYOTIY DIALOG SIMULYATORI */}
+        {/* 2. TINGLAB TUSHUNISH */}
+        {reviewMode === 'listen' && (
+          <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
+            <span className="px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-500 text-[10px] font-black uppercase">
+              듣기 연습 • Tinglab Toping
+            </span>
+            <div>
+              <button
+                onClick={() => speakKo(listenWord.ko)}
+                className="w-20 h-20 rounded-full bg-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg active:scale-95 transition"
+              >
+                <Volume2 size={34} />
+              </button>
+              <p className="text-xs text-slate-400 mt-2">Audioni tinglang va to‘g‘ri tarjimani tanlang</p>
+            </div>
+
+            <div className="space-y-2 text-left">
+              {listenOpts.map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setListenPick(opt);
+                    if (opt === listenWord.uz) {
+                      setProfile(p => ({ ...p, xp: p.xp + 15, dailyXp: p.dailyXp + 15 }));
+                    }
+                  }}
+                  className={`w-full p-3.5 rounded-2xl border text-xs font-black transition ${
+                    listenPick !== null
+                      ? opt === listenWord.uz
+                        ? 'bg-emerald-500 text-white border-emerald-600'
+                        : listenPick === opt
+                          ? 'bg-rose-500 text-white border-rose-600'
+                          : `${t.sub} opacity-50`
+                      : `${t.sub} ${t.textMain}`
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            {listenPick !== null && (
+              <button
+                onClick={() => {
+                  const next = listenIdx + 1;
+                  setListenIdx(next);
+                  prepareListening(next);
+                }}
+                className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+              >
+                Keyingi audio →
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* 3. REAL HAYOTIY DIALOG SIMULYATORI (ROLEPLAY) */}
         {reviewMode === 'dialog' && (
           <div className="space-y-3.5">
             <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
@@ -1726,7 +2754,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 3. 쓰기 • YOZISH VA IMLO TRENAJYORI */}
+        {/* 4. 쓰기 • YOZISH VA IMLO TRENAJYORI */}
         {reviewMode === 'write' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             <div className="flex justify-between items-center">
@@ -1787,7 +2815,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 4. SPEAKING */}
+        {/* 5. SPEAKING */}
         {reviewMode === 'speak' && (
           <div className={`rounded-3xl ${t.card} border p-6 text-center space-y-4`}>
             <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] font-black uppercase">
@@ -1833,7 +2861,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 5. SPRINT */}
+        {/* 6. SPRINT */}
         {reviewMode === 'sprint' && (
           <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
             <div className="flex justify-between items-center text-xs font-black">
@@ -1880,7 +2908,7 @@ export default function App() {
           </div>
         )}
 
-        {/* 6. TOPIK MOCK */}
+        {/* 7. TOPIK MOCK */}
         {reviewMode === 'mock' && (
           <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
             {!mockActive ? (
@@ -2033,7 +3061,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 🛍️ XP DO'KONI */}
+        {/* 🛍️ XP DO'KONI (MASKOT AKSESSUARLARI & STREAK MUZLATGICH) */}
         <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
           <div className="flex justify-between items-center text-xs font-black">
             <span className="flex items-center gap-1.5 text-emerald-500"><ShoppingBag size={15} /> XP Do‘koni (Maskot Kiyimlari)</span>
@@ -2178,7 +3206,10 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setScreen('review')}
+            onClick={() => {
+              setScreen('review');
+              if (reviewMode === 'listen' && listenOpts.length === 0) prepareListening(listenIdx);
+            }}
             className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
               screen === 'review' ? 'text-amber-500' : t.textMuted
             }`}
