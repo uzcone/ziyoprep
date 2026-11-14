@@ -55,7 +55,7 @@ Qoidalar:
 
     const rawText = data?.choices?.[0]?.message?.content;
     const parsed = JSON.parse(rawText);
-    return res.status(200).json(parsed);
+    return res.status200).json(parsed);
   } catch (err) {
     return res.status(200).json({
       ko: '잠시 오류가 발생했어요.',
