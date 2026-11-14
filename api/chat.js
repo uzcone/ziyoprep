@@ -3,11 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({
       ko: 'API 키 설정이 필요해요!',
-      uz: 'Vercel Settings da GEMINI_API_KEY topilmadi!'
+      uz: 'Vercel Settings da OPENAI_API_KEY topilmadi!'
     });
   }
 
@@ -19,32 +19,28 @@ Foydalanuvchi ismi: ${userName}.
 Qoidalar:
 1. Foydalanuvchi o'zbekcha, koreyscha yoki aralash nima yozsa ham, xuddi jonli ustozdek tabiiy, aqlli va batafsil javob ber.
 2. Javobingni har doim JSON formatida qaytar: {"ko": "koreyscha tabiiy javob (ovozli o'qish uchun)", "uz": "o'zbekcha batafsil tushuntirish, misollar yoki suhbat javobi"}.
-3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g‘ri variantini ko'rsat.`;
+3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g'ri variantini ko'rsat.`;
 
-    const contents = [
+    const messages = [
+      { role: "system", content: systemPrompt },
       ...history.slice(-6).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.role === 'user' ? m.ko : `${m.ko}\n${m.uz || ''}` }]
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.role === 'user' ? m.ko : `${m.ko}\n${m.uz || ''}`
       })),
-      { role: 'user', parts: [{ text: message }] }
+      { role: "user", content: message }
     ];
 
-    // AQ... tokeni uchun Gemini API so'rovini Bearer token orqali yuboramiz
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-    
-    const response = await fetch(url, {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.7
-        }
+        model: 'gpt-4o-mini',
+        messages,
+        response_format: { type: "json_object" },
+        temperature: 0.7
       })
     });
 
@@ -53,11 +49,11 @@ Qoidalar:
     if (!response.ok) {
       return res.status(200).json({
         ko: 'API 오류가 발생했어요.',
-        uz: `Google AI xatosi (${response.status}): ${data?.error?.message || JSON.stringify(data)}`
+        uz: `OpenAI xatosi (${response.status}): ${data?.error?.message || JSON.stringify(data)}`
       });
     }
 
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = data?.choices?.[0]?.message?.content;
     const parsed = JSON.parse(rawText);
     return res.status(200).json(parsed);
   } catch (err) {
