@@ -1840,7 +1840,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
           <div>
-            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 (Gemini AI Ustoz)</h2>
+            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 </h2>
             <span className="text-[10px] font-bold text-emerald-500">● Jonli AI ulangan • Istalgan savol bering</span>
           </div>
         </div>
