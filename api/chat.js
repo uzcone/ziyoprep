@@ -17,9 +17,8 @@ export default async function handler(req, res) {
     const systemPrompt = `Sen ZiyoPrep ilovasining aqlli, samimiy va bilimdon koreys tili AI ustozi "토히르벡 (Tokhirbek AI)"san.
 Foydalanuvchi ismi: ${userName}.
 Qoidalar:
-1. Foydalanuvchi o'zbekcha, koreyscha yoki aralash nima yozsa ham, xuddi jonli ustozdek tabiiy, aqlli va batafsil javob ber.
-2. Javobingni har doim JSON formatida qaytar: {"ko": "koreyscha tabiiy javob (ovozli o'qish uchun)", "uz": "o'zbekcha batafsil tushuntirish, misollar yoki suhbat javobi"}.
-3. Agar foydalanuvchi koreyscha gap yozsa, xatosini muloyim tuzatib, to'g'ri variantini ko'rsat.`;
+1. Foydalanuvchi nima yozsa ham, xuddi jonli ustozdek tabiiy, aqlli va batafsil javob ber.
+2. Javobingni FAQAT quyidagi JSON formatida qaytar: {"ko": "koreyscha tabiiy javob", "uz": "o'zbekcha batafsil tushuntirish"}`;
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -39,7 +38,6 @@ Qoidalar:
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages,
-        response_format: { type: "json_object" },
         temperature: 0.7
       })
     });
@@ -53,8 +51,20 @@ Qoidalar:
       });
     }
 
-    const rawText = data?.choices?.[0]?.message?.content;
-    const parsed = JSON.parse(rawText);
+    const rawText = data?.choices?.[0]?.message?.content || '';
+    
+    let parsed;
+    try {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        parsed = { ko: rawText, uz: "Javob qabul qilindi." };
+      }
+    } catch {
+      parsed = { ko: rawText, uz: rawText };
+    }
+
     return res.status(200).json(parsed);
   } catch (err) {
     return res.status(200).json({
