@@ -30,13 +30,14 @@ Qoidalar:
     ];
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      model: 'gemma2-9b-it',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'gemma2-9b-it',
         messages,
         temperature: 0.7
       })
