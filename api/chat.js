@@ -3,11 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return res.status(500).json({
       ko: 'API 키 설정이 필요해요!',
-      uz: 'Vercel Settings da OPENAI_API_KEY topilmadi!'
+      uz: 'Vercel Settings da GROQ_API_KEY topilmadi!'
     });
   }
 
@@ -30,14 +30,14 @@ Qoidalar:
       { role: "user", content: message }
     ];
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
         messages,
         response_format: { type: "json_object" },
         temperature: 0.7
@@ -49,7 +49,7 @@ Qoidalar:
     if (!response.ok) {
       return res.status(200).json({
         ko: 'API 오류가 발생했어요.',
-        uz: `OpenAI xatosi (${response.status}): ${data?.error?.message || JSON.stringify(data)}`
+        uz: `Groq xatosi (${response.status}): ${data?.error?.message || JSON.stringify(data)}`
       });
     }
 
