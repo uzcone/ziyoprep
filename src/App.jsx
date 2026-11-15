@@ -1,795 +1,1523 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
-  ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
-  BookOpen, Sparkles, RotateCcw, User, 
-  Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, Clock, Layers, Timer,
-  MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target
-} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-// Darslik fayllari
-import { snu1A } from './data/snu1A.js';
-import { snu1B } from './data/snu1B.js';
-import { snu2A, snu2B } from './data/snu2AB.js';
-import { snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B } from './data/snu3_6.js';
+/*
+  ZiyoPrep — single-file React app
+  - No icon/UI library required
+  - Uses localStorage for demo progress and saved words
+  - AI chat calls your existing Vercel endpoint: POST /api/chat
+  - Keep GROQ_API_KEY only on the server (Vercel Environment Variables)
+*/
 
-// Lug'at fayllari (1A ~ 6A)
-import { vocab1A } from './data/vocab1A.js';
-import { vocab1B } from './data/vocab1B.js';
-import { vocab2A } from './data/vocab2A.js';
-import { vocab2B } from './data/vocab2B.js';
-import { vocab3A } from './data/vocab3A.js';
-import { vocab3B } from './data/vocab3B.js';
-import { vocab4A } from './data/vocab4A.js';
-import { vocab4B } from './data/vocab4B.js';
-import { vocab5A } from './data/vocab5A.js';
-import { vocab5B } from './data/vocab5B.js';
-import { vocab6A } from './data/vocab6A.js';
+const COURSES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B", "5A", "5B", "6A", "6B"];
 
-// ZiyoPrep Yashil Boyo'g'li Maskot
-function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
-  return (
-    <div className={`${className} overflow-hidden shadow-md relative select-none`}>
-      <svg viewBox="0 0 200 200" className="w-full h-full">
-        <defs>
-          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#7dd3fc" />
-            <stop offset="60%" stopColor="#bae6fd" />
-            <stop offset="100%" stopColor="#86efac" />
-          </linearGradient>
-          <linearGradient id="owlBody" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#76e026" />
-            <stop offset="100%" stopColor="#48b808" />
-          </linearGradient>
-          <linearGradient id="bookGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#1e40af" />
-            <stop offset="100%" stopColor="#1e3a8a" />
-          </linearGradient>
-        </defs>
+const LESSONS = [
+  { id: "1a-01", course: "1A", title: "안녕하세요? (Tanishuv)", subtitle: "Men O‘zbekistonlikman", icon: "👋", words: ["안녕하세요", "저", "학생", "한국", "사람"], grammar: "이에요 / 예요", example: "저는 토히르벡이에요.", meaning: "Men Tohirbekman." },
+  { id: "1a-02", course: "1A", title: "이거 뭐예요? (Buyumlar)", subtitle: "Bu koreys tili lug‘ati", icon: "🎒", words: ["이거", "책", "가방", "연필", "핸드폰"], grammar: "이거 / 그거 / 저거", example: "이거는 책이에요.", meaning: "Bu kitob." },
+  { id: "1a-03", course: "1A", title: "한국어를 공부해요 (Kundalik ishlar)", subtitle: "Kutubxonada koreys tilini o‘rganaman", icon: "📚", words: ["공부하다", "읽다", "쓰다", "학교", "도서관"], grammar: "을 / 를", example: "저는 한국어를 공부해요.", meaning: "Men koreys tilini o‘rganaman." },
+  { id: "1a-04", course: "1A", title: "어디에 있어요? (Joylashuv)", subtitle: "Bank kasalxonaning yonida joylashgan", icon: "📍", words: ["어디", "은행", "병원", "옆", "앞"], grammar: "에 있어요", example: "은행은 병원 옆에 있어요.", meaning: "Bank kasalxona yonida." },
+  { id: "1a-05", course: "1A", title: "주말에 친구를 만났어요 (O‘tgan zamon)", subtitle: "Kecha do‘stim bilan kino ko‘rdim", icon: "📅", words: ["주말", "친구", "만나다", "영화", "보다"], grammar: "았어요 / 었어요", example: "어제 영화를 봤어요.", meaning: "Kecha kino ko‘rdim." },
+  { id: "1a-06", course: "1A", title: "얼마예요? (Xarid va sonlar)", subtitle: "Beshta olma va ikkita apelsin", icon: "🍎", words: ["얼마", "사과", "오렌지", "개", "원"], grammar: "Koreyscha va xitoycha sonlar", example: "사과 두 개 주세요.", meaning: "Ikkita olma bering." },
+  { id: "1a-07", course: "1A", title: "날씨가 어때요? (Ob-havo va fasllar)", subtitle: "Koreyada bahorda havo iliq bo‘ladi", icon: "☀️", words: ["날씨", "봄", "여름", "가을", "겨울"], grammar: "아 / 어요", example: "오늘은 날씨가 좋아요.", meaning: "Bugun havo yaxshi." },
+  { id: "1a-08", course: "1A", title: "주말에 같이 영화 볼까요? (Taklif)", subtitle: "Shanba kuni birga kinoga chiqaylikmi?", icon: "🎬", words: ["같이", "주말", "영화", "보다", "까요"], grammar: "(으)ㄹ까요?", example: "주말에 같이 영화 볼까요?", meaning: "Dam olish kuni birga kino ko‘ramizmi?" },
+  { id: "1b-01", course: "1B", title: "하루 일과 (Kun tartibi)", subtitle: "Kundalik reja va vaqt", icon: "⏰", words: ["일어나다", "아침", "점심", "저녁", "자다"], grammar: "부터 / 까지", example: "아침 7시부터 공부해요.", meaning: "Ertalab soat 7 dan o‘qiyman." },
+  { id: "2a-01", course: "2A", title: "경험 이야기하기 (Tajriba)", subtitle: "Boshdan kechirgan voqealar", icon: "✈️", words: ["경험", "여행", "가다", "먹다", "재미있다"], grammar: "아 / 어 본 적이 있어요", example: "한국에 가 본 적이 있어요.", meaning: "Koreyaga borib ko‘rganman." },
+  { id: "2b-01", course: "2B", title: "이유 설명하기 (Sabab)", subtitle: "Sabab va natijani tushuntirish", icon: "💡", words: ["이유", "때문", "아프다", "늦다", "약속"], grammar: "기 때문에", example: "비가 오기 때문에 집에 있어요.", meaning: "Yomg‘ir yog‘ayotgani sababli uyda qolaman." },
+];
 
-        <rect width="200" height="200" rx="44" fill="url(#skyGrad)" />
-        <circle cx="155" cy="42" r="18" fill="#ffffff" opacity="0.6" />
-        <circle cx="142" cy="46" r="13" fill="#ffffff" opacity="0.6" />
+const WORDS = [
+  { ko: "안녕하세요", uz: "Salom", type: "Salomlashuv", level: "1A" },
+  { ko: "감사합니다", uz: "Rahmat", type: "Salomlashuv", level: "1A" },
+  { ko: "학교", uz: "Maktab", type: "Joy", level: "1A" },
+  { ko: "도서관", uz: "Kutubxona", type: "Joy", level: "1A" },
+  { ko: "친구", uz: "Do‘st", type: "Odamlar", level: "1A" },
+  { ko: "공부하다", uz: "O‘qimoq, o‘rganmoq", type: "Fe’l", level: "1A" },
+  { ko: "맛있어요", uz: "Mazali", type: "Sifat", level: "1A" },
+  { ko: "괜찮아요", uz: "Yaxshi, muammo yo‘q", type: "Ifoda", level: "1A" },
+  { ko: "약속", uz: "Uchrashuv, va’da", type: "Ot", level: "2B" },
+  { ko: "경험", uz: "Tajriba", type: "Ot", level: "2A" },
+];
 
-        <rect x="166" y="45" width="4" height="65" fill="#94a3b8" />
-        <rect x="167.2" y="25" width="1.6" height="22" fill="#ef4444" />
-        <ellipse cx="168" cy="52" rx="11" ry="4.5" fill="#f8fafc" stroke="#64748b" strokeWidth="1" />
-        <rect x="161" y="48" width="14" height="4" rx="1" fill="#3b82f6" />
+const STORAGE = {
+  done: "ziyoprep_done_v2",
+  xp: "ziyoprep_xp_v2",
+  saved: "ziyoprep_saved_words_v2",
+  streak: "ziyoprep_streak_v2",
+  name: "ziyoprep_name_v2",
+};
 
-        <ellipse cx="100" cy="185" rx="115" ry="45" fill="#4ade80" />
-        <ellipse cx="45" cy="188" rx="75" ry="35" fill="#22c55e" />
-        <circle cx="178" cy="145" r="16" fill="#f9a8d4" opacity="0.85" />
-        <ellipse cx="24" cy="72" rx="6" ry="3.5" transform="rotate(-25 24 72)" fill="#f472b6" />
-        <ellipse cx="175" cy="112" rx="5" ry="3" transform="rotate(20 175 112)" fill="#f472b6" />
-
-        <path d="M44 58 Q46 26 68 38 Z" fill="#65d318" />
-        <path d="M156 58 Q154 26 132 38 Z" fill="#65d318" />
-        <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
-
-        <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
-        <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">
-          ZiyoPrep
-        </text>
-
-        <circle cx="72" cy="105" r="22" fill="#ffffff" />
-        <circle cx="128" cy="105" r="22" fill="#ffffff" />
-        <circle cx="76" cy="105" r="11.5" fill="#1e293b" />
-        <circle cx="124" cy="105" r="11.5" fill="#1e293b" />
-        <circle cx="80" cy="100" r="4.2" fill="#ffffff" />
-        <circle cx="128" cy="100" r="4.2" fill="#ffffff" />
-
-        {equipped.glasses && (
-          <g>
-            <circle cx="72" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
-            <circle cx="128" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
-            <line x1="96" y1="103" x2="104" y2="103" stroke="#0f172a" strokeWidth="5" />
-          </g>
-        )}
-
-        <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
-        <path d="M94 123 Q100 133 106 123 Z" fill="#ea580c" />
-
-        <path d="M46 132 L98 142 L98 184 L46 172 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
-        <path d="M154 132 L102 142 L102 184 L154 172 Z" fill="url(#bookGrad)" stroke="#1e3a8a" strokeWidth="1.5" />
-        <path d="M50 130 L98 140 L102 140 L150 130 L150 135 L100 145 L50 135 Z" fill="#f8fafc" />
-
-        <text x="128" y="162" textAnchor="middle" fill="#ffffff" fontSize="12.5" fontWeight="900" fontFamily="sans-serif" transform="rotate(-11 128 162)">
-          한국어
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-// 3D Stildagi Qizaloq Avatar (Emma / 토히르벡 AI)
-function LiveAiAvatar({ isSpeaking, isListening }) {
-  return (
-    <div className="relative flex items-center justify-center py-2">
-      <div className={`absolute w-28 h-28 rounded-full bg-emerald-500/20 blur-xl transition-all duration-700 ${isSpeaking || isListening ? 'scale-125 bg-emerald-400/40 animate-pulse' : 'scale-100'}`} />
-      <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-500 shadow-xl bg-gradient-to-b from-sky-400 to-emerald-600 flex flex-col items-center justify-center p-1">
-        <svg viewBox="0 0 150 150" className="w-full h-full drop-shadow-md">
-          <circle cx="75" cy="75" r="70" fill="#fbcfe8" opacity="0.3" />
-          <path d="M30 70 Q30 20 75 20 Q120 20 120 70 Q120 120 100 140 L50 140 Q30 120 30 70 Z" fill="#78350f" />
-          <ellipse cx="75" cy="80" rx="35" ry="40" fill="#fed7aa" />
-          <circle cx="63" cy="75" r="5" fill="#1e293b" />
-          <circle cx="87" cy="75" r="5" fill="#1e293b" />
-          <circle cx="65" cy="73" r="1.5" fill="#ffffff" />
-          <circle cx="89" cy="73" r="1.5" fill="#ffffff" />
-          <ellipse cx="56" cy="88" rx="5" ry="3" fill="#f43f5e" opacity="0.5" />
-          <ellipse cx="94" cy="88" rx="5" ry="3" fill="#f43f5e" opacity="0.5" />
-          {isSpeaking ? (
-            <ellipse cx="75" cy="98" rx="6" ry="8" fill="#991b1b" className="animate-bounce" />
-          ) : (
-            <path d="M68 96 Q75 103 82 96" stroke="#991b1b" strokeWidth="3" strokeLinecap="round" fill="none" />
-          )}
-          <path d="M42 75 Q42 45 75 45 Q108 45 108 75" stroke="#3b82f6" strokeWidth="5" fill="none" />
-          <circle cx="43" cy="78" r="7" fill="#1e293b" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-
-const ROMAN_CHO = { 'ㄱ':'g/k','ㄲ':'kk','ㄴ':'n','ㄷ':'d/t','ㄸ':'tt','ㄹ':'r/l','ㅁ':'m','ㅂ':'b/p','ㅃ':'pp','ㅅ':'s','ㅆ':'ss','ㅇ':'-','ㅈ':'j','ㅉ':'jj','ㅊ':'ch','ㅋ':'kh','ㅌ':'th','ㅍ':'ph','ㅎ':'h' };
-const ROMAN_JUNG = { 'ㅏ':'a','ㅐ':'ae','ㅑ':'ya','ㅒ':'yae','ㅓ':'eo','ㅔ':'e','ㅕ':'yeo','ㅖ':'ye','ㅗ':'o','ㅘ':'wa','ㅙ':'wae','ㅚ':'oe','ㅛ':'yo','ㅜ':'u','ㅝ':'wo','ㅞ':'we','ㅟ':'wi','ㅠ':'yu','ㅡ':'eu','ㅢ':'ui','ㅣ':'i' };
-const ROMAN_JONG = { '':'','ㄱ':'k','ㄴ':'n','ㄷ':'t','ㄹ':'l','ㅁ':'m','ㅂ':'p','ㅅ':'t','ㅇ':'ng','ㅈ':'t','ㅊ':'t','ㅎ':'t' };
-
-function composeHangul(cho, jung, jong = '') {
-  const c = INITIALS.indexOf(cho);
-  const v = MEDIALS.indexOf(jung);
-  const f = FINALS.indexOf(jong);
-  if (c === -1 || v === -1) return cho || jung || '';
-  return String.fromCharCode(0xAC00 + (c * 21 * 28) + (v * 28) + (f > 0 ? f : 0));
-}
-
-function shuffleArray(arr) {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+function readStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
   }
-  return copy;
+}
+
+function Icon({ name, size = 21 }) {
+  const paths = {
+    book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20"/></>,
+    words: <><path d="M4 6h16M4 12h10M4 18h16"/><path d="M17 9l3 3-3 3"/></>,
+    spark: <><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></>,
+    repeat: <><path d="m17 2 4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></>,
+    user: <><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></>,
+    send: <><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></>,
+    mic: <><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></>,
+    check: <path d="m5 12 4 4L19 6"/>,
+    arrow: <><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>,
+    moon: <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></>,
+    close: <><path d="m18 6-12 12M6 6l12 12"/></>,
+  };
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true">
+      {paths[name] || paths.spark}
+    </svg>
+  );
 }
 
 export default function App() {
-  // --- AUTH STATE ---
-  const [currentUser, setCurrentUser] = useState(() => {
-    try { const saved = localStorage.getItem('hs_auth_user'); return saved ? JSON.parse(saved) : null; } catch { return null; }
-  });
-  const [registeredUsers, setRegisteredUsers] = useState(() => {
-    try { const saved = localStorage.getItem('hs_registered_users'); return saved ? JSON.parse(saved) : []; } catch { return []; }
-  });
-  const [authMode, setAuthMode] = useState('welcome');
-  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
-  const [authError, setAuthError] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
-
-  const handleGuestLogin = () => {
-    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'guest@ziyoprep.uz', isGuest: true };
-    setCurrentUser(guest);
-    localStorage.setItem('hs_auth_user', JSON.stringify(guest));
-    setProfile(p => ({ ...p, name: 'Tokhirbek' }));
-  };
-
-  const handleGoogleSubmit = (e) => {
-    e.preventDefault();
-    setAuthError('');
-    const email = authForm.email.trim().toLowerCase();
-    if (!email || !email.includes('@')) return setAuthError("To‘g‘ri Gmail manzilini kiriting!");
-    const name = authForm.name.trim() || email.split('@')[0];
-    const gUser = { uid: 'google_' + email, name, email };
-    setCurrentUser(gUser);
-    localStorage.setItem('hs_auth_user', JSON.stringify(gUser));
-    setProfile(p => ({ ...p, name }));
-  };
-
-  const handleEmailAuth = (e) => {
-    e.preventDefault();
-    setAuthError('');
-    const email = authForm.email.trim().toLowerCase();
-    const password = authForm.password.trim();
-    if (!email || !email.includes('@')) return setAuthError("To‘g‘ri email kiriting!");
-    if (password.length < 4) return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lsin!");
-
-    if (authMode === 'register') {
-      if (!authForm.name.trim()) return setAuthError("Ismingizni kiriting!");
-      const exists = registeredUsers.find(u => u.email === email);
-      if (exists) return setAuthError("Bu email band! Tizimga kiring.");
-      const newUser = { uid: 'user_' + Date.now(), name: authForm.name.trim(), email, password };
-      const updated = [...registeredUsers, newUser];
-      setRegisteredUsers(updated);
-      localStorage.setItem('hs_registered_users', JSON.stringify(updated));
-      setCurrentUser(newUser);
-      setProfile(p => ({ ...p, name: newUser.name }));
-    } else if (authMode === 'login') {
-      const found = registeredUsers.find(u => u.email === email);
-      if (!found) return setAuthError("Bunday email topilmadi! Ro‘yxatdan o‘ting.");
-      if (found.password !== password) return setAuthError("Parol xato!");
-      setCurrentUser(found);
-      setProfile(p => ({ ...p, name: found.name }));
-    } else if (authMode === 'forgot') {
-      const foundIndex = registeredUsers.findIndex(u => u.email === email);
-      if (foundIndex === -1) return setAuthError("Bunday email bazada topilmadi!");
-      const updated = [...registeredUsers];
-      updated[foundIndex].password = password;
-      setRegisteredUsers(updated);
-      localStorage.setItem('hs_registered_users', JSON.stringify(updated));
-      setResetSuccess("Parol muvaffaqiyatli o'zgartirildi!");
-      setTimeout(() => setAuthMode('login'), 2000);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('hs_auth_user');
-    setCurrentUser(null);
-    setAuthMode('welcome');
-    setScreen('home');
-  };
-
-  // --- CORE APP STATES ---
-  const [screen, setScreen] = useState('home');
-  const [uiLang, setUiLang] = useState('uz');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
-  const [selectedBookCode, setSelectedBookCode] = useState('1A');
+  const [tab, setTab] = useState("learn");
+  const [course, setCourse] = useState("1A");
+  const [done, setDone] = useState(() => readStorage(STORAGE.done, []));
+  const [xp, setXp] = useState(() => readStorage(STORAGE.xp, 535));
+  const [savedWords, setSavedWords] = useState(() => readStorage(STORAGE.saved, []));
+  const [userName, setUserName] = useState(() => readStorage(STORAGE.name, "토히르벡"));
+  const [dark, setDark] = useState(false);
   const [activeLesson, setActiveLesson] = useState(null);
-  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
-
-  const [mistakes, setMistakes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
-  });
-  const [plannerTasks, setPlannerTasks] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('hs_planner')) || [
-        { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
-        { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
-      ];
-    } catch {
-      return [
-        { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
-        { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
-      ];
+  const [quizChoice, setQuizChoice] = useState("");
+  const [quizChecked, setQuizChecked] = useState(false);
+  const [wordSearch, setWordSearch] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistory, setChatHistory] = useState([
+    {
+      role: "assistant",
+      ko: "안녕하세요! 저는 ZiyoPrep AI 선생님이에요. 한국어, TOPIK, 문법에 대해 무엇이든 물어보세요!",
+      uz: "Assalomu alaykum! Men ZiyoPrep AI ustoziman. Koreys tili, TOPIK yoki grammatika haqida istalgan savolingizni bering."
     }
-  });
-
-  const vocabBooks = [vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A].filter(Boolean);
-  const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
-  const [selectedVocabTopicId, setSelectedVocabTopicId] = useState('1a-l1');
-  const [vocabSearch, setVocabSearch] = useState('');
-  const [vocabQuizMode, setVocabQuizMode] = useState(false);
-  const [vocabQuizDirection, setVocabQuizDirection] = useState('ko2uz');
-  const [vocabQuizWord, setVocabQuizWord] = useState(null);
-  const [vocabQuizOpts, setVocabQuizOpts] = useState([]);
-  const [vocabQuizPick, setVocabQuizPick] = useState(null);
-  const [vocabQuizScore, setVocabQuizScore] = useState(0);
-  const [vocabQuizCount, setVocabQuizCount] = useState(0);
-
-  const [profile, setProfile] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('hs_profile'));
-      return { name: saved?.name || 'Tokhirbek', xp: saved?.xp ?? 1450, dailyXp: saved?.dailyXp ?? 60, streak: saved?.streak ?? 12, freezes: saved?.freezes ?? 1 };
-    } catch {
-      return { name: 'Tokhirbek', xp: 1450, dailyXp: 60, streak: 12, freezes: 1 };
-    }
-  });
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState(profile.name);
-
-  const [ownedItems, setOwnedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_owned_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
-  });
-  const [equippedItems, setEquippedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_equipped_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
-  });
-
-  const [completedIds, setCompletedIds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_completed')) || []; } catch { return []; }
-  });
-  const [memos, setMemos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_memos')) || {}; } catch { return {}; }
-  });
-
-  useEffect(() => { localStorage.setItem('hs_profile', JSON.stringify(profile)); }, [profile]);
-  useEffect(() => { localStorage.setItem('hs_completed', JSON.stringify(completedIds)); }, [completedIds]);
-  useEffect(() => { localStorage.setItem('hs_memos', JSON.stringify(memos)); }, [memos]);
-  useEffect(() => { localStorage.setItem('hs_mistakes', JSON.stringify(mistakes)); }, [mistakes]);
-  useEffect(() => { localStorage.setItem('hs_planner', JSON.stringify(plannerTasks)); }, [plannerTasks]);
-
-  const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
-
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const speakKo = (text) => {
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[\(\)\[\]~]/g, '').trim());
-      u.lang = 'ko-KR';
-      u.onstart = () => setIsAiSpeaking(true);
-      u.onend = () => setIsAiSpeaking(false);
-      window.speechSynthesis.speak(u);
-    } catch {
-      setIsAiSpeaking(false);
-    }
-  };
-
-  const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B].filter(Boolean);
-  const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
-  const allLessons = snuBooks.flatMap(b => b.lessons || []);
-  const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
-  const allWords = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
-  const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
-
-  // --- LIVE 3D AI TUTOR VOICE STATE ---
-  const [aiMessages, setAiMessages] = useState([
-    { role: 'ai', ko: '안녕하세요! 저는 토히르벡 AI에요. 마이크를 누르고 대화해봐요!', uz: 'Assalomu alaykum! Men 토히르벡 AI man. Mikrofonni bosib gaplashing!' }
   ]);
-  const [aiInput, setAiInput] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatError, setChatError] = useState("");
   const chatEndRef = useRef(null);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiLoading]);
+  useEffect(() => localStorage.setItem(STORAGE.done, JSON.stringify(done)), [done]);
+  useEffect(() => localStorage.setItem(STORAGE.xp, JSON.stringify(xp)), [xp]);
+  useEffect(() => localStorage.setItem(STORAGE.saved, JSON.stringify(savedWords)), [savedWords]);
+  useEffect(() => localStorage.setItem(STORAGE.name, JSON.stringify(userName)), [userName]);
+  useEffect(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), [chatHistory, chatBusy]);
 
-  const handleVoiceInput = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      alert("Brauzeringiz ovozli kiritishni qo‘llab-quvvatlamaydi.");
-      return;
+  const courseLessons = useMemo(
+    () => LESSONS.filter((lesson) => lesson.course === course),
+    [course]
+  );
+
+  const completedCount = done.length;
+  const progress = Math.min(
+    100,
+    Math.round((completedCount / Math.max(LESSONS.length, 1)) * 100)
+  );
+
+  const filteredWords = useMemo(
+    () => WORDS.filter((w) =>
+      `${w.ko} ${w.uz} ${w.type}`.toLowerCase().includes(wordSearch.toLowerCase())
+    ),
+    [wordSearch]
+  );
+
+  function completeLesson(lesson) {
+    if (!done.includes(lesson.id)) {
+      setDone((current) => [...current, lesson.id]);
+      setXp((current) => current + 20);
     }
-    const rec = new SR();
-    rec.lang = 'ko-KR';
-    rec.interimResults = false;
-    setIsRecording(true);
-    rec.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      setAiInput(transcript);
-      setIsRecording(false);
-      handleAiSend(transcript);
-    };
-    rec.onerror = () => setIsRecording(false);
-    rec.start();
-  };
 
-  const handleAiSend = async (preset) => {
-    const text = (preset || aiInput).trim();
-    if (!text || aiLoading) return;
-    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
-    setAiInput('');
-    setAiLoading(true);
-    setPlannerTasks(prev => prev.map(task => task.id === 3 ? { ...task, done: true } : task));
-    
-    setTimeout(() => {
-      let replyKo = `"${text}" — 아주 좋은 표현이에요! 함께 연습해봐요.`;
-      let replyUz = `Ajoyib! Buni birga mashq qilamiz.`;
-      if (text.toLowerCase().includes('salom') || text.includes('안녕하세요')) {
-        replyKo = '안녕하세요! 만나서 반가워요. 오늘 기분이 어때요?';
-        replyUz = 'Assalomu alaykum! Tanishganimdan xursandman. Bugun kayfiyatingiz qanday?';
-      }
-      setAiMessages(prev => [...prev, { role: 'ai', ko: replyKo, uz: replyUz }]);
-      speakKo(replyKo);
-      setAiLoading(false);
-    }, 600);
-  };
+    setActiveLesson(null);
+    setQuizChoice("");
+    setQuizChecked(false);
+  }
 
-  const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
-  const [doneSec, setDoneSec] = useState({ rule: false, struct: false });
-  const [revealed, setRevealed] = useState({});
-  const [quizList, setQuizList] = useState([]);
-  const [qIdx, setQIdx] = useState(0);
-  const [qAnswer, setQAnswer] = useState(null);
-
-  const toggleItem = (key, ko) => { speakKo(ko); setRevealed(p => ({ ...p, [key]: !p[key] })); };
-  const startLesson = (lesson) => {
-    setActiveLesson(lesson);
-    setRevealed({});
-    const shuffled = shuffleArray(lesson.quizzes || []).map(q => ({ ...q, opts: shuffleArray(q.opts) }));
-    setQuizList(shuffled);
-    setQIdx(0);
-    setQAnswer(null);
-    setScreen('lesson');
-  };
-
-  const t = {
-    bg: isDark ? 'bg-[#0b0f19] text-slate-100' : 'bg-[#faf8f9] text-[#1e1e1e]',
-    card: isDark ? 'bg-[#141a29] border-slate-800' : 'bg-white border-slate-200 shadow-2xs',
-    sub: isDark ? 'bg-[#1c2438] border-slate-700' : 'bg-[#fafafa] border-slate-200',
-    nav: isDark ? 'bg-[#0f1524]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200',
-    textMain: isDark ? 'text-white' : 'text-[#1e1e1e]',
-    textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
-  };
-
-  // --- AUTH SCREEN ---
-  if (!currentUser) {
-    return (
-      <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 pt-10 font-sans`}>
-        <div className="max-w-md w-full mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
-            <div>
-              <span className={`font-black text-lg ${t.textMain}`}>ZiyoPrep</span>
-              <span className="text-[10px] font-black text-emerald-500 block">한글 스튜디오</span>
-            </div>
-          </div>
-          <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>{isDark ? <Sun size={16} /> : <Moon size={16} />}</button>
-        </div>
-
-        <div className="max-w-md w-full mx-auto my-auto text-center space-y-6">
-          {authMode === 'welcome' && (
-            <>
-              <div className="w-36 h-36 mx-auto"><ZiyoOwlAvatar className="w-full h-full rounded-[36px]" /></div>
-              <h1 className={`text-2xl font-black ${t.textMain}`}>ZiyoPrep bilan koreys tilini o‘rganing!</h1>
-              <div className="space-y-3">
-                <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-sm uppercase shadow">Tezkor kirish (Mehmon)</button>
-                <button onClick={() => { setAuthError(''); setAuthMode('google'); }} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain}`}>Google bilan davom etish</button>
-                <div className="flex justify-center gap-4 pt-2">
-                  <button onClick={() => { setAuthError(''); setAuthMode('login'); }} className="text-xs font-black text-emerald-600">Email orqali kirish</button>
-                  <span className="text-slate-300">|</span>
-                  <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className="text-xs font-black text-indigo-500">Ro‘yxatdan o‘tish</button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {authMode === 'google' && (
-            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
-              <button onClick={() => setAuthMode('welcome')} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
-              <h2 className={`font-black text-base ${t.textMain}`}>Google hisob</h2>
-              {authError && <div className="text-rose-500 text-xs">{authError}</div>}
-              <form onSubmit={handleGoogleSubmit} className="space-y-3">
-                <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <input type="email" placeholder="Gmail manzilingiz" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <button type="submit" className="w-full py-3 rounded-2xl bg-blue-600 text-white font-black text-xs">Tasdiqlash</button>
-              </form>
-            </div>
-          )}
-
-          {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && (
-            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
-              <button onClick={() => { setAuthError(''); setResetSuccess(''); setAuthMode('welcome'); }} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
-              <h2 className={`font-black text-base ${t.textMain}`}>
-                {authMode === 'login' ? 'Tizimga kirish' : authMode === 'register' ? 'Ro‘yxatdan o‘tish' : 'Parolni tiklash'}
-              </h2>
-              {authError && <div className="text-rose-500 text-xs">{authError}</div>}
-              {resetSuccess && <div className="text-emerald-500 text-xs">{resetSuccess}</div>}
-              <form onSubmit={handleEmailAuth} className="space-y-3">
-                {authMode === 'register' && <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />}
-                <input type="email" placeholder="Email" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <input type="password" placeholder={authMode === 'forgot' ? "Yangi parol" : "Parol"} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <button type="submit" className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs">
-                  {authMode === 'login' ? 'Kirish' : authMode === 'register' ? 'Yaratish' : 'Yangilash'}
-                </button>
-              </form>
-              {authMode === 'login' && (
-                <div className="flex justify-between pt-1 text-xs">
-                  <button onClick={() => setAuthMode('forgot')} className="text-slate-400">Parolni unutdingizmi?</button>
-                  <button onClick={() => setAuthMode('register')} className="text-emerald-600 font-bold">Ro‘yxatdan o‘tish</button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="text-center text-[11px] text-slate-400">ZiyoPrep</div>
-      </div>
+  function toggleSaved(word) {
+    setSavedWords((current) =>
+      current.some((w) => w.ko === word.ko)
+        ? current.filter((w) => w.ko !== word.ko)
+        : [...current, word]
     );
   }
 
-  // --- HOME SCREEN ---
-  const renderHome = () => {
-    const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
-    return (
-      <div className="space-y-4 pb-28">
-        <div className="flex justify-between items-center pt-2">
-          <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
-            <div>
-              <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
-              <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오 • 1A–6B</span>
-            </div>
-          </div>
-          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
-        </div>
+  async function sendChat(event) {
+    event?.preventDefault();
 
-        <div className={`rounded-3xl ${t.card} border p-4 flex items-center gap-3.5`}>
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0" equipped={equippedItems} />
-          <div className="flex-1 space-y-2">
-            <div className="flex justify-between items-center">
-              <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
-              <span className="text-[11px] font-black text-emerald-600">{profile.dailyXp}/100 XP</span>
-            </div>
-            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
-              <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
-            </div>
-            <div className="text-[10px] text-slate-400">🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP</div>
-          </div>
-        </div>
+    const message = chatInput.trim();
+    if (!message || chatBusy) return;
 
-        <button onClick={() => startLesson(nextLesson)} className="w-full py-3.5 px-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs flex items-center justify-center gap-2">
-          <Play size={13} className="fill-white" /> Davom etish ({nextLesson.title})
-        </button>
-
-        {/* PLANNER */}
-        <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
-          <div className="flex justify-between items-center text-xs font-black">
-            <span className="flex items-center gap-1.5 text-indigo-500"><Target size={14} /> Kunlik O‘quv Rejasi</span>
-            <span className="text-[10px] text-slate-400">{plannerTasks.filter(p => p.done).length}/{plannerTasks.length}</span>
-          </div>
-          <div className="space-y-1.5">
-            {plannerTasks.map(task => (
-              <div key={task.id} onClick={() => {
-                setPlannerTasks(prev => prev.map(p => p.id === task.id ? { ...p, done: !p.done } : p));
-                if (!task.done) setProfile(p => ({ ...p, xp: p.xp + task.xp }));
-              }} className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer text-xs ${task.done ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' : `${t.sub} ${t.textMain}`}`}>
-                <div className="flex items-center gap-2">
-                  <CheckSquare size={14} className={task.done ? 'text-emerald-500' : 'text-slate-400'} />
-                  <span className={task.done ? 'line-through opacity-75' : ''}>{task.title}</span>
-                </div>
-                <span className="text-[10px] font-bold text-sky-500">+{task.xp} XP</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }} className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center">단어</div>
-            <div>
-              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar & Savol-Javob ({allVocabWords.length}+ so‘z)</div>
-              <div className="text-[10px] text-slate-400">서울대 1A–6A barcha lug'atlar</div>
-            </div>
-          </div>
-          <span className="text-indigo-500 font-black text-xs">Ochish ›</span>
-        </div>
-
-        {/* 12 BOOKS */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {snuBooks.map((b) => (
-            <button key={b.code} onClick={() => setSelectedBookCode(b.code)} className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 ${b.code === selectedBookCode ? 'bg-[#58cc02] text-white border-2 border-emerald-600' : `${t.card} border`}`}>
-              {b.code}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-2.5">
-          {currentBook.lessons.map((lesson) => {
-            const isDone = completedIds.includes(lesson.id);
-            return (
-              <div key={lesson.id} onClick={() => startLesson(lesson)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer`}>
-                <div className="flex items-center gap-3">
-                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : 'bg-blue-100 text-blue-700'}`}>{lesson.num}</span>
-                  <div>
-                    <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
-                    <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
-                  </div>
-                </div>
-                {isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : <span className="text-slate-300">›</span>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  // --- VOCABULARY SCREEN ---
-  const renderVocab = () => {
-    const vBook = vocabBooks.find(b => b.code === selectedVocabBook) || vocabBooks[0];
-    const filteredWords = allVocabWords.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
-
-    return (
-      <div className="space-y-3.5 pb-28">
-        <div className="flex justify-between pt-2">
-          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Lug‘atlar</button>
-        </div>
-        <div className="relative">
-          <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
-          <input type="text" value={vocabSearch} onChange={e => setVocabSearch(e.target.value)} placeholder="So‘z qidirish..." className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`} />
-        </div>
-        <div className="space-y-1.5">
-          {filteredWords.slice(0, 40).map((w, idx) => (
-            <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
-              <div>
-                <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
-                <div className="text-xs text-slate-400">{w.uz}</div>
-              </div>
-              <Volume2 size={16} className="text-indigo-500" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // --- BUILDER SCREEN ---
-  const renderBuilder = () => (
-    <div className="space-y-3.5 pb-28">
-      <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Harf Yig‘ish</button>
-      <div className={`rounded-3xl ${t.card} border p-8 text-center`}>
-        <div className={`text-6xl font-black ${t.textMain}`}>한글</div>
-        <p className="text-xs text-slate-400 mt-2">Hangul alifbosi va bo'g'in yig'ish</p>
-      </div>
-    </div>
-  );
-
-  // --- LESSON SCREEN ---
-  const renderLesson = () => {
-    if (!activeLesson) return null;
-    const currentQ = quizList[qIdx];
-    return (
-      <div className="space-y-3.5 pb-28">
-        <button onClick={() => setScreen('home')} className="text-xs font-black text-slate-400"><ArrowLeft size={15} /> Orqaga</button>
-        <div className={`rounded-2xl ${t.card} border p-4`}>
-          <div className={`text-base font-black ${t.textMain}`}>{activeLesson.title}</div>
-        </div>
-        {currentQ && (
-          <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
-            <div className={`text-sm font-black ${t.textMain}`}>{currentQ.q}</div>
-            <div className="space-y-2">
-              {currentQ.opts.map(opt => (
-                <button key={opt} onClick={() => {
-                  if (opt === currentQ.ans) {
-                    setProfile(p => ({ ...p, xp: p.xp + 10 }));
-                    alert("To'g'ri! 🎉 (+10 XP)");
-                    if (qIdx + 1 < quizList.length) setQIdx(qIdx + 1);
-                    else { setCompletedIds(p => [...new Set([...p, activeLesson.id])]); setScreen('home'); }
-                  } else {
-                    setMistakes(m => [...m, { ko: currentQ.ans, uz: currentQ.q }]);
-                    alert("Xato! Odatlar daftariga qo'shildi.");
-                  }
-                }} className={`w-full p-3 rounded-2xl border text-xs font-bold ${t.sub} ${t.textMain}`}>{opt}</button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // --- 🎙️ LIVE 3D AI TUTOR (EMMA / 토히르벡 3D AI VIBE - PASTGA TUSHIRILGAN) ---
-  const renderAiTutor = () => (
-    <div className="flex flex-col h-[84vh] pb-20 pt-1">
-      <div className="flex items-center justify-between pb-1.5">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-          <h2 className={`font-black text-xs ${t.textMain}`}>Live AI Tutor — 토히르벡</h2>
-        </div>
-      </div>
-
-      <div className={`rounded-2xl ${t.card} border p-3 text-center space-y-1 flex flex-col items-center shrink-0`}>
-        <LiveAiAvatar isSpeaking={isAiSpeaking} isListening={isRecording} />
-        <div className={`text-sm font-black ${t.textMain}`}>토히르벡 AI</div>
-        <div className="text-[10px] text-emerald-500 font-bold">
-          {isRecording ? "🎤 Eshitilmoqda..." : isAiSpeaking ? "🔊 Gapirmoqda..." : "Suhbat uchun mikrofonni bosing"}
-        </div>
-      </div>
-
-      <div className={`flex-1 overflow-y-auto rounded-2xl ${t.card} border p-3 space-y-2 mt-2`}>
-        {aiMessages.map((m, idx) => (
-          <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
-              {m.ko && <div className="font-black">{m.ko}</div>}
-              {m.uz && <div className="text-[10px] opacity-90">{m.uz}</div>}
-            </div>
-          </div>
-        ))}
-        {aiLoading && <div className="text-xs text-slate-400 animate-pulse text-center">토히르벡 o‘ylamoqda...</div>}
-        <div ref={chatEndRef} />
-      </div>
-
-      <div className="pt-2 flex gap-2 items-center shrink-0">
-        <button onClick={handleVoiceInput} className={`p-3.5 rounded-full text-white shadow-lg ${isRecording ? 'bg-rose-600 animate-pulse scale-110' : 'bg-emerald-500'}`}>
-          <Mic size={20} />
-        </button>
-        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Yoki xabar yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
-        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-3.5 py-3 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={16} /></button>
-      </div>
-    </div>
-  );
-
-  // --- REVIEW SCREEN ---
-  const renderReview = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className="flex justify-between items-center text-xs font-black px-1">
-        <span className={t.textMain}>📌 Xatolar daftari</span>
-        {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
-      </div>
-      {mistakes.length === 0 ? (
-        <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
-      ) : (
-        mistakes.map((m, idx) => (
-          <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
-            <div>
-              <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
-              <div className="text-xs text-slate-400">{m.uz}</div>
-            </div>
-            <Volume2 size={16} className="text-rose-500" />
-          </div>
-        ))
-      )}
-    </div>
-  );
-
-  // --- PROFILE SCREEN ---
-  const renderProfile = () => {
-    const shopItems = [
-      { id: 'glasses', icon: '🕶️', name: 'Aqlli Ko‘zoynak', price: 200 },
-      { id: 'gradCap', icon: '🎓', name: 'TOPIK 6 Qalpoqchasi', price: 400 },
-      { id: 'crown', icon: '👑', name: 'Oltin Qirollik Toji', price: 700 }
+    const nextHistory = [
+      ...chatHistory,
+      { role: "user", ko: message, uz: message }
     ];
 
-    return (
-      <div className="space-y-4 pb-28 pt-2">
-        <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
-          <div className="flex items-center gap-3.5">
-            <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
-            <div>
-              {editingName ? (
-                <div className="flex gap-1.5">
-                  <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs`} />
-                  <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs rounded-xl">OK</button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                  <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
-                </div>
-              )}
-              <p className="text-xs text-slate-400">{currentUser?.email}</p>
-            </div>
-          </div>
-          <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
-        </div>
+    setChatHistory(nextHistory);
+    setChatInput("");
+    setChatBusy(true);
+    setChatError("");
 
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-            <Flame size={20} className="mx-auto text-amber-500" />
-            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
-            <div className="text-[10px] text-slate-400">Streak</div>
-          </div>
-          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-            <Zap size={20} className="mx-auto text-sky-500" />
-            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-            <div className="text-[10px] text-slate-400">XP</div>
-          </div>
-          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-            <Award size={20} className="mx-auto text-indigo-500" />
-            <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
-            <div className="text-[10px] text-slate-400">Daraja</div>
-          </div>
-        </div>
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          userName,
+          history: chatHistory.slice(-8),
+        }),
+      });
 
-        <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
-      </div>
-    );
-  };
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.uz || data?.error || `HTTP ${response.status}`);
+      }
+
+      if (
+        data?.uz?.startsWith("AI xatosi") ||
+        data?.uz?.startsWith("Server xatosi")
+      ) {
+        throw new Error(data.uz);
+      }
+
+      setChatHistory((current) => [
+        ...current,
+        {
+          role: "assistant",
+          ko: data.ko || "답변을 준비하지 못했어요.",
+          uz: data.uz || data.ko || "Javob olinmadi."
+        }
+      ]);
+    } catch (error) {
+      setChatError(
+        error.message || "AI bilan bog‘lanib bo‘lmadi. Keyinroq urinib ko‘ring."
+      );
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ko-KR";
+    utterance.rate = 0.88;
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  const styles = `
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Noto+Sans+KR:wght@500;600;700;800;900&display=swap');
+
+    * { box-sizing: border-box; }
+
+    :root {
+      font-family: Nunito, 'Noto Sans KR', sans-serif;
+      color: #17243a;
+      background: #f8f9fc;
+    }
+
+    body {
+      margin: 0;
+      background: #f8f9fc;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      min-height: 100vh;
+      background: ${dark ? "#111827" : "#f8f9fc"};
+      color: ${dark ? "#f3f4f6" : "#17243a"};
+      padding-bottom: 94px;
+      transition: .2s;
+    }
+
+    .wrap {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 24px 22px 30px;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 19px;
+      background: linear-gradient(145deg, #b7efff, #d9f8eb);
+      display: grid;
+      place-items: center;
+      font-size: 31px;
+      box-shadow: 0 5px 12px #1e293b18;
+    }
+
+    .brand h1 {
+      font-size: 27px;
+      line-height: 1;
+      margin: 0;
+      font-weight: 1000;
+      letter-spacing: -1px;
+    }
+
+    .brand p {
+      margin: 6px 0 0;
+      color: #0aa477;
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .topActions { display: flex; gap: 9px; }
+
+    .pill, .round {
+      border: 1px solid #e1e8f1;
+      background: ${dark ? "#1f2937" : "#fff"};
+      color: inherit;
+      border-radius: 24px;
+      padding: 11px 15px;
+      font-weight: 900;
+    }
+
+    .round {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero {
+      border: 1px solid #ccebd1;
+      background: linear-gradient(110deg, #eefbea, #e7f6ff);
+      border-radius: 29px;
+      padding: 19px;
+      display: flex;
+      align-items: center;
+      gap: 17px;
+      color: #17243a;
+      margin-bottom: 22px;
+    }
+
+    .avatar {
+      width: 92px;
+      height: 92px;
+      flex: 0 0 92px;
+      border-radius: 25px;
+      background: linear-gradient(145deg, #c9f4ff, #d9f9df);
+      display: grid;
+      place-items: center;
+      font-size: 48px;
+      border: 4px solid #fff;
+      box-shadow: 0 5px 12px #1e293b18;
+    }
+
+    .heroMain { flex: 1; min-width: 0; }
+
+    .heroLine {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 1000;
+    }
+
+    .heroLine strong { font-size: 18px; }
+    .xp { color: #059b70; white-space: nowrap; }
+
+    .bar {
+      height: 11px;
+      background: #fff;
+      border: 1px solid #dce8e3;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    .bar span {
+      height: 100%;
+      display: block;
+      background: #55c900;
+      border-radius: 20px;
+    }
+
+    .muted { color: #8292a9; }
+
+    .stats {
+      font-size: 14px;
+      font-weight: 900;
+      color: #70819a;
+    }
+
+    .sectionHead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0 12px;
+    }
+
+    .sectionHead h2 {
+      font-size: 19px;
+      margin: 0;
+      font-weight: 1000;
+    }
+
+    .link {
+      border: 0;
+      background: none;
+      color: #079c71;
+      font-weight: 900;
+    }
+
+    .continue {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      text-align: left;
+      border: 1px solid #e0e8f2;
+      background: ${dark ? "#1f2937" : "#fff"};
+      color: inherit;
+      padding: 17px 18px;
+      border-radius: 22px;
+      font-weight: 1000;
+      font-size: 16px;
+      box-shadow: 0 2px 5px #1e293b05;
+    }
+
+    .play {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: #55c900;
+      font-size: 22px;
+    }
+
+    .featureGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 17px 0;
+    }
+
+    .feature {
+      min-height: 142px;
+      border-radius: 25px;
+      border: 1px solid;
+      padding: 17px;
+      text-align: left;
+      color: inherit;
+      background: ${dark ? "#1f2937" : "#fff"};
+    }
+
+    .feature.purple {
+      border-color: #d9d0ff;
+      background: ${dark ? "#27243c" : "#f2efff"};
+    }
+
+    .feature.blue {
+      border-color: #c9e7fa;
+      background: ${dark ? "#1e3040" : "#edf7ff"};
+    }
+
+    .feature.green {
+      border-color: #d3ead8;
+      background: ${dark ? "#1e352a" : "#eff9f0"};
+    }
+
+    .featureIcon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: #5746e8;
+      color: white;
+      font-size: 23px;
+      margin-bottom: 11px;
+    }
+
+    .feature.blue .featureIcon { background: #10a8df; }
+    .feature.green .featureIcon { background: #4d9277; }
+
+    .feature b {
+      display: block;
+      font-size: 16px;
+      font-weight: 1000;
+    }
+
+    .feature small {
+      display: block;
+      color: #8091a8;
+      font-weight: 800;
+      margin-top: 5px;
+      line-height: 1.35;
+    }
+
+    .courseScroller {
+      display: flex;
+      gap: 9px;
+      overflow: auto;
+      padding: 4px 0 9px;
+      scrollbar-width: none;
+    }
+
+    .courseScroller::-webkit-scrollbar { display: none; }
+
+    .courseBtn {
+      border: 0;
+      background: #f8dfe4;
+      color: #8e3348;
+      padding: 11px 16px;
+      border-radius: 14px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .courseBtn.active {
+      background: ${dark ? "#263b35" : "#fff"};
+      color: #17243a;
+      outline: 3px solid #222;
+      outline-offset: -3px;
+    }
+
+    .courseMeta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #8ea0b8;
+      font-size: 13px;
+      font-weight: 900;
+      margin: 5px 0 14px;
+    }
+
+    .lessonList { display: grid; gap: 12px; }
+
+    .lesson {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      width: 100%;
+      border: 1px solid #e0e8f2;
+      background: ${dark ? "#1f2937" : "#fff"};
+      color: inherit;
+      text-align: left;
+      padding: 15px;
+      border-radius: 23px;
+    }
+
+    .lessonNum {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: #e1edff;
+      color: #2460db;
+      font-size: 18px;
+      font-weight: 1000;
+      flex: 0 0 42px;
+    }
+
+    .lesson.done .lessonNum {
+      background: #55c900;
+      color: white;
+    }
+
+    .lessonEmoji { font-size: 23px; }
+    .lessonText { flex: 1; min-width: 0; }
+
+    .lessonText b {
+      display: block;
+      font-size: 15px;
+      font-weight: 1000;
+    }
+
+    .lessonText small {
+      display: block;
+      color: #91a0b5;
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .lessonArrow { color: #0a9e72; font-weight: 1000; }
+
+    .panel {
+      border: 1px solid #e1e9f2;
+      background: ${dark ? "#1f2937" : "#fff"};
+      border-radius: 25px;
+      padding: 18px;
+      margin-top: 15px;
+    }
+
+    .panel h2 { margin: 0 0 7px; font-size: 21px; }
+    .panel p { color: #8292a9; font-weight: 700; }
+
+    .search {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #dfe7f0;
+      border-radius: 16px;
+      background: ${dark ? "#111827" : "#f8fafc"};
+      color: inherit;
+      outline: none;
+      margin: 10px 0 14px;
+    }
+
+    .wordRow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #edf0f5;
+    }
+
+    .wordRow:last-child { border: 0; }
+    .wordInfo { flex: 1; }
+
+    .wordInfo b {
+      display: block;
+      font-size: 19px;
+    }
+
+    .wordInfo small {
+      color: #8494aa;
+      font-weight: 800;
+    }
+
+    .save {
+      border: 1px solid #dfe7ef;
+      background: transparent;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: #0a9e72;
+      font-weight: 900;
+    }
+
+    .chatPanel {
+      height: min(58vh, 560px);
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      padding: 16px;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 14px 16px;
+      border-radius: 20px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-weight: 700;
+    }
+
+    .bubble.ai {
+      align-self: flex-start;
+      background: ${dark ? "#263345" : "#f2f5f8"};
+      border-bottom-left-radius: 6px;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: #55c900;
+      color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+
+    .bubble small {
+      display: block;
+      margin-top: 8px;
+      color: #8292a9;
+      font-weight: 900;
+    }
+
+    .bubble.user small { color: #efffe5; }
+
+    .chatForm {
+      display: flex;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .chatForm input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #dfe7f0;
+      border-radius: 17px;
+      padding: 15px;
+      background: ${dark ? "#1f2937" : "#fff"};
+      color: inherit;
+      outline: none;
+    }
+
+    .send {
+      width: 54px;
+      border: 0;
+      border-radius: 17px;
+      background: #55c900;
+      color: white;
+      display: grid;
+      place-items: center;
+    }
+
+    .suggestions {
+      display: flex;
+      gap: 8px;
+      overflow: auto;
+      margin: 12px 0;
+    }
+
+    .suggestion {
+      border: 1px solid #dfe7f0;
+      background: ${dark ? "#1f2937" : "#fff"};
+      border-radius: 20px;
+      padding: 9px 13px;
+      white-space: nowrap;
+      font-weight: 800;
+      color: inherit;
+    }
+
+    .bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      background: ${dark ? "#111827ee" : "#ffffffed"};
+      backdrop-filter: blur(12px);
+      border-top: 1px solid #e4eaf2;
+    }
+
+    .nav {
+      width: min(100%, 760px);
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 9px 8px 12px;
+    }
+
+    .nav button {
+      border: 0;
+      background: none;
+      color: #71829b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 1000;
+      padding: 5px 0;
+    }
+
+    .nav button.active { color: #55c900; }
+
+    .nav .aiNav {
+      color: #fff;
+      background: #55c900;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      justify-self: center;
+      margin-top: -24px;
+      border: 5px solid ${dark ? "#111827" : "#f8f9fc"};
+      box-shadow: 0 4px 12px #1e293b25;
+      font-size: 22px;
+    }
+
+    .modalBack {
+      position: fixed;
+      inset: 0;
+      background: #0b172a88;
+      z-index: 20;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .modal {
+      width: min(100%, 620px);
+      max-height: 88vh;
+      overflow: auto;
+      background: ${dark ? "#172033" : "#fff"};
+      color: inherit;
+      border-radius: 28px 28px 20px 20px;
+      padding: 22px;
+    }
+
+    .modalTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .modalTop h2 { margin: 0; font-size: 21px; }
+
+    .close {
+      border: 0;
+      background: #eef2f7;
+      color: #26344a;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+    }
+
+    .tag {
+      display: inline-flex;
+      padding: 7px 11px;
+      border-radius: 12px;
+      background: #e9f8ef;
+      color: #098b62;
+      font-size: 12px;
+      font-weight: 1000;
+      margin: 8px 5px 8px 0;
+    }
+
+    .example {
+      background: #f1f8ff;
+      border-radius: 17px;
+      padding: 15px;
+      margin: 14px 0;
+      color: #17243a;
+    }
+
+    .primary {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 15px;
+      background: #55c900;
+      color: white;
+      font-weight: 1000;
+      font-size: 16px;
+      margin-top: 12px;
+    }
+
+    .choice {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #dfe7f0;
+      border-radius: 15px;
+      background: transparent;
+      color: inherit;
+      padding: 13px;
+      margin: 6px 0;
+      font-weight: 800;
+    }
+
+    .choice.selected {
+      border: 2px solid #55c900;
+      background: #f0ffe8;
+    }
+
+    .correct { color: #0a9e72; font-weight: 1000; }
+    .wrong { color: #e05b5b; font-weight: 1000; }
+
+    .profileHero {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .profileAvatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 23px;
+      background: #dff7ec;
+      display: grid;
+      place-items: center;
+      font-size: 39px;
+    }
+
+    .statGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .stat {
+      background: ${dark ? "#263345" : "#f5f8fb"};
+      border-radius: 17px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat b { display: block; font-size: 22px; }
+    .stat small { color: #8797ad; font-weight: 800; }
+
+    @media (max-width: 480px) {
+      .wrap { padding: 18px 15px 25px; }
+      .brand h1 { font-size: 23px; }
+      .hero { padding: 14px; gap: 11px; }
+      .avatar {
+        width: 70px;
+        height: 70px;
+        flex-basis: 70px;
+        font-size: 37px;
+      }
+      .heroLine {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .feature { padding: 14px; min-height: 136px; }
+      .feature b { font-size: 14px; }
+      .courseMeta { font-size: 11px; }
+      .lesson { padding: 13px; }
+      .lessonText b { font-size: 14px; }
+    }
+  `;
 
   return (
-    <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
-      <main className="max-w-md mx-auto px-4 pt-8 pb-2">
-        {screen === 'home' && renderHome()}
-        {screen === 'vocab' && renderVocab()}
-        {screen === 'builder' && renderBuilder()}
-        {screen === 'lesson' && renderLesson()}
-        {screen === 'ai' && renderAiTutor()}
-        {screen === 'review' && renderReview()}
-        {screen === 'profile' && renderProfile()}
+    <div className="app">
+      <style>{styles}</style>
+
+      <main className="wrap">
+        <header className="top">
+          <div className="brand">
+            <div className="logo" aria-label="ZiyoPrep mascot">🦉</div>
+            <div>
+              <h1>ZiyoPrep</h1>
+              <p>한글 스튜디오 • 1A–6B</p>
+            </div>
+          </div>
+
+          <div className="topActions">
+            <button className="pill" onClick={() => setTab("profile")}>
+              🌐 O‘zbekcha
+            </button>
+            <button
+              className="round"
+              aria-label="Theme"
+              onClick={() => setDark((v) => !v)}
+            >
+              <Icon name={dark ? "sun" : "moon"} />
+            </button>
+          </div>
+        </header>
+
+        {tab === "learn" && (
+          <>
+            <section className="hero">
+              <div className="avatar">🦉📘</div>
+
+              <div className="heroMain">
+                <div className="heroLine">
+                  <strong>Salom, {userName}! 👋</strong>
+                  <span className="xp">{xp} XP</span>
+                </div>
+
+                <div className="bar">
+                  <span
+                    style={{
+                      width: `${Math.max(8, Math.min(100, xp % 100 || 100))}%`
+                    }}
+                  />
+                </div>
+
+                <div className="stats">
+                  🔥 12 kunlik streak&nbsp; • &nbsp;⚡ {xp} XP&nbsp; • &nbsp;❄️ 3
+                </div>
+              </div>
+            </section>
+
+            <button
+              className="continue"
+              onClick={() =>
+                setActiveLesson(
+                  courseLessons.find((l) => !done.includes(l.id)) ||
+                  courseLessons[0] ||
+                  LESSONS[0]
+                )
+              }
+            >
+              <span className="play">▶</span>
+              <span style={{ flex: 1 }}>
+                Davom etish
+                <small
+                  className="muted"
+                  style={{ display: "block", marginTop: 3 }}
+                >
+                  Oxirgi darsingizni davom ettiring
+                </small>
+              </span>
+              <Icon name="arrow" />
+            </button>
+
+            <div className="featureGrid">
+              <button
+                className="feature purple"
+                onClick={() => setTab("words")}
+              >
+                <span className="featureIcon">단어장</span>
+                <b>📚 Lug‘atlar & Savol-Javob</b>
+                <small>So‘zlarni o‘rganish va takrorlash</small>
+              </button>
+
+              <button
+                className="feature blue"
+                onClick={() => setTab("ai")}
+              >
+                <span className="featureIcon">
+                  <Icon name="spark" size={25} />
+                </span>
+                <b>🎭 Dialog Simulator</b>
+                <small>Kafe, shifoxona, suhbat</small>
+              </button>
+
+              <button
+                className="feature green"
+                onClick={() => setTab("practice")}
+              >
+                <span className="featureIcon">가나다</span>
+                <b>글자 조립 (Harf)</b>
+                <small>Bo‘g‘in yig‘ish va talaffuz</small>
+              </button>
+
+              <button
+                className="feature"
+                style={{ borderColor: "#d8e8fa" }}
+                onClick={() => setTab("ai")}
+              >
+                <span
+                  className="featureIcon"
+                  style={{ background: "#0aa477" }}
+                >
+                  AI
+                </span>
+                <b>Ziyo AI Tutor</b>
+                <small>Istalgan savolingizni bering</small>
+              </button>
+            </div>
+
+            <div className="sectionHead">
+              <h2>📖 Koreys tili kurslari</h2>
+              <span
+                className="muted"
+                style={{ fontWeight: 900, fontSize: 12 }}
+              >
+                {completedCount}/{LESSONS.length} dars
+              </span>
+            </div>
+
+            <div className="courseScroller">
+              {COURSES.map((c) => (
+                <button
+                  key={c}
+                  className={`courseBtn ${course === c ? "active" : ""}`}
+                  onClick={() => setCourse(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+
+            <div className="courseMeta">
+              <span>서울대 한국어 {course}</span>
+              <span>
+                TOPIK {["1A", "1B"].includes(course) ? "1" : "2"} · Boshlang‘ich kurs
+              </span>
+            </div>
+
+            <div className="lessonList">
+              {courseLessons.length ? (
+                courseLessons.map((lesson, index) => (
+                  <button
+                    key={lesson.id}
+                    className={`lesson ${done.includes(lesson.id) ? "done" : ""}`}
+                    onClick={() => setActiveLesson(lesson)}
+                  >
+                    <span className="lessonNum">
+                      {done.includes(lesson.id) ? "✓" : index + 1}
+                    </span>
+                    <span className="lessonEmoji">{lesson.icon}</span>
+                    <span className="lessonText">
+                      <b>{lesson.title}</b>
+                      <small>{lesson.subtitle}</small>
+                    </span>
+                    <span className="lessonArrow">›</span>
+                  </button>
+                ))
+              ) : (
+                <div className="panel">
+                  <b>{course} kursi</b>
+                  <p>
+                    Bu kurs uchun darslar hali qo‘shilmagan. Hozircha mavjud
+                    namunaviy darslardan foydalaning.
+                  </p>
+                  <button className="primary" onClick={() => setCourse("1A")}>
+                    1A kursiga qaytish
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {tab === "words" && (
+          <>
+            <div className="sectionHead">
+              <h2>📚 Lug‘at daftari</h2>
+              <span className="muted">{savedWords.length} saqlangan</span>
+            </div>
+
+            <div className="panel">
+              <h2>Har kuni yangi so‘zlar</h2>
+              <p>
+                Koreyscha so‘zni eshiting, ma’nosini o‘rganing va keyin takrorlang.
+              </p>
+
+              <input
+                className="search"
+                value={wordSearch}
+                onChange={(e) => setWordSearch(e.target.value)}
+                placeholder="Koreyscha yoki o‘zbekcha qidiring..."
+              />
+
+              {filteredWords.map((word) => (
+                <div className="wordRow" key={word.ko}>
+                  <div className="wordInfo">
+                    <b>{word.ko}</b>
+                    <span>{word.uz}</span>
+                    <small>{word.type} · {word.level}</small>
+                  </div>
+
+                  <button className="save" onClick={() => speak(word.ko)}>
+                    🔊
+                  </button>
+
+                  <button className="save" onClick={() => toggleSaved(word)}>
+                    {savedWords.some((w) => w.ko === word.ko) ? "★" : "☆"}
+                  </button>
+                </div>
+              ))}
+
+              {!filteredWords.length && <p>Bu so‘z topilmadi.</p>}
+            </div>
+
+            {savedWords.length > 0 && (
+              <div className="panel">
+                <h2>⭐ Saqlangan so‘zlar</h2>
+
+                {savedWords.map((w) => (
+                  <div className="wordRow" key={w.ko}>
+                    <div className="wordInfo">
+                      <b>{w.ko}</b>
+                      <small>{w.uz}</small>
+                    </div>
+                    <button className="save" onClick={() => speak(w.ko)}>
+                      🔊
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "ai" && (
+          <>
+            <div className="sectionHead">
+              <h2>✨ Ziyo AI Tutor</h2>
+              <span
+                style={{
+                  color: "#0aa477",
+                  fontWeight: 900,
+                  fontSize: 12
+                }}
+              >
+                ● Jonli AI ulangan
+              </span>
+            </div>
+
+            <div className="panel" style={{ padding: 12 }}>
+              <div className="chatPanel">
+                {chatHistory.map((item, index) =>
+                  item.role === "user" ? (
+                    <div className="bubble user" key={index}>
+                      {item.ko}
+                    </div>
+                  ) : (
+                    <div className="bubble ai" key={index}>
+                      <b>🦉 토히르벡 AI</b>
+                      <div style={{ marginTop: 7 }}>{item.ko}</div>
+                      <small>{item.uz}</small>
+                      <button
+                        className="link"
+                        style={{ padding: "8px 0 0" }}
+                        onClick={() => speak(item.ko)}
+                      >
+                        🔊 Tinglash
+                      </button>
+                    </div>
+                  )
+                )}
+
+                {chatBusy && (
+                  <div className="bubble ai">AI javob tayyorlamoqda…</div>
+                )}
+
+                <div ref={chatEndRef} />
+              </div>
+
+              {chatError && (
+                <p className="wrong" role="alert">{chatError}</p>
+              )}
+
+              <div className="suggestions">
+                {[
+                  "이에요 va 예요 farqi?",
+                  "TOPIK uchun maslahat",
+                  "Koreyscha suhbat qilaylik"
+                ].map((s) => (
+                  <button
+                    className="suggestion"
+                    key={s}
+                    onClick={() => setChatInput(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+
+              <form className="chatForm" onSubmit={sendChat}>
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Savolingizni yozing..."
+                  aria-label="AI savoli"
+                />
+
+                <button
+                  className="send"
+                  type="submit"
+                  disabled={chatBusy || !chatInput.trim()}
+                  aria-label="Yuborish"
+                >
+                  <Icon name="send" />
+                </button>
+              </form>
+            </div>
+          </>
+        )}
+
+        {tab === "practice" && (
+          <>
+            <div className="sectionHead">
+              <h2>🎯 Mashq markazi</h2>
+            </div>
+
+            <div className="featureGrid">
+              <button
+                className="feature green"
+                onClick={() => setActiveLesson(LESSONS[0])}
+              >
+                <span className="featureIcon">가</span>
+                <b>Hangul mashqi</b>
+                <small>Harf va bo‘g‘inlarni o‘rganish</small>
+              </button>
+
+              <button
+                className="feature blue"
+                onClick={() => setTab("ai")}
+              >
+                <span className="featureIcon">
+                  <Icon name="mic" />
+                </span>
+                <b>Speaking</b>
+                <small>AI bilan gaplashish</small>
+              </button>
+
+              <button
+                className="feature purple"
+                onClick={() => setTab("words")}
+              >
+                <span className="featureIcon">가나다</span>
+                <b>Vocabulary</b>
+                <small>So‘zlarni takrorlash</small>
+              </button>
+
+              <button
+                className="feature"
+                onClick={() => setActiveLesson(LESSONS[1])}
+              >
+                <span
+                  className="featureIcon"
+                  style={{ background: "#e49b2c" }}
+                >
+                  TOPIK
+                </span>
+                <b>TOPIK mini test</b>
+                <small>Namunaviy savollar</small>
+              </button>
+            </div>
+
+            <div className="panel">
+              <h2>Bugungi maqsad</h2>
+              <p>
+                Bugun 15 daqiqa shug‘ullaning va ketma-ketlikni davom ettiring.
+              </p>
+              <div className="bar">
+                <span
+                  style={{
+                    width: `${Math.min(100, completedCount * 12)}%`
+                  }}
+                />
+              </div>
+              <b>{Math.min(15, completedCount * 2)} / 15 daqiqa</b>
+            </div>
+          </>
+        )}
+
+        {tab === "profile" && (
+          <>
+            <div className="sectionHead">
+              <h2>👤 Profil</h2>
+            </div>
+
+            <div className="panel">
+              <div className="profileHero">
+                <div className="profileAvatar">🦉</div>
+                <div>
+                  <h2 style={{ margin: 0 }}>{userName}</h2>
+                  <p style={{ margin: "5px 0" }}>ZiyoPrep o‘quvchisi</p>
+                </div>
+              </div>
+
+              <label
+                style={{
+                  display: "block",
+                  marginTop: 20,
+                  fontWeight: 900
+                }}
+              >
+                Ismingiz
+              </label>
+
+              <input
+                className="search"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Ismingiz"
+              />
+
+              <div className="statGrid">
+                <div className="stat">
+                  <b>{xp}</b>
+                  <small>Jami XP</small>
+                </div>
+                <div className="stat">
+                  <b>{completedCount}</b>
+                  <small>Tugallangan dars</small>
+                </div>
+                <div className="stat">
+                  <b>{savedWords.length}</b>
+                  <small>Saqlangan so‘z</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel">
+              <h2>📈 O‘quv progressi</h2>
+              <p>Namunaviy kursdagi darslar bajarilishi</p>
+              <div className="bar">
+                <span style={{ width: `${progress}%` }} />
+              </div>
+              <b>{progress}% yakunlangan</b>
+            </div>
+          </>
+        )}
       </main>
 
-      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
-        <div className="max-w-md mx-auto flex items-center justify-around">
-          <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
-          <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
-          <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
-          <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
-          <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
+      <footer className="bottom">
+        <nav className="nav">
+          <button
+            className={tab === "learn" ? "active" : ""}
+            onClick={() => setTab("learn")}
+          >
+            <Icon name="book" size={24} />
+            <span>학습 · Dars</span>
+          </button>
+
+          <button
+            className={tab === "words" ? "active" : ""}
+            onClick={() => setTab("words")}
+          >
+            <Icon name="words" size={24} />
+            <span>단어 · Lug‘at</span>
+          </button>
+
+          <button
+            className={`aiNav ${tab === "ai" ? "active" : ""}`}
+            onClick={() => setTab("ai")}
+          >
+            <Icon name="spark" size={25} />
+          </button>
+
+          <button
+            className={tab === "practice" ? "active" : ""}
+            onClick={() => setTab("practice")}
+          >
+            <Icon name="repeat" size={24} />
+            <span>복습 · Mashq</span>
+          </button>
+
+          <button
+            className={tab === "profile" ? "active" : ""}
+            onClick={() => setTab("profile")}
+          >
+            <Icon name="user" size={24} />
+            <span>프로필 · Profil</span>
+          </button>
+        </nav>
+      </footer>
+
+      {activeLesson && (
+        <div
+          className="modalBack"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveLesson(null);
+              setQuizChoice("");
+              setQuizChecked(false);
+            }
+          }}
+        >
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeLesson.title}
+          >
+            <div className="modalTop">
+              <h2>{activeLesson.icon} {activeLesson.title}</h2>
+              <button
+                className="close"
+                onClick={() => setActiveLesson(null)}
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <span className="tag">{activeLesson.course} · Koreys tili</span>
+            <span className="tag">+20 XP</span>
+
+            <h3>📌 Grammatika: {activeLesson.grammar}</h3>
+
+            <div className="example">
+              <b>{activeLesson.example}</b>
+              <p style={{ margin: "7px 0 0" }}>{activeLesson.meaning}</p>
+              <button
+                className="link"
+                onClick={() => speak(activeLesson.example)}
+              >
+                🔊 Talaffuzni eshitish
+              </button>
+            </div>
+
+            <h3>🧠 Lug‘at</h3>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {activeLesson.words.map((w) => (
+                <button
+                  className="tag"
+                  key={w}
+                  onClick={() => speak(w)}
+                >
+                  {w} 🔊
+                </button>
+              ))}
+            </div>
+
+            <h3 style={{ marginTop: 20 }}>✏️ Mini test</h3>
+            <p>
+              “Men koreys tilini o‘rganaman” jumlasining koreyschasi qaysi?
+            </p>
+
+            {[
+              "저는 한국어를 공부해요.",
+              "저는 학교에 있어요.",
+              "이거는 사과예요."
+            ].map((choice) => (
+              <button
+                key={choice}
+                className={`choice ${quizChoice === choice ? "selected" : ""}`}
+                onClick={() => {
+                  setQuizChoice(choice);
+                  setQuizChecked(false);
+                }}
+              >
+                {choice}
+              </button>
+            ))}
+
+            {quizChecked && (
+              <p
+                className={
+                  quizChoice === "저는 한국어를 공부해요."
+                    ? "correct"
+                    : "wrong"
+                }
+              >
+                {quizChoice === "저는 한국어를 공부해요."
+                  ? "정답이에요! To‘g‘ri javob! 🎉"
+                  : "다시 해 보세요. Yana urinib ko‘ring."}
+              </p>
+            )}
+
+            {!quizChecked ? (
+              <button
+                className="primary"
+                disabled={!quizChoice}
+                onClick={() => setQuizChecked(true)}
+              >
+                Javobni tekshirish
+              </button>
+            ) : (
+              <button
+                className="primary"
+                onClick={() =>
+                  quizChoice === "저는 한국어를 공부해요."
+                    ? completeLesson(activeLesson)
+                    : setQuizChecked(false)
+                }
+              >
+                {quizChoice === "저는 한국어를 공부해요."
+                  ? "Darsni yakunlash · +20 XP"
+                  : "Qayta urinish"}
+              </button>
+            )}
+          </section>
         </div>
-      </nav>
+      )}
     </div>
   );
 }
