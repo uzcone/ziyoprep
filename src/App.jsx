@@ -106,9 +106,9 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
 // 3D Stildagi Qizaloq Avatar (Emma / 토히르벡 AI)
 function LiveAiAvatar({ isSpeaking, isListening }) {
   return (
-    <div className="relative flex items-center justify-center py-4">
-      <div className={`absolute w-36 h-36 rounded-full bg-emerald-500/20 blur-xl transition-all duration-700 ${isSpeaking || isListening ? 'scale-125 bg-emerald-400/40 animate-pulse' : 'scale-100'}`} />
-      <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-500 shadow-2xl bg-gradient-to-b from-sky-400 to-emerald-600 flex flex-col items-center justify-center p-2">
+    <div className="relative flex items-center justify-center py-2">
+      <div className={`absolute w-28 h-28 rounded-full bg-emerald-500/20 blur-xl transition-all duration-700 ${isSpeaking || isListening ? 'scale-125 bg-emerald-400/40 animate-pulse' : 'scale-100'}`} />
+      <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-500 shadow-xl bg-gradient-to-b from-sky-400 to-emerald-600 flex flex-col items-center justify-center p-1">
         <svg viewBox="0 0 150 150" className="w-full h-full drop-shadow-md">
           <circle cx="75" cy="75" r="70" fill="#fbcfe8" opacity="0.3" />
           <path d="M30 70 Q30 20 75 20 Q120 20 120 70 Q120 120 100 140 L50 140 Q30 120 30 70 Z" fill="#78350f" />
@@ -136,6 +136,10 @@ const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','�
 const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
+const ROMAN_CHO = { 'ㄱ':'g/k','ㄲ':'kk','ㄴ':'n','ㄷ':'d/t','ㄸ':'tt','ㄹ':'r/l','ㅁ':'m','ㅂ':'b/p','ㅃ':'pp','ㅅ':'s','ㅆ':'ss','ㅇ':'-','ㅈ':'j','ㅉ':'jj','ㅊ':'ch','ㅋ':'kh','ㅌ':'th','ㅍ':'ph','ㅎ':'h' };
+const ROMAN_JUNG = { 'ㅏ':'a','ㅐ':'ae','ㅑ':'ya','ㅒ':'yae','ㅓ':'eo','ㅔ':'e','ㅕ':'yeo','ㅖ':'ye','ㅗ':'o','ㅘ':'wa','ㅙ':'wae','ㅚ':'oe','ㅛ':'yo','ㅜ':'u','ㅝ':'wo','ㅞ':'we','ㅟ':'wi','ㅠ':'yu','ㅡ':'eu','ㅢ':'ui','ㅣ':'i' };
+const ROMAN_JONG = { '':'','ㄱ':'k','ㄴ':'n','ㄷ':'t','ㄹ':'l','ㅁ':'m','ㅂ':'p','ㅅ':'t','ㅇ':'ng','ㅈ':'t','ㅊ':'t','ㅎ':'t' };
+
 function composeHangul(cho, jung, jong = '') {
   const c = INITIALS.indexOf(cho);
   const v = MEDIALS.indexOf(jung);
@@ -154,6 +158,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
+  // --- AUTH STATE ---
   const [currentUser, setCurrentUser] = useState(() => {
     try { const saved = localStorage.getItem('hs_auth_user'); return saved ? JSON.parse(saved) : null; } catch { return null; }
   });
@@ -227,6 +232,7 @@ export default function App() {
     setScreen('home');
   };
 
+  // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
   const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
@@ -317,6 +323,7 @@ export default function App() {
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons || []);
   const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
+  const allWords = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
   // --- LIVE 3D AI TUTOR VOICE STATE ---
@@ -398,6 +405,7 @@ export default function App() {
     textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
   };
 
+  // --- AUTH SCREEN ---
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 pt-10 font-sans`}>
@@ -472,82 +480,144 @@ export default function App() {
     );
   }
 
-  const renderHome = () => (
-    <div className="space-y-4 pb-28">
-      <div className="flex justify-between items-center pt-2">
-        <div className="flex items-center gap-2.5">
-          <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
-          <div>
-            <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
-            <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오</span>
-          </div>
-        </div>
-        <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
-      </div>
-
-      <div className={`rounded-3xl ${t.card} border p-4 flex items-center gap-3.5`}>
-        <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0" equipped={equippedItems} />
-        <div className="flex-1 space-y-1">
-          <div className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</div>
-          <div className="text-[10px] text-slate-400">🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP</div>
-        </div>
-      </div>
-
-      <button onClick={() => startLesson(nextLesson)} className="w-full py-3.5 px-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs flex items-center justify-center gap-2">
-        <Play size={13} className="fill-white" /> Davom etish ({nextLesson.title})
-      </button>
-
-      <div className="space-y-2.5">
-        {currentBook.lessons.map((lesson) => {
-          const isDone = completedIds.includes(lesson.id);
-          return (
-            <div key={lesson.id} onClick={() => startLesson(lesson)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer`}>
-              <div className="flex items-center gap-3">
-                <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : 'bg-blue-100 text-blue-700'}`}>{lesson.num}</span>
-                <div>
-                  <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
-                  <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
-                </div>
-              </div>
-              {isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : <span className="text-slate-300">›</span>}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderVocab = () => (
-    <div className="space-y-3.5 pb-28">
-      <div className="flex justify-between pt-2">
-        <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Lug‘atlar</button>
-      </div>
-      <div className="space-y-1.5">
-        {allVocabWords.slice(0, 30).map((w, idx) => (
-          <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
+  // --- HOME SCREEN ---
+  const renderHome = () => {
+    const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
+    return (
+      <div className="space-y-4 pb-28">
+        <div className="flex justify-between items-center pt-2">
+          <div className="flex items-center gap-2.5">
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
-              <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
-              <div className="text-xs text-slate-400">{w.uz}</div>
+              <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
+              <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오 • 1A–6B</span>
             </div>
-            <Volume2 size={16} className="text-indigo-500" />
           </div>
-        ))}
-      </div>
-    </div>
-  );
+          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
+        </div>
 
+        <div className={`rounded-3xl ${t.card} border p-4 flex items-center gap-3.5`}>
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0" equipped={equippedItems} />
+          <div className="flex-1 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
+              <span className="text-[11px] font-black text-emerald-600">{profile.dailyXp}/100 XP</span>
+            </div>
+            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+              <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
+            </div>
+            <div className="text-[10px] text-slate-400">🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP</div>
+          </div>
+        </div>
+
+        <button onClick={() => startLesson(nextLesson)} className="w-full py-3.5 px-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs flex items-center justify-center gap-2">
+          <Play size={13} className="fill-white" /> Davom etish ({nextLesson.title})
+        </button>
+
+        {/* PLANNER */}
+        <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
+          <div className="flex justify-between items-center text-xs font-black">
+            <span className="flex items-center gap-1.5 text-indigo-500"><Target size={14} /> Kunlik O‘quv Rejasi</span>
+            <span className="text-[10px] text-slate-400">{plannerTasks.filter(p => p.done).length}/{plannerTasks.length}</span>
+          </div>
+          <div className="space-y-1.5">
+            {plannerTasks.map(task => (
+              <div key={task.id} onClick={() => {
+                setPlannerTasks(prev => prev.map(p => p.id === task.id ? { ...p, done: !p.done } : p));
+                if (!task.done) setProfile(p => ({ ...p, xp: p.xp + task.xp }));
+              }} className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer text-xs ${task.done ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' : `${t.sub} ${t.textMain}`}`}>
+                <div className="flex items-center gap-2">
+                  <CheckSquare size={14} className={task.done ? 'text-emerald-500' : 'text-slate-400'} />
+                  <span className={task.done ? 'line-through opacity-75' : ''}>{task.title}</span>
+                </div>
+                <span className="text-[10px] font-bold text-sky-500">+{task.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }} className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer`}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center">단어</div>
+            <div>
+              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar & Savol-Javob ({allVocabWords.length}+ so‘z)</div>
+              <div className="text-[10px] text-slate-400">서울대 1A–6A barcha lug'atlar</div>
+            </div>
+          </div>
+          <span className="text-indigo-500 font-black text-xs">Ochish ›</span>
+        </div>
+
+        {/* 12 BOOKS */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {snuBooks.map((b) => (
+            <button key={b.code} onClick={() => setSelectedBookCode(b.code)} className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 ${b.code === selectedBookCode ? 'bg-[#58cc02] text-white border-2 border-emerald-600' : `${t.card} border`}`}>
+              {b.code}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2.5">
+          {currentBook.lessons.map((lesson) => {
+            const isDone = completedIds.includes(lesson.id);
+            return (
+              <div key={lesson.id} onClick={() => startLesson(lesson)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer`}>
+                <div className="flex items-center gap-3">
+                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : 'bg-blue-100 text-blue-700'}`}>{lesson.num}</span>
+                  <div>
+                    <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
+                    <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
+                  </div>
+                </div>
+                {isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : <span className="text-slate-300">›</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // --- VOCABULARY SCREEN ---
+  const renderVocab = () => {
+    const vBook = vocabBooks.find(b => b.code === selectedVocabBook) || vocabBooks[0];
+    const filteredWords = allVocabWords.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
+
+    return (
+      <div className="space-y-3.5 pb-28">
+        <div className="flex justify-between pt-2">
+          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Lug‘atlar</button>
+        </div>
+        <div className="relative">
+          <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
+          <input type="text" value={vocabSearch} onChange={e => setVocabSearch(e.target.value)} placeholder="So‘z qidirish..." className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`} />
+        </div>
+        <div className="space-y-1.5">
+          {filteredWords.slice(0, 40).map((w, idx) => (
+            <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
+              <div>
+                <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
+                <div className="text-xs text-slate-400">{w.uz}</div>
+              </div>
+              <Volume2 size={16} className="text-indigo-500" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // --- BUILDER SCREEN ---
   const renderBuilder = () => (
     <div className="space-y-3.5 pb-28">
-      <div className="flex justify-between pt-2">
-        <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Harf Yig‘ish</button>
-      </div>
+      <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Harf Yig‘ish</button>
       <div className={`rounded-3xl ${t.card} border p-8 text-center`}>
         <div className={`text-6xl font-black ${t.textMain}`}>한글</div>
-        <p className="text-xs text-slate-400 mt-2">Hangul alifbosi trenajyori</p>
+        <p className="text-xs text-slate-400 mt-2">Hangul alifbosi va bo'g'in yig'ish</p>
       </div>
     </div>
   );
 
+  // --- LESSON SCREEN ---
   const renderLesson = () => {
     if (!activeLesson) return null;
     const currentQ = quizList[qIdx];
@@ -581,7 +651,7 @@ export default function App() {
     );
   };
 
-  // --- 🎙️ LIVE 3D AI TUTOR (EMMA / 토히르벡 3D AI VIBE) ---
+  // --- 🎙️ LIVE 3D AI TUTOR (EMMA / 토히르벡 3D AI VIBE - PASTGA TUSHIRILGAN) ---
   const renderAiTutor = () => (
     <div className="flex flex-col h-[84vh] pb-20 pt-1">
       <div className="flex items-center justify-between pb-1.5">
@@ -622,6 +692,7 @@ export default function App() {
     </div>
   );
 
+  // --- REVIEW SCREEN ---
   const renderReview = () => (
     <div className="space-y-4 pb-28 pt-2">
       <div className="flex justify-between items-center text-xs font-black px-1">
@@ -644,50 +715,59 @@ export default function App() {
     </div>
   );
 
-  const renderProfile = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
-        <div className="flex items-center gap-3.5">
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
-          <div>
-            {editingName ? (
-              <div className="flex gap-1.5">
-                <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold`} />
-                <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs rounded-xl">OK</button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
-              </div>
-            )}
-            <p className="text-xs text-slate-400">{currentUser?.email}</p>
+  // --- PROFILE SCREEN ---
+  const renderProfile = () => {
+    const shopItems = [
+      { id: 'glasses', icon: '🕶️', name: 'Aqlli Ko‘zoynak', price: 200 },
+      { id: 'gradCap', icon: '🎓', name: 'TOPIK 6 Qalpoqchasi', price: 400 },
+      { id: 'crown', icon: '👑', name: 'Oltin Qirollik Toji', price: 700 }
+    ];
+
+    return (
+      <div className="space-y-4 pb-28 pt-2">
+        <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
+          <div className="flex items-center gap-3.5">
+            <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
+            <div>
+              {editingName ? (
+                <div className="flex gap-1.5">
+                  <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs`} />
+                  <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs rounded-xl">OK</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
+                  <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
+                </div>
+              )}
+              <p className="text-xs text-slate-400">{currentUser?.email}</p>
+            </div>
+          </div>
+          <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Flame size={20} className="mx-auto text-amber-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
+            <div className="text-[10px] text-slate-400">Streak</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Zap size={20} className="mx-auto text-sky-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
+            <div className="text-[10px] text-slate-400">XP</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Award size={20} className="mx-auto text-indigo-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
+            <div className="text-[10px] text-slate-400">Daraja</div>
           </div>
         </div>
-        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
-      </div>
 
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Flame size={20} className="mx-auto text-amber-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
-          <div className="text-[10px] text-slate-400">Streak</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Zap size={20} className="mx-auto text-sky-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-          <div className="text-[10px] text-slate-400">XP</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Award size={20} className="mx-auto text-indigo-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
-          <div className="text-[10px] text-slate-400">Daraja</div>
-        </div>
+        <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
       </div>
-
-      <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
