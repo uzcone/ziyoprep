@@ -1,12 +1,11 @@
-Import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, ArrowLeft, Globe, Lock, CheckCircle2, 
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
   Headphones, Mic, Clock, Layers, Timer,
-  MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target
+  MessageSquare, Keyboard, ShoppingBag, Trophy, Search
 } from 'lucide-react';
 
 // Darslik fayllari
@@ -69,9 +68,40 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
         <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
 
         <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
+        <path d="M161 74 L185 88 L178 98 L158 84 Z" fill="#f1f5f9" />
+        <path d="M159 81 L180 104 L170 110 L154 86 Z" fill="#e2e8f0" />
+
         <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">
           ZiyoPrep
         </text>
+
+        <g transform="translate(128, 63) rotate(10)">
+          <rect width="19" height="13" rx="2" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
+          <circle cx="9.5" cy="6.5" r="3.4" fill="#dc2626" />
+          <path d="M6.1 6.5 A3.4 3.4 0 0 0 12.9 6.5 A1.7 1.7 0 0 1 9.5 6.5 A1.7 1.7 0 0 0 6.1 6.5 Z" fill="#2563eb" />
+          <line x1="3" y1="3" x2="5" y2="4.5" stroke="#0f172a" strokeWidth="1" />
+          <line x1="14" y1="4.5" x2="16" y2="3" stroke="#0f172a" strokeWidth="1" />
+          <line x1="3" y1="10" x2="5" y2="8.5" stroke="#0f172a" strokeWidth="1" />
+          <line x1="14" y1="8.5" x2="16" y2="10" stroke="#0f172a" strokeWidth="1" />
+        </g>
+
+        {equipped.gradCap && (
+          <g>
+            <polygon points="100,12 152,30 100,48 48,30" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+            <rect x="74" y="34" width="52" height="14" rx="4" fill="#334155" />
+            <line x1="146" y1="32" x2="152" y2="54" stroke="#facc15" strokeWidth="3" />
+            <circle cx="152" cy="55" r="4" fill="#f59e0b" />
+          </g>
+        )}
+
+        {equipped.crown && (
+          <g>
+            <polygon points="68,46 76,20 90,36 100,14 110,36 124,20 132,46" fill="#facc15" stroke="#d97706" strokeWidth="2" />
+            <circle cx="100" cy="24" r="3" fill="#ef4444" />
+            <circle cx="78" cy="30" r="2.5" fill="#3b82f6" />
+            <circle cx="122" cy="30" r="2.5" fill="#3b82f6" />
+          </g>
+        )}
 
         <circle cx="72" cy="105" r="22" fill="#ffffff" />
         <circle cx="128" cy="105" r="22" fill="#ffffff" />
@@ -85,6 +115,8 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
             <circle cx="72" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
             <circle cx="128" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
             <line x1="96" y1="103" x2="104" y2="103" stroke="#0f172a" strokeWidth="5" />
+            <line x1="36" y1="96" x2="48" y2="102" stroke="#0f172a" strokeWidth="4" />
+            <line x1="164" y1="96" x2="152" y2="102" stroke="#0f172a" strokeWidth="4" />
           </g>
         )}
 
@@ -98,6 +130,14 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
         <text x="128" y="162" textAnchor="middle" fill="#ffffff" fontSize="12.5" fontWeight="900" fontFamily="sans-serif" transform="rotate(-11 128 162)">
           한국어
         </text>
+        <circle cx="129" cy="173" r="4.5" fill="#dc2626" />
+        <path d="M124.5 173 A4.5 4.5 0 0 0 133.5 173 Z" fill="#3b82f6" />
+
+        <ellipse cx="42" cy="154" rx="13" ry="16" transform="rotate(-18 42 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
+        <ellipse cx="158" cy="154" rx="13" ry="16" transform="rotate(18 158 154)" fill="#65d318" stroke="#48b808" strokeWidth="1.5" />
+
+        <rect x="20" y="42" width="14" height="5" rx="2.5" transform="rotate(32 20 42)" fill="#facc15" />
+        <rect x="14" y="55" width="13" height="5" rx="2.5" transform="rotate(12 14 55)" fill="#facc15" />
       </svg>
     </div>
   );
@@ -129,32 +169,43 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
-  // --- 1. AUTH STATE ---
+  // --- 1. LOGIN / REGISTER / GOOGLE / MEHMON KIRISH ---
   const [currentUser, setCurrentUser] = useState(() => {
-    try { const saved = localStorage.getItem('hs_auth_user'); return saved ? JSON.parse(saved) : null; } catch { return null; }
+    try {
+      const saved = localStorage.getItem('hs_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [registeredUsers, setRegisteredUsers] = useState(() => {
-    try { const saved = localStorage.getItem('hs_registered_users'); return saved ? JSON.parse(saved) : []; } catch { return []; }
+    try {
+      const saved = localStorage.getItem('hs_registered_users');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
   const [authMode, setAuthMode] = useState('welcome');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
 
   const handleGuestLogin = () => {
-    const guest = { uid: 'guest', name: 'Tokhirbek', email: 'guest@ziyoprep.uz', isGuest: true };
+    const guest = { uid: 'guest', name: 'Mehmon Talaba', email: 'guest@ziyoprep.uz', isGuest: true };
     setCurrentUser(guest);
     localStorage.setItem('hs_auth_user', JSON.stringify(guest));
-    setProfile(p => ({ ...p, name: 'Tokhirbek' }));
+    setProfile(p => ({ ...p, name: 'Mehmon Talaba' }));
   };
 
   const handleGoogleSubmit = (e) => {
     e.preventDefault();
     setAuthError('');
     const email = authForm.email.trim().toLowerCase();
-    if (!email || !email.includes('@')) return setAuthError("To‘g‘ri Gmail manzilini kiriting!");
+    if (!email || !email.includes('@')) {
+      return setAuthError("To‘g‘ri Gmail manzilini kiriting (masalan: ism@gmail.com)!");
+    }
     const name = authForm.name.trim() || email.split('@')[0];
-    const gUser = { uid: 'google_' + email, name, email };
+    const gUser = { uid: 'google_' + email, name, email, provider: 'google' };
     setCurrentUser(gUser);
     localStorage.setItem('hs_auth_user', JSON.stringify(gUser));
     setProfile(p => ({ ...p, name }));
@@ -165,45 +216,61 @@ export default function App() {
     setAuthError('');
     const email = authForm.email.trim().toLowerCase();
     const password = authForm.password.trim();
-    if (!email || !email.includes('@')) return setAuthError("To‘g‘ri email kiriting!");
-    if (password.length < 4) return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lsin!");
+
+    if (!email || !email.includes('@')) {
+      return setAuthError("To‘g‘ri email manzilini kiriting!");
+    }
+    if (password.length < 4) {
+      return setAuthError("Parol kamida 4 ta belgidan iborat bo‘lishi kerak!");
+    }
 
     if (authMode === 'register') {
-      if (!authForm.name.trim()) return setAuthError("Ismingizni kiriting!");
+      if (!authForm.name.trim()) {
+        return setAuthError("Ismingizni kiriting!");
+      }
       const exists = registeredUsers.find(u => u.email === email);
-      if (exists) return setAuthError("Bu email band! Tizimga kiring.");
-      const newUser = { uid: 'user_' + Date.now(), name: authForm.name.trim(), email, password };
-      const updated = [...registeredUsers, newUser];
-      setRegisteredUsers(updated);
-      localStorage.setItem('hs_registered_users', JSON.stringify(updated));
-      setCurrentUser(newUser);
+      if (exists) {
+        return setAuthError("Bu email allaqachon ro‘yxatdan o‘tgan! Kirish bo‘limidan kiring.");
+      }
+      const newUser = {
+        uid: 'user_' + Date.now(),
+        name: authForm.name.trim(),
+        email,
+        password
+      };
+      const updatedList = [...registeredUsers, newUser];
+      setRegisteredUsers(updatedList);
+      localStorage.setItem('hs_registered_users', JSON.stringify(updatedList));
+
+      const sessionUser = { uid: newUser.uid, name: newUser.name, email: newUser.email };
+      setCurrentUser(sessionUser);
+      localStorage.setItem('hs_auth_user', JSON.stringify(sessionUser));
       setProfile(p => ({ ...p, name: newUser.name }));
-    } else if (authMode === 'login') {
+    } else {
       const found = registeredUsers.find(u => u.email === email);
-      if (!found) return setAuthError("Bunday email topilmadi! Ro‘yxatdan o‘ting.");
-      if (found.password !== password) return setAuthError("Parol xato!");
-      setCurrentUser(found);
+      if (!found) {
+        return setAuthError("Bunday email topilmadi! Avval 'Ro‘yxatdan o‘tish' tugmasini bosing.");
+      }
+      if (found.password !== password) {
+        return setAuthError("Parol noto‘g‘ri! Qaytadan tekshirib kiriting.");
+      }
+      const sessionUser = { uid: found.uid, name: found.name, email: found.email };
+      setCurrentUser(sessionUser);
+      localStorage.setItem('hs_auth_user', JSON.stringify(sessionUser));
       setProfile(p => ({ ...p, name: found.name }));
-    } else if (authMode === 'forgot') {
-      const foundIndex = registeredUsers.findIndex(u => u.email === email);
-      if (foundIndex === -1) return setAuthError("Bunday email bazada topilmadi!");
-      const updated = [...registeredUsers];
-      updated[foundIndex].password = password;
-      setRegisteredUsers(updated);
-      localStorage.setItem('hs_registered_users', JSON.stringify(updated));
-      setResetSuccess("Parol muvaffaqiyatli o'zgartirildi! Endi kirishingiz mumkin.");
-      setTimeout(() => setAuthMode('login'), 2000);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('hs_auth_user');
     setCurrentUser(null);
+    setAuthForm({ name: '', email: '', password: '' });
+    setAuthError('');
     setAuthMode('welcome');
     setScreen('home');
   };
 
-  // --- 2. CORE APP STATES ---
+  // --- 2. ASOSIY ILOVA HOLATLARI ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
   const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
@@ -211,28 +278,11 @@ export default function App() {
   const [activeLesson, setActiveLesson] = useState(null);
   const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
 
-  // --- MISTAKES & PLANNER ---
-  const [mistakes, setMistakes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
-  });
-  const [plannerTasks, setPlannerTasks] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('hs_planner')) || [
-        { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
-        { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
-      ];
-    } catch {
-      return [
-        { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
-        { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
-      ];
-    }
-  });
+  // --- LUG'ATLAR BO'LIMI HOLATLARI ---
+  const vocabBooks = [
+    vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A
+  ].filter(Boolean);
 
-  // --- VOCABULARY ---
-  const vocabBooks = [vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A].filter(Boolean);
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [selectedVocabTopicId, setSelectedVocabTopicId] = useState('1a-l1');
   const [vocabSearch, setVocabSearch] = useState('');
@@ -244,11 +294,16 @@ export default function App() {
   const [vocabQuizScore, setVocabQuizScore] = useState(0);
   const [vocabQuizCount, setVocabQuizCount] = useState(0);
 
-  // --- PROFILE ---
   const [profile, setProfile] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('hs_profile'));
-      return { name: saved?.name || 'Tokhirbek', xp: saved?.xp ?? 1450, dailyXp: saved?.dailyXp ?? 60, streak: saved?.streak ?? 12, freezes: saved?.freezes ?? 1 };
+      return {
+        name: saved?.name || 'Tokhirbek',
+        xp: saved?.xp ?? 1450,
+        dailyXp: saved?.dailyXp ?? 60,
+        streak: saved?.streak ?? 12,
+        freezes: saved?.freezes ?? 1
+      };
     } catch {
       return { name: 'Tokhirbek', xp: 1450, dailyXp: 60, streak: 12, freezes: 1 };
     }
@@ -257,37 +312,68 @@ export default function App() {
   const [nameDraft, setNameDraft] = useState(profile.name);
 
   const [ownedItems, setOwnedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_owned_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
+    try {
+      return JSON.parse(localStorage.getItem('hs_owned_items')) || { glasses: false, gradCap: false, crown: false };
+    } catch {
+      return { glasses: false, gradCap: false, crown: false };
+    }
   });
   const [equippedItems, setEquippedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_equipped_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
+    try {
+      return JSON.parse(localStorage.getItem('hs_equipped_items')) || { glasses: false, gradCap: false, crown: false };
+    } catch {
+      return { glasses: false, gradCap: false, crown: false };
+    }
   });
 
   const [completedIds, setCompletedIds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_completed')) || []; } catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem('hs_completed'));
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
   });
+
   const [memos, setMemos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_memos')) || {}; } catch { return {}; }
+    try {
+      return JSON.parse(localStorage.getItem('hs_memos')) || {};
+    } catch {
+      return {};
+    }
   });
 
   useEffect(() => { localStorage.setItem('hs_profile', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { localStorage.setItem('hs_completed', JSON.stringify(completedIds)); }, [completedIds]);
   useEffect(() => { localStorage.setItem('hs_memos', JSON.stringify(memos)); }, [memos]);
-  useEffect(() => { localStorage.setItem('hs_mistakes', JSON.stringify(mistakes)); }, [mistakes]);
-  useEffect(() => { localStorage.setItem('hs_planner', JSON.stringify(plannerTasks)); }, [plannerTasks]);
+  useEffect(() => { localStorage.setItem('hs_owned_items', JSON.stringify(ownedItems)); }, [ownedItems]);
+  useEffect(() => { localStorage.setItem('hs_equipped_items', JSON.stringify(equippedItems)); }, [equippedItems]);
 
-  const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
+  const toggleDark = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      localStorage.setItem('hs_dark', String(next));
+      return next;
+    });
+  };
+
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text.replace(/[\(\)\[\]~]/g, '').trim());
+      const clean = text.replace(/[\(\)\[\]~]/g, '').trim();
+      const u = new SpeechSynthesisUtterance(clean);
       u.lang = 'ko-KR';
+      u.rate = 0.85;
       window.speechSynthesis.speak(u);
     } catch {}
   };
 
-  const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B].filter(Boolean);
+  // --- BARCHA 12 TA KITOB (1A ~ 6B) ---
+  const snuBooks = [
+    snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B
+  ].filter(Boolean);
+
   const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons || []);
   const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
@@ -295,33 +381,287 @@ export default function App() {
   const allQuizzesPool = allLessons.flatMap(l => l.quizzes || []);
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
-  // --- AI CHAT STATE ---
-  const [aiMessages, setAiMessages] = useState([{ role: 'ai', ko: '안녕하세요! 토히르벡이에요.', uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 man.' }]);
+  // --- 3. REAL HAYOTIY DIALOG SIMULYATORI (ROLEPLAY) ---
+  const roleplayScenarios = [
+    {
+      id: 'cafe',
+      emoji: '☕',
+      title: 'Kafeda Buyurtma',
+      level: '1A–1B',
+      steps: [
+        {
+          npcKo: '어서 오세요! 주문하시겠어요?',
+          npcUz: 'Xush kelibsiz! Buyurtma berasizmi?',
+          opts: [
+            { ko: '네, 아이스 아메리카노 한 잔 주세요.', uz: 'Ha, bitta muzli amerikano bering.', ok: true },
+            { ko: '아니요, 학교에 갔어요.', uz: 'Yo‘q, maktabga bordim.', ok: false }
+          ]
+        },
+        {
+          npcKo: '네, 알겠습니다. 여기서 드실 거예요?',
+          npcUz: 'Xo‘p, tushunarli. Shu yerda ichasizmi?',
+          opts: [
+            { ko: '네, 여기서 마실 거예요.', uz: 'Ha, shu yerda ichaman.', ok: true },
+            { ko: '어제 영화를 봤어요.', uz: 'Kecha kino ko‘rdim.', ok: false }
+          ]
+        },
+        {
+          npcKo: '사천오백 원입니다. 진동벨 울리면 가져가세요!',
+          npcUz: '4,500 von bo‘ldi. Qo‘ng‘iroq jiringlaganda olib keting!',
+          opts: [
+            { ko: '네, 감사합니다!', uz: 'Xo‘p, rahmat!', ok: true },
+            { ko: '얼마예요?', uz: 'Qancha turadi?', ok: false }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'hospital',
+      emoji: '🏥',
+      title: 'Shifokor Qabulida',
+      level: '1B–2A',
+      steps: [
+        {
+          npcKo: '어떻게 오셨어요? 어디가 아프세요?',
+          npcUz: 'Nima shikoyat bilan keldingiz? Qayeringiz og‘riyapti?',
+          opts: [
+            { ko: '어제부터 목이 아프고 열이 나요.', uz: 'Kechadan beri tomog‘im og‘riyapti va isitmam bor.', ok: true },
+            { ko: '날씨가 맑아서 기분이 좋아요.', uz: 'Havo ochiq bo‘lgani uchun kayfiyatim yaxshi.', ok: false }
+          ]
+        },
+        {
+          npcKo: '감기에 걸리셨네요. 처방전을 드릴 테니까 약국에 가세요.',
+          npcUz: 'Shamollab qolibsiz. Retsept beraman, dorixonaga boring.',
+          opts: [
+            { ko: '선생님, 찬물을 마셔도 돼요?', uz: 'Doktor, sovuq suv ichsam maylimi?', ok: true },
+            { ko: '지하철로 30분 걸려요.', uz: 'Metroda 30 daqiqa ketadi.', ok: false }
+          ]
+        },
+        {
+          npcKo: '아니요, 찬물을 마시면 안 돼요. 따뜻한 물을 많이 드세요.',
+          npcUz: 'Yo‘q, sovuq suv ichish mumkin emas. Iliq suv ko‘proq iching.',
+          opts: [
+            { ko: '네, 잘 알겠습니다. 감사합니다!', uz: 'Xo‘p, tushundim. Rahmat!', ok: true },
+            { ko: '아메리카노 두 잔 주세요.', uz: 'Ikkita amerikano bering.', ok: false }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'interview',
+      emoji: '💼',
+      title: 'Kompaniyada Suhbat',
+      level: '3A–4B',
+      steps: [
+        {
+          npcKo: '자기소개를 간단하게 해 주시겠어요?',
+          npcUz: 'O‘zingizni qisqacha tanishtirib bera olasizmi?',
+          opts: [
+            { ko: '안녕하세요! 저는 한국어와 IT에 관심이 많은 토히르벡입니다.', uz: 'Assalomu alaykum! Men koreys tili va IT ga qiziqishi katta Tokhirbekman.', ok: true },
+            { ko: '가방에 지갑이 없어요.', uz: 'Sumkada hamyon yo‘q.', ok: false }
+          ]
+        },
+        {
+          npcKo: '우리 회사에 지원한 이유가 무엇입니까?',
+          npcUz: 'Kompaniyamizga hujjat topshirishingiz sababi nima?',
+          opts: [
+            { ko: '귀사의 혁신적인 기술력 덕분에 많이 배울 수 있을 것 같아서 지원했습니다.', uz: 'Kompaniyangizning innovatsion texnologiyalari sharofati bilan ko‘p narsa o‘rgana olaman deb o‘ylab topshirdim.', ok: true },
+            { ko: '비가 오니까 우산을 가지고 가세요.', uz: 'Yomg‘ir yog‘ayotgani uchun soyabon olib keting.', ok: false }
+          ]
+        }
+      ]
+    }
+  ];
+  const [activeDialog, setActiveDialog] = useState(roleplayScenarios[0]);
+  const [dialogStep, setDialogStep] = useState(0);
+  const [dialogFeedback, setDialogFeedback] = useState(null);
+
+  // --- 4. 쓰기 • YOZISH VA IMLO TRENAJYORI ---
+  const writingPrompts = [
+    { uz: 'Talaba', ko: '학생', hint: 'ㅎ + ㅏ + ㄱ + ㅅ + ㅐ + ㅇ' },
+    { uz: 'Kutubxona', ko: '도서관', hint: 'ㄷ + ㅗ + ㅅ + ㅓ + ㄱ + ㅘ + ㄴ' },
+    { uz: 'Rahmat', ko: '감사합니다', hint: 'ㄱ + ㅏ + ㅁ + ㅅ + ㅏ + ㅎ + ㅏ + ㅂ + ㄴ + ㅣ + ㄷ + ㅏ' },
+    { uz: 'Stipendiya', ko: '장학금', hint: 'ㅈ + ㅏ + ㅇ + ㅎ + ㅏ + ㄱ + ㄱ + ㅡ + ㅁ' },
+    { uz: 'Men talabaman', ko: '저는 학생이에요', hint: '저는 + 학생 + 이에요' },
+    { uz: 'Koreys tili', ko: '한국어', hint: 'ㅎ + ㅏ + ㄴ + ㄱ + ㅜ + ㄱ + ㅇ + ㅓ' }
+  ];
+  const [writeIdx, setWriteIdx] = useState(0);
+  const [writeInput, setWriteInput] = useState('');
+  const [writeResult, setWriteResult] = useState(null);
+
+  // --- HAQIQIY GEMINI AI USTOZ: 토히르벡 ---
+  const [aiMessages, setAiMessages] = useState([
+    {
+      role: 'ai',
+      ko: '안녕하세요! 저는 ZiyoPrep AI 튜터 토히르벡이에요. 무엇이든 물어보세요!',
+      uz: `Assalomu alaykum! Men ZiyoPrep AI ustoz 토히르벡 (Tokhirbek) man. Bazamda 서울대 1A–6A dan ${allVocabWords.length}+ so‘z va barcha grammatikalar bor. Istalgan savol bering, xatolaringizni tekshirtiring yoki koreyscha suhbatlashing!`
+    }
+  ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiLoading]);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [aiMessages, aiLoading]);
 
+  // Zaxira (offline) javob generatori
+  const generateFallbackAiReply = (rawText) => {
+    const q = rawText.toLowerCase().trim();
+    const cleanQuery = q.replace(/(koreyscha nima|nima degani|tarjimasi|\?)/g, '').trim();
+    const foundWord = allWords.find(
+      w => (cleanQuery.length >= 2 && w.uz.toLowerCase().includes(cleanQuery)) ||
+           (cleanQuery.length >= 1 && w.ko.toLowerCase() === cleanQuery)
+    );
+    if (foundWord) {
+      return {
+        ko: `"${foundWord.ko}" — 뜻: ${foundWord.uz}!`,
+        uz: `Topildi! Koreyscha: "${foundWord.ko}" — O‘zbekcha ma’nosi: "${foundWord.uz}".`
+      };
+    }
+    return {
+      ko: `"${rawText}"에 대해 같이 공부해 봐요!`,
+      uz: `Server bilan aloqa tekshirilmoqda. Hozircha lug‘atdan so‘z qidirishingiz yoki savolingizni qayta yuborishingiz mumkin!`
+    };
+  };
+
+  // Haqiqiy Gemini API ga ulangan asosiy funksiya
   const handleAiSend = async (preset) => {
     const text = (preset || aiInput).trim();
     if (!text || aiLoading) return;
-    setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
+
+    const updatedHistory = [...aiMessages, { role: 'user', ko: text }];
+    setAiMessages(updatedHistory);
     setAiInput('');
     setAiLoading(true);
-    setPlannerTasks(prev => prev.map(task => task.id === 3 ? { ...task, done: true } : task));
+
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: aiMessages, userName: profile.name })
+        body: JSON.stringify({
+          message: text,
+          history: aiMessages,
+          userName: profile.name
+        })
       });
+
       const data = await res.json();
-      setAiMessages(prev => [...prev, { role: 'ai', ko: data.ko || '', uz: data.uz || '' }]);
-      if (data.ko) speakKo(data.ko);
+      if (data.ko || data.uz) {
+        setAiMessages(prev => [...prev, { role: 'ai', ko: data.ko || '', uz: data.uz || '' }]);
+        if (data.ko) speakKo(data.ko);
+      } else {
+        throw new Error(data.error || 'AI javob qaytarmadi');
+      }
     } catch {
-      setAiMessages(prev => [...prev, { role: 'ai', ko: '오류가 발생했어요.', uz: 'Server xatosi.' }]);
-    } finally { setAiLoading(false); }
+      const fallback = generateFallbackAiReply(text);
+      setAiMessages(prev => [...prev, { role: 'ai', ...fallback }]);
+      speakKo(fallback.ko);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // --- TAKRORLASH ---
+  const [reviewMode, setReviewMode] = useState('cards');
+  const [flashIdx, setFlashIdx] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+
+  const [listenIdx, setListenIdx] = useState(0);
+  const [listenOpts, setListenOpts] = useState([]);
+  const [listenPick, setListenPick] = useState(null);
+
+  const [speakIdx, setSpeakIdx] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [speechText, setSpeechText] = useState('');
+  const [speechStatus, setSpeechStatus] = useState(null);
+
+  const [mockActive, setMockActive] = useState(false);
+  const [mockList, setMockList] = useState([]);
+  const [mockStep, setMockStep] = useState(0);
+  const [mockSelected, setMockSelected] = useState({});
+  const [mockSeconds, setMockSeconds] = useState(300);
+  const [mockDone, setMockDone] = useState(false);
+
+  const [sprintRunning, setSprintRunning] = useState(false);
+  const [sprintTime, setSprintTime] = useState(30);
+  const [sprintScore, setSprintScore] = useState(0);
+  const [sprintWord, setSprintWord] = useState(null);
+  const [sprintChoices, setSprintChoices] = useState([]);
+
+  useEffect(() => {
+    if (!sprintRunning) return;
+    const tmr = setInterval(() => {
+      setSprintTime(prev => {
+        if (prev <= 1) {
+          clearInterval(tmr);
+          setSprintRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tmr);
+  }, [sprintRunning]);
+
+  const nextSprintRound = () => {
+    const target = allWords[Math.floor(Math.random() * allWords.length)];
+    const wrong = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setSprintWord(target);
+    setSprintChoices(shuffleArray([target.uz, ...wrong]));
+    speakKo(target.ko);
+  };
+
+  const startSprintGame = () => {
+    setSprintScore(0);
+    setSprintTime(30);
+    setSprintRunning(true);
+    nextSprintRound();
+  };
+
+  useEffect(() => {
+    if (!mockActive || mockDone) return;
+    const timer = setInterval(() => {
+      setMockSeconds(s => {
+        if (s <= 1) {
+          clearInterval(timer);
+          setMockDone(true);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [mockActive, mockDone]);
+
+  // --- 글자 조립 ---
+  const [builderTab, setBuilderTab] = useState('no_batchim');
+  const [cho, setCho] = useState('ㄱ');
+  const [jung, setJung] = useState('ㅏ');
+  const [jong, setJong] = useState('ㄴ');
+  const [showDoubleCho, setShowDoubleCho] = useState(false);
+  const [showCompoundJung, setShowCompoundJung] = useState(false);
+  const [wordBuffer, setWordBuffer] = useState('');
+  const [randomChar, setRandomChar] = useState('흐');
+  const [practiceCount, setPracticeCount] = useState(0);
+
+  const basicCho = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const doubleCho = ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
+  const basicJung = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+  const compoundJung = ['ㅐ','ㅒ','ㅔ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
+  const batchims = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅎ'];
+
+  const activeJong = (builderTab === 'with_batchim' || builderTab === 'word') ? jong : '';
+  const composedSyllable = composeHangul(cho, jung, activeJong);
+  const romanGuide = `${ROMAN_CHO[cho] || ''} + ${ROMAN_JUNG[jung] || ''}${activeJong ? ` + ${ROMAN_JONG[activeJong] || ''}` : ''}`;
+
+  const nextRandomSyllable = () => {
+    const c = basicCho[Math.floor(Math.random() * basicCho.length)];
+    const v = basicJung[Math.floor(Math.random() * basicJung.length)];
+    const b = Math.random() > 0.45 ? batchims[Math.floor(Math.random() * batchims.length)] : '';
+    setRandomChar(composeHangul(c, v, b));
+    setPracticeCount(p => p + 1);
+    setProfile(p => ({ ...p, xp: p.xp + 2, dailyXp: p.dailyXp + 2 }));
   };
 
   // --- DARS ICHIDAGI HOLATLAR ---
@@ -332,11 +672,16 @@ export default function App() {
   const [memoInput, setMemoInput] = useState('');
   const [hwInput, setHwInput] = useState('');
   const [hwStatus, setHwStatus] = useState(null);
+
   const [quizList, setQuizList] = useState([]);
   const [qIdx, setQIdx] = useState(0);
   const [qAnswer, setQAnswer] = useState(null);
 
-  const toggleItem = (key, ko) => { speakKo(ko); setRevealed(p => ({ ...p, [key]: !p[key] })); };
+  const toggleItem = (key, ko) => {
+    speakKo(ko);
+    setRevealed(p => ({ ...p, [key]: !p[key] }));
+  };
+
   const startLesson = (lesson) => {
     setActiveLesson(lesson);
     setOpenSec({ rule: true, struct: true, words: true });
@@ -346,12 +691,72 @@ export default function App() {
     setMemoInput(memos[lesson.id] || '');
     setHwInput('');
     setHwStatus(null);
-    const shuffled = shuffleArray(lesson.quizzes || []).map(q => ({ ...q, opts: shuffleArray(q.opts) }));
+    const shuffled = shuffleArray(lesson.quizzes || []).map(q => ({
+      ...q,
+      opts: shuffleArray(q.opts)
+    }));
     setQuizList(shuffled);
     setQIdx(0);
     setQAnswer(null);
     setScreen('lesson');
-    setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
+  };
+
+  const prepareListening = (idx) => {
+    const target = allWords[idx % allWords.length];
+    const distractors = shuffleArray(allWords.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setListenOpts(shuffleArray([target.uz, ...distractors]));
+    setListenPick(null);
+    speakKo(target.ko);
+  };
+
+  const handleSpeechTest = (targetKo) => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setSpeechText("Brauzeringiz mikrofonni qo‘llاب-quvvatlamaydi (Chrome/Safari da sinab ko‘ring).");
+      return;
+    }
+    try {
+      const rec = new SR();
+      rec.lang = 'ko-KR';
+      rec.interimResults = false;
+      setIsRecording(true);
+      setSpeechText('');
+      setSpeechStatus(null);
+
+      rec.onresult = (e) => {
+        const spoken = e.results[0][0].transcript;
+        setSpeechText(spoken);
+        const cleanSpoken = spoken.replace(/\s+/g, '');
+        const cleanTarget = targetKo.split('/')[0].replace(/\s+/g, '');
+        if (cleanSpoken.includes(cleanTarget) || cleanTarget.includes(cleanSpoken)) {
+          setSpeechStatus({ ok: true, msg: "Ajoyib talaffuz! To‘g‘ri! 🎉 (+20 XP)" });
+          setProfile(p => ({ ...p, xp: p.xp + 20, dailyXp: p.dailyXp + 20 }));
+        } else {
+          setSpeechStatus({ ok: false, msg: "Yana bir bor aniqroq talaffuz qilib ko‘ring!" });
+        }
+        setIsRecording(false);
+      };
+      rec.onerror = () => {
+        setIsRecording(false);
+        setSpeechText("Ovoz eshitilmadi. Mikrofon ruxsatini tekshiring.");
+      };
+      rec.start();
+    } catch {
+      setIsRecording(false);
+    }
+  };
+
+  const launchTopikMock = () => {
+    const picked = shuffleArray(allQuizzesPool).slice(0, 8).map(q => ({
+      ...q,
+      opts: shuffleArray(q.opts)
+    }));
+    setMockList(picked);
+    setMockStep(0);
+    setMockSelected({});
+    setMockSeconds(300);
+    setMockDone(false);
+    setMockActive(true);
   };
 
   const t = {
@@ -364,7 +769,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // AUTH SCREEN
+  // 0. KIRISH EKRANI
   // =========================================================================
   if (!currentUser) {
     return (
@@ -478,14 +883,14 @@ export default function App() {
             </div>
           )}
 
-          {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && (
+          {(authMode === 'login' || authMode === 'register') && (
             <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
               <div className="flex items-center justify-between">
-                <button onClick={() => { setAuthError(''); setResetSuccess(''); setAuthMode('welcome'); }} className={`p-2 rounded-xl ${t.sub} border`}>
+                <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${t.sub} border`}>
                   <ArrowLeft size={16} />
                 </button>
                 <h2 className={`font-black text-base ${t.textMain}`}>
-                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : authMode === 'register' ? 'Yangi akkaunt yaratish' : 'Parolni tiklash'}
+                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : 'Yangi akkaunt yaratish'}
                 </h2>
                 <div className="w-8" />
               </div>
@@ -493,11 +898,6 @@ export default function App() {
               {authError && (
                 <div className="p-3 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold text-center">
                   {authError}
-                </div>
-              )}
-              {resetSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-600 text-xs font-bold text-center">
-                  {resetSuccess}
                 </div>
               )}
 
@@ -520,7 +920,7 @@ export default function App() {
                 />
                 <input
                   type="password"
-                  placeholder={authMode === 'forgot' ? "Yangi parol kiriting" : "Parol (kamida 4 ta belgi)"}
+                  placeholder="Parol (kamida 4 ta belgi)"
                   value={authForm.password}
                   onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
                   className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
@@ -529,16 +929,16 @@ export default function App() {
                   type="submit"
                   className="w-full py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#46a302] text-white font-black text-xs uppercase"
                 >
-                  {authMode === 'login' ? 'Kirish' : authMode === 'register' ? 'Ro‘yxatdan o‘tish' : 'Parolni yangilash'}
+                  {authMode === 'login' ? 'Kirish' : 'Ro‘yxatdan o‘tish'}
                 </button>
               </form>
 
-              {authMode === 'login' && (
-                <div className="flex justify-between items-center pt-1 text-xs">
-                  <button onClick={() => { setAuthError(''); setAuthMode('forgot'); }} className="text-slate-400 hover:underline font-bold">Parolni esdan chiqardingizmi?</button>
-                  <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className="text-emerald-600 font-bold hover:underline">Ro‘yxatdan o‘tish</button>
-                </div>
-              )}
+              <button
+                onClick={() => { setAuthError(''); setAuthMode(authMode === 'login' ? 'register' : 'login'); }}
+                className="w-full text-center text-xs font-bold text-emerald-600"
+              >
+                {authMode === 'login' ? "Akkauntingiz yo‘qmi? Avval ro‘yxatdan o‘ting" : "Akkauntingiz bormi? Tizimga kiring"}
+              </button>
             </div>
           )}
         </div>
@@ -606,28 +1006,6 @@ export default function App() {
               : `${nextLesson.week} 이어서 공부하기`}
           </span>
         </button>
-
-        {/* PLANNER */}
-        <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
-          <div className="flex justify-between items-center text-xs font-black">
-            <span className="flex items-center gap-1.5 text-indigo-500"><Target size={14} /> Kunlik O‘quv Rejasi</span>
-            <span className="text-[10px] text-slate-400">{plannerTasks.filter(p => p.done).length}/{plannerTasks.length} bajarildi</span>
-          </div>
-          <div className="space-y-1.5">
-            {plannerTasks.map(task => (
-              <div key={task.id} onClick={() => {
-                setPlannerTasks(prev => prev.map(p => p.id === task.id ? { ...p, done: !p.done } : p));
-                if (!task.done) setProfile(p => ({ ...p, xp: p.xp + task.xp }));
-              }} className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer text-xs ${task.done ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' : `${t.sub} ${t.textMain}`}`}>
-                <div className="flex items-center gap-2">
-                  <CheckSquare size={14} className={task.done ? 'text-emerald-500' : 'text-slate-400'} />
-                  <span className={task.done ? 'line-through opacity-75' : ''}>{task.title}</span>
-                </div>
-                <span className="text-[10px] font-bold text-sky-500">+{task.xp} XP</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* 📚 LUG'ATLAR & SAVOL-JAVOB MAXSUS KARTASI */}
         <div
@@ -916,8 +1294,6 @@ export default function App() {
                       if (opt === correctAns) {
                         setVocabQuizScore(s => s + 1);
                         setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
-                      } else {
-                        setMistakes(m => [...m, { ko: vocabQuizWord.ko, uz: vocabQuizWord.uz }]);
                       }
                     }}
                     className={`w-full p-3.5 rounded-2xl border text-xs font-black transition ${
@@ -1409,7 +1785,6 @@ export default function App() {
                   onClick={() => {
                     setQAnswer(opt);
                     speakKo(opt);
-                    if (opt !== currentQ.ans) setMistakes(m => [...m, { ko: currentQ.ans, uz: currentQ.q }]);
                   }}
                   className={`w-full p-3 rounded-2xl text-left border text-xs font-bold transition ${
                     qAnswer !== null
@@ -1465,97 +1840,107 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
           <div>
-            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 </h2>
-            <span className="text-[10px] font-bold text-emerald-500">● Jonli AI ulangan • Istalgan savol bering</span>
+            <h2 className={`font-black text-sm ${t.textMain}`}>{selectedScenario ? selectedScenario.title : '토히르벡 (AI Ustoz)'}</h2>
+            <span className="text-[10px] font-bold text-emerald-500">● Ovozli suhbat & Xatolarni tuzatish</span>
           </div>
         </div>
-      </div>
-
-      <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
-        {[
-          'Koreys tilida qanday tez gapirish mumkin?',
-          '이에요 va 예요 farqini misollar bilan tushuntir',
-          'Kafeda buyurtma berish dialogini tuzib ber',
-          'TOPIK 4-daraja uchun muhim grammatikalar qaysilar?'
-        ].map(chip => (
-          <button
-            key={chip}
-            onClick={() => handleAiSend(chip)}
-            className={`shrink-0 px-3 py-1.5 rounded-full ${t.card} border text-[11px] font-bold text-emerald-600 dark:text-emerald-400`}
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
-
-      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
-        {aiMessages.map((m, idx) => (
-          <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)}
-              className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1.5 cursor-pointer ${
-                m.role === 'user'
-                  ? 'bg-[#58cc02] text-white font-bold'
-                  : `${t.sub} ${t.textMain}`
-              }`}
-            >
-              {m.role === 'ai' && (
-                <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-                  <span>🦉 토히르벡 AI</span>
-                  <Volume2 size={12} />
-                </div>
-              )}
-              {m.ko && <div className="font-black leading-relaxed whitespace-pre-line">{m.ko}</div>}
-              {m.uz && <div className="text-[11px] opacity-90 leading-relaxed whitespace-pre-line">{m.uz}</div>}
-            </div>
-          </div>
-        ))}
-
-        {aiLoading && (
-          <div className="flex justify-start">
-            <div className={`rounded-2xl px-4 py-2.5 text-xs font-bold ${t.sub} ${t.textMuted} animate-pulse`}>
-              🦉 토히르벡 javob yozmoqda...
-            </div>
-          </div>
+        {selectedScenario && (
+          <button onClick={() => setSelectedScenario(null)} className="text-xs font-bold text-rose-500 underline">Stsenariydan chiqish</button>
         )}
-        <div ref={chatEndRef} />
       </div>
 
-      <div className="pt-3 flex gap-2">
-        <input
-          type="text"
-          value={aiInput}
-          onChange={e => setAiInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAiSend()}
-          placeholder="토히르벡 ga istalgan savol yozing..."
-          className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
-        />
-        <button
-          onClick={() => handleAiSend()}
-          disabled={aiLoading}
-          className="px-4 rounded-2xl bg-[#58cc02] disabled:opacity-50 text-white font-black flex items-center justify-center"
-        >
-          <Send size={18} />
-        </button>
-      </div>
+      {!selectedScenario ? (
+        <div className="space-y-2.5 flex-1 overflow-y-auto">
+          <div className="text-xs font-black text-slate-400">Stsenariy tanlang:</div>
+          {aiScenarios.map(sc => (
+            <div key={sc.id} onClick={() => setSelectedScenario(sc)} className={`rounded-2xl ${t.card} border p-3.5 flex items-center gap-3.5 cursor-pointer hover:border-emerald-400 transition`}>
+              <span className="text-2xl">{sc.emoji}</span>
+              <div>
+                <div className={`text-xs font-black ${t.textMain}`}>{sc.title}</div>
+                <div className="text-[10px] text-slate-400">{sc.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
+          <div className="p-2 rounded-xl bg-sky-500/10 text-sky-500 text-xs font-bold text-center">
+            {selectedScenario.emoji} {selectedScenario.title} rejimida suhbatlashilmoqda
+          </div>
+          {aiMessages.map((m, idx) => (
+            <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)}
+                className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1.5 cursor-pointer ${
+                  m.role === 'user'
+                    ? 'bg-[#58cc02] text-white font-bold'
+                    : `${t.sub} ${t.textMain}`
+                }`}
+              >
+                {m.role === 'ai' && (
+                  <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                    <span>🦉 토히르벡 AI</span>
+                    <Volume2 size={12} />
+                  </div>
+                )}
+                {m.ko && <div className="font-black leading-relaxed whitespace-pre-line">{m.ko}</div>}
+                {m.uz && <div className="text-[11px] opacity-90 leading-relaxed whitespace-pre-line">{m.uz}</div>}
+              </div>
+            </div>
+          ))}
+
+          {aiLoading && (
+            <div className="flex justify-start">
+              <div className={`rounded-2xl px-4 py-2.5 text-xs font-bold ${t.sub} ${t.textMuted} animate-pulse`}>
+                🦉 토히르벡 javob yozmoqda...
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+      )}
+
+      {selectedScenario && (
+        <div className="pt-3 flex gap-2">
+          <button
+            onClick={handleVoiceInput}
+            className={`p-3 rounded-2xl text-white ${isRecording ? 'bg-rose-600 animate-pulse' : 'bg-indigo-600'}`}
+          >
+            <Mic size={18} />
+          </button>
+          <input
+            type="text"
+            value={aiInput}
+            onChange={e => setAiInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAiSend()}
+            placeholder="Koreyscha yozing yoki mikrofondan gapiring..."
+            className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+          />
+          <button
+            onClick={() => handleAiSend()}
+            disabled={aiLoading}
+            className="px-4 rounded-2xl bg-[#58cc02] disabled:opacity-50 text-white font-black flex items-center justify-center"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 
   // =========================================================================
-  // 5. TAKRORLASH (MASHQ)
+  // 5. TAKRORLASH
   // =========================================================================
   const renderReview = () => {
     const card = allWords[flashIdx % allWords.length];
-    const currentDialogObj = activeDialog.steps[dialogStep];
 
     return (
       <div className="space-y-4 pb-28 pt-2">
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: 'cards', icon: Layers, label: 'So‘z' },
-            { id: 'mistakes', icon: Bookmark, label: `오답 노트 (${mistakes.length})` },
-            { id: 'dialog', icon: MessageSquare, label: 'Dialog' },
-            { id: 'mock', icon: Clock, label: 'TOPIK' }
+            { id: 'ai_tutor', icon: MessageSquare, label: '🤖 AI Stsenariylar' },
+            { id: 'mistakes', icon: Bookmark, label: `오답 노트 (${mistakes.length})` }
           ].map(m => (
             <button
               key={m.id}
@@ -1613,6 +1998,21 @@ export default function App() {
           </div>
         )}
 
+        {reviewMode === 'ai_tutor' && (
+          <div className="space-y-3">
+            <div className="text-xs font-black text-slate-400">Real vaziyatlarda AI bilan mashq qilish:</div>
+            {aiScenarios.map(sc => (
+              <div key={sc.id} onClick={() => { setSelectedScenario(sc); setScreen('ai'); }} className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer hover:border-emerald-400`}>
+                <span className="text-2xl">{sc.emoji}</span>
+                <div>
+                  <div className={`text-xs font-black ${t.textMain}`}>{sc.title}</div>
+                  <div className="text-[10px] text-slate-400">{sc.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {reviewMode === 'mistakes' && (
           <div className="space-y-3">
             <div className="flex justify-between items-center text-xs font-black">
@@ -1620,7 +2020,7 @@ export default function App() {
               {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
             </div>
             {mistakes.length === 0 ? (
-              <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! Ajoyib! 🎉</div>
+              <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
             ) : (
               mistakes.map((m, idx) => (
                 <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
@@ -1631,93 +2031,6 @@ export default function App() {
                   <Volume2 size={16} className="text-rose-500" />
                 </div>
               ))
-            )}
-          </div>
-        )}
-
-        {reviewMode === 'dialog' && (
-          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
-            <div className="text-xs font-black text-sky-500">🎭 Real Dialog Simulyatori</div>
-            <div onClick={() => speakKo(currentDialogObj.npcKo)} className={`p-4 rounded-2xl ${t.sub} border cursor-pointer`}>
-              <div className="text-[10px] font-black text-emerald-500 flex items-center gap-1">
-                <Volume2 size={13} /> Suhbatdosh (Eshitish uchun bosing):
-              </div>
-              <div className={`text-base font-black ${t.textMain}`}>{currentDialogObj.npcKo}</div>
-              <div className="text-xs text-slate-400">{currentDialogObj.npcUz}</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-[11px] font-bold text-slate-400">Javobni tanlang:</div>
-              {currentDialogObj.opts.map((opt, idx) => (
-                <button key={idx} onClick={() => {
-                  speakKo(opt.ko);
-                  if (opt.ok) {
-                    setProfile(p => ({ ...p, xp: p.xp + 15 }));
-                    setDialogFeedback({ ok: true, msg: "To‘g‘ri va tabiiy javob! 🎉 (+15 XP)" });
-                  } else {
-                    setDialogFeedback({ ok: false, msg: "Bu javob vaziyatga mos kelmadi. Boshqasini tanlang!" });
-                  }
-                }} className={`w-full p-3.5 rounded-2xl text-left border text-xs font-black ${t.sub} ${t.textMain}`}>
-                  {opt.ko} ({opt.uz})
-                </button>
-              ))}
-            </div>
-            {dialogFeedback && (
-              <div className={`p-3 rounded-2xl text-xs font-black ${dialogFeedback.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
-                {dialogFeedback.msg}
-              </div>
-            )}
-            {dialogFeedback?.ok && (
-              <button onClick={() => {
-                if (dialogStep + 1 < activeDialog.steps.length) {
-                  setDialogStep(s => s + 1);
-                  setDialogFeedback(null);
-                  speakKo(activeDialog.steps[dialogStep + 1].npcKo);
-                } else {
-                  setDialogStep(0);
-                  setDialogFeedback(null);
-                  alert("Dialog muvaffaqiyatli yakunlandi!");
-                }
-              }} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs">
-                Keyingi suhbat →
-              </button>
-            )}
-          </div>
-        )}
-
-        {reviewMode === 'mock' && (
-          <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
-            {!mockActive ? (
-              <div className="py-4 space-y-3">
-                <div className="text-4xl">📝</div>
-                <h3 className={`text-lg font-black ${t.textMain}`}>TOPIK I & II Mock Test</h3>
-                <p className="text-xs text-slate-400">8 ta aralash imtihon savoli va vaqt nazorati.</p>
-                <button onClick={launchTopikMock} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow">Imtihonni Boshlash</button>
-              </div>
-            ) : !mockDone ? (
-              <div className="space-y-4 text-left">
-                <div className="flex justify-between text-xs font-black text-emerald-500">
-                  <span>Savol {mockStep + 1} / {mockList.length}</span>
-                  <span>⏱ {mockSeconds}s</span>
-                </div>
-                <div className={`text-sm font-black ${t.textMain}`}>{mockList[mockStep]?.q}</div>
-                <div className="space-y-2">
-                  {mockList[mockStep]?.opts.map(opt => (
-                    <button key={opt} onClick={() => setMockSelected({ ...mockSelected, [mockStep]: opt })} className={`w-full p-3 rounded-2xl border text-xs font-black ${mockSelected[mockStep] === opt ? 'bg-emerald-500 text-white border-emerald-600' : `${t.sub} ${t.textMain}`}`}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-                <button onClick={() => { if (mockStep + 1 < mockList.length) setMockStep(s => s + 1); else setMockDone(true); }} className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs">
-                  {mockStep + 1 < mockList.length ? 'Keyingi savol →' : 'Imtihonni Yakunlash'}
-                </button>
-              </div>
-            ) : (
-              <div className="py-4 space-y-3">
-                <div className="text-4xl">🎓</div>
-                <h3 className={`text-xl font-black ${t.textMain}`}>Imtihon yakunlandi!</h3>
-                <p className="text-xs font-bold text-emerald-500">Natijangiz saqlandi va XP qo‘shildi.</p>
-                <button onClick={() => setMockActive(false)} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs">Bosh sahifaga qaytish</button>
-              </div>
             )}
           </div>
         )}
@@ -1755,7 +2068,7 @@ export default function App() {
                     type="text"
                     value={nameDraft}
                     onChange={e => setNameDraft(e.target.value)}
-                    className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold outline-none`}
+                    className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold`}
                   />
                   <button
                     onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }}
@@ -1767,7 +2080,7 @@ export default function App() {
               ) : (
                 <div className="flex items-center gap-2">
                   <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                  <button onClick={() => { setNameDraft(profile.name); setEditingName(true); }} className="text-slate-400"><Edit3 size={13} /></button>
+                  <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
                 </div>
               )}
               <p className="text-xs text-slate-400 mt-0.5">{currentUser?.email}</p>
