@@ -188,7 +188,7 @@ export default function App() {
       const foundIndex = registeredUsers.findIndex(u => u.email === email);
       if (foundIndex === -1) return setAuthError("Bunday email bazada topilmadi!");
       const updated = [...registeredUsers];
-      updated[foundIndex].password = password; // Yangi parolni o'rnatish
+      updated[foundIndex].password = password;
       setRegisteredUsers(updated);
       localStorage.setItem('hs_registered_users', JSON.stringify(updated));
       setResetSuccess("Parol muvaffaqiyatli o'zgartirildi! Endi kirishingiz mumkin.");
@@ -356,42 +356,76 @@ export default function App() {
 
   const t = {
     bg: isDark ? 'bg-[#0b0f19] text-slate-100' : 'bg-[#faf8f9] text-[#1e1e1e]',
-    card: isDark ? 'bg-[#141a29] border-slate-800' : 'bg-white border-slate-200 shadow-2xs',
+    card: isDark ? 'bg-[#141a29] border-slate-800' : 'bg-white border-slate-200/90 shadow-2xs',
     sub: isDark ? 'bg-[#1c2438] border-slate-700' : 'bg-[#fafafa] border-slate-200',
-    nav: isDark ? 'bg-[#0f1524]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200',
+    nav: isDark ? 'bg-[#0f1524]/95 border-t border-slate-800' : 'bg-white/95 border-t border-slate-200/90',
     textMain: isDark ? 'text-white' : 'text-[#1e1e1e]',
     textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
   };
 
   // =========================================================================
-  // AUTH SCREEN (With Registration, Login, Google, & Password Reset Flow)
+  // AUTH SCREEN
   // =========================================================================
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 pt-10 font-sans`}>
         <div className="max-w-md w-full mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2.5">
-            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
+            <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
-              <span className={`font-black text-lg ${t.textMain}`}>ZiyoPrep</span>
-              <span className="text-[10px] font-black text-emerald-500 block">한글 스튜디오</span>
+              <span className={`font-black text-lg tracking-tight block leading-none ${t.textMain}`}>ZiyoPrep</span>
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">한글 스튜디오</span>
             </div>
           </div>
-          <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>{isDark ? <Sun size={16} /> : <Moon size={16} />}</button>
+          <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>
+            {isDark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-slate-600" />}
+          </button>
         </div>
 
         <div className="max-w-md w-full mx-auto my-auto text-center space-y-6">
           {authMode === 'welcome' && (
             <>
-              <div className="w-36 h-36 mx-auto"><ZiyoOwlAvatar className="w-full h-full rounded-[36px]" /></div>
-              <h1 className={`text-2xl font-black ${t.textMain}`}>ZiyoPrep bilan koreys tilini o‘rganing!</h1>
-              <div className="space-y-3">
-                <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-sm uppercase shadow">Tezkor kirish (Mehmon)</button>
-                <button onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('google'); }} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain}`}>Google bilan davom etish</button>
-                <div className="flex justify-center gap-4 pt-2">
-                  <button onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('login'); }} className="text-xs font-black text-emerald-600">Email orqali kirish</button>
+              <div className="w-36 h-36 mx-auto">
+                <ZiyoOwlAvatar className="w-full h-full rounded-[36px] border-4 border-emerald-500/30 shadow-2xl" equipped={equippedItems} />
+              </div>
+
+              <div className="space-y-2">
+                <h1 className={`text-2xl font-black ${t.textMain}`}>
+                  ZiyoPrep bilan koreys tilini quvnoq va samarali o‘rganing!
+                </h1>
+                <p className={`text-xs ${t.textMuted} max-w-xs mx-auto leading-relaxed`}>
+                  Hangul alifbosi, 서울대 한국어 1A–6B darsliklari, {allVocabWords.length}+ lug‘at va Savol-Javob testlari, Real Dialoglar va AI ustoz 토히르벡.
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <button
+                  onClick={handleGuestLogin}
+                  className="w-full py-4 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] border-b-4 border-[#46a302] text-white font-black text-sm uppercase shadow-lg active:translate-y-0.5 transition"
+                >
+                  Akkauntsiz Boshlash (Tezkor kirish)
+                </button>
+                <button
+                  onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('google'); }}
+                  className={`w-full py-4 rounded-2xl ${t.card} border-2 border-b-4 font-black text-sm ${t.textMain} flex items-center justify-center gap-2 active:translate-y-0.5 transition`}
+                >
+                  <span className="text-base font-black text-blue-500">G</span>
+                  <span>Google bilan davom etish</span>
+                </button>
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('login'); }}
+                    className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Email va Parol bilan kirish
+                  </button>
                   <span className="text-slate-300">|</span>
-                  <button onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('register'); }} className="text-xs font-black text-indigo-500">Ro‘yxatdan o‘tish</button>
+                  <button
+                    onClick={() => { setAuthError(''); setAuthForm({ name: '', email: '', password: '' }); setAuthMode('register'); }}
+                    className="text-xs font-black text-indigo-500 hover:underline"
+                  >
+                    Ro‘yxatdan o‘tish
+                  </button>
                 </div>
               </div>
             </>
@@ -399,92 +433,185 @@ export default function App() {
 
           {authMode === 'google' && (
             <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
-              <button onClick={() => setAuthMode('welcome')} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
-              <h2 className={`font-black text-base ${t.textMain}`}>Google orqali kirish</h2>
-              {authError && <div className="text-rose-500 text-xs font-bold">{authError}</div>}
+              <div className="flex items-center justify-between">
+                <button onClick={() => setAuthMode('welcome')} className={`p-2 rounded-xl ${t.sub} border`}>
+                  <ArrowLeft size={16} />
+                </button>
+                <h2 className={`font-black text-base ${t.textMain}`}>Google hisob bilan kirish</h2>
+                <div className="w-8" />
+              </div>
+
+              {authError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold text-center">
+                  {authError}
+                </div>
+              )}
+
               <form onSubmit={handleGoogleSubmit} className="space-y-3">
-                <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold outline-none`} />
-                <input type="email" placeholder="Gmail manzilingiz" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold outline-none`} />
-                <button type="submit" className="w-full py-3 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase">Tasdiqlash</button>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 block mb-1">Ismingiz</label>
+                  <input
+                    type="text"
+                    placeholder="Masalan: Tokhirbek"
+                    value={authForm.name}
+                    onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 block mb-1">Gmail manzilingiz</label>
+                  <input
+                    type="email"
+                    placeholder="example@gmail.com"
+                    value={authForm.email}
+                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-blue-600 border-b-4 border-blue-800 text-white font-black text-xs uppercase"
+                >
+                  Google orqali tasdiqlash
+                </button>
               </form>
             </div>
           )}
 
           {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && (
             <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
-              <button onClick={() => { setAuthError(''); setResetSuccess(''); setAuthMode('welcome'); }} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
-              <h2 className={`font-black text-base ${t.textMain}`}>
-                {authMode === 'login' ? 'Tizimga kirish' : authMode === 'register' ? 'Yangi ro‘yxatdan o‘tish' : 'Parolni tiklash'}
-              </h2>
-              {authError && <div className="text-rose-500 text-xs font-bold">{authError}</div>}
-              {resetSuccess && <div className="text-emerald-500 text-xs font-bold">{resetSuccess}</div>}
-              
+              <div className="flex items-center justify-between">
+                <button onClick={() => { setAuthError(''); setResetSuccess(''); setAuthMode('welcome'); }} className={`p-2 rounded-xl ${t.sub} border`}>
+                  <ArrowLeft size={16} />
+                </button>
+                <h2 className={`font-black text-base ${t.textMain}`}>
+                  {authMode === 'login' ? 'ZiyoPrep ga kirish' : authMode === 'register' ? 'Yangi akkaunt yaratish' : 'Parolni tiklash'}
+                </h2>
+                <div className="w-8" />
+              </div>
+
+              {authError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 text-rose-500 text-xs font-bold text-center">
+                  {authError}
+                </div>
+              )}
+              {resetSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/15 text-emerald-600 text-xs font-bold text-center">
+                  {resetSuccess}
+                </div>
+              )}
+
               <form onSubmit={handleEmailAuth} className="space-y-3">
-                {authMode === 'register' && <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold outline-none`} />}
-                <input type="email" placeholder="Email" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold outline-none`} />
-                <input type="password" placeholder={authMode === 'forgot' ? "Yangi parol kiriting" : "Parol"} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold outline-none`} />
-                
-                <button type="submit" className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase">
-                  {authMode === 'login' ? 'Kirish' : authMode === 'register' ? 'Akkaunt ochish' : 'Parolni yangilash'}
+                {authMode === 'register' && (
+                  <input
+                    type="text"
+                    placeholder="Ismingiz (masalan: Tokhirbek)"
+                    value={authForm.name}
+                    onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                    className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                  />
+                )}
+                <input
+                  type="email"
+                  placeholder="Email manzilingiz"
+                  value={authForm.email}
+                  onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                  className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                />
+                <input
+                  type="password"
+                  placeholder={authMode === 'forgot' ? "Yangi parol kiriting" : "Parol (kamida 4 ta belgi)"}
+                  value={authForm.password}
+                  onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                  className={`w-full ${t.sub} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+                />
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl bg-[#58cc02] border-b-4 border-[#46a302] text-white font-black text-xs uppercase"
+                >
+                  {authMode === 'login' ? 'Kirish' : authMode === 'register' ? 'Ro‘yxatdan o‘tish' : 'Parolni yangilash'}
                 </button>
               </form>
 
               {authMode === 'login' && (
                 <div className="flex justify-between items-center pt-1 text-xs">
-                  <button onClick={() => { setAuthError(''); setAuthMode('forgot'); }} className="text-slate-400 hover:underline">Parolni esdan chiqardingizmi?</button>
+                  <button onClick={() => { setAuthError(''); setAuthMode('forgot'); }} className="text-slate-400 hover:underline font-bold">Parolni esdan chiqardingizmi?</button>
                   <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className="text-emerald-600 font-bold hover:underline">Ro‘yxatdan o‘tish</button>
                 </div>
               )}
             </div>
           )}
         </div>
+
         <div className="text-center text-[11px] text-slate-400">ZiyoPrep • 한글 스튜디오</div>
       </div>
     );
   }
 
   // =========================================================================
-  // HOME SCREEN
+  // 1. ASOSIY EKRAN — "ZiyoPrep • 한글 스튜디오"
   // =========================================================================
   const renderHome = () => {
     const dailyPct = Math.min(100, Math.round((profile.dailyXp / 100) * 100));
+
     return (
       <div className="space-y-4 pb-28">
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2.5">
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
-              <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
-              <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오 • 1A–6B</span>
+              <h1 className={`text-lg font-black tracking-tight leading-none ${t.textMain}`}>ZiyoPrep</h1>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">한글 스튜디오 • 1A–6B</span>
             </div>
           </div>
-          <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
+              className={`px-3 py-1.5 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1.5`}
+            >
+              <Globe size={14} className="text-sky-500" />
+              <span>{uiLang === 'uz' ? "O'zbekcha" : '한국어'}</span>
+            </button>
+            <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>
+              {isDark ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-slate-600" />}
+            </button>
+          </div>
         </div>
 
-        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0" equipped={equippedItems} />
+        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/35 border-emerald-800/70' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-4 flex items-center gap-3.5`}>
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl shrink-0 border-2 border-white dark:border-slate-700" equipped={equippedItems} />
           <div className="flex-1 space-y-2">
             <div className="flex justify-between items-center">
               <span className={`text-xs font-black ${t.textMain}`}>Salom, {profile.name}! 👋</span>
-              <span className="text-[11px] font-black text-emerald-600">{profile.dailyXp}/100 XP</span>
+              <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{profile.dailyXp}/100 XP</span>
             </div>
             <div className="w-full h-2.5 bg-white/80 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
               <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${dailyPct}%` }} />
             </div>
-            <div className="text-[10px] font-bold text-slate-500">🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP</div>
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+              🔥 {profile.streak} kunlik streak • ⚡ {profile.xp} XP • ❄️ {profile.freezes}
+            </div>
           </div>
         </div>
 
-        <button onClick={() => startLesson(nextLesson)} className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-emerald-400 text-xs font-black flex items-center justify-center gap-2`}>
+        <button
+          onClick={() => startLesson(nextLesson)}
+          className={`w-full py-3.5 px-4 rounded-2xl ${t.card} border hover:border-emerald-400 text-xs font-black flex items-center justify-center gap-2 active:scale-99 transition`}
+        >
           <Play size={13} className="text-[#58cc02] fill-[#58cc02]" />
-          <span>{nextLesson.week} Davom etish ({nextLesson.title})</span>
+          <span>
+            {uiLang === 'uz'
+              ? `${nextLesson.week} Davom etish (${nextLesson.title})`
+              : `${nextLesson.week} 이어서 공부하기`}
+          </span>
         </button>
 
         {/* PLANNER */}
         <div className={`rounded-2xl ${t.card} border p-3.5 space-y-2`}>
           <div className="flex justify-between items-center text-xs font-black">
             <span className="flex items-center gap-1.5 text-indigo-500"><Target size={14} /> Kunlik O‘quv Rejasi</span>
-            <span className="text-[10px] text-slate-400">{plannerTasks.filter(p => p.done).length}/{plannerTasks.length}</span>
+            <span className="text-[10px] text-slate-400">{plannerTasks.filter(p => p.done).length}/{plannerTasks.length} bajarildi</span>
           </div>
           <div className="space-y-1.5">
             {plannerTasks.map(task => (
@@ -502,25 +629,77 @@ export default function App() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
-          <div onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }} className={`rounded-2xl ${t.card} border p-3.5 cursor-pointer`}>
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center mb-1">단어</div>
-            <div className={`font-black text-xs ${t.textMain}`}>Lug‘atlar & Test</div>
+        {/* 📚 LUG'ATLAR & SAVOL-JAVOB MAXSUS KARTASI */}
+        <div
+          onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }}
+          className={`rounded-2xl ${isDark ? 'bg-indigo-950/45 border-indigo-700' : 'bg-gradient-to-r from-[#f3f0fa] to-[#eef2ff] border-[#d8ccf5]'} border p-3.5 flex items-center justify-between cursor-pointer active:scale-99 transition`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+              단어장
+            </div>
+            <div>
+              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar & Savol-Javob ({allVocabWords.length}+ so‘z)</div>
+              <div className={`text-[10px] ${t.textMuted}`}>서울대 1A–6A barcha bo‘lim lug‘atlari + Test</div>
+            </div>
           </div>
-          <div onClick={() => setScreen('builder')} className={`rounded-2xl ${t.card} border p-3.5 cursor-pointer`}>
-            <div className="w-8 h-8 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center mb-1">가나다</div>
-            <div className={`font-black text-xs ${t.textMain}`}>Harf Yig‘ish</div>
+          <span className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-black text-[10px]">Ochish ›</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <div
+            onClick={() => setScreen('builder')}
+            className={`rounded-2xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border p-3.5 cursor-pointer active:scale-98 transition space-y-1.5`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#4d8b6f] text-white font-black text-xs flex items-center justify-center">
+              가나다
+            </div>
+            <div className={`font-black text-xs ${t.textMain}`}>글자 조립 (Harf)</div>
+            <div className={`text-[10px] ${t.textMuted}`}>Bo‘g‘in yig‘ish & Talaffuz</div>
+          </div>
+
+          <div
+            onClick={() => {
+              setScreen('review');
+              setReviewMode('dialog');
+              setDialogStep(0);
+              setDialogFeedback(null);
+            }}
+            className={`rounded-2xl ${isDark ? 'bg-sky-950/40 border-sky-800' : 'bg-[#eef6fc] border-[#cce5f6]'} border p-3.5 cursor-pointer active:scale-98 transition space-y-1.5`}
+          >
+            <div className="w-9 h-9 rounded-xl bg-sky-500 text-white font-black text-xs flex items-center justify-center">
+              <MessageSquare size={18} />
+            </div>
+            <div className={`font-black text-xs ${t.textMain}`}>🎭 Dialog Simulyator</div>
+            <div className={`text-[10px] ${t.textMuted}`}>Kafe, Shifoxona, Suhbat</div>
           </div>
         </div>
 
-        {/* 12 BOOKS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          <span className="text-[11px] font-black text-slate-400 shrink-0 mr-1">서울대</span>
-          {snuBooks.map((b) => (
-            <button key={b.code} onClick={() => setSelectedBookCode(b.code)} className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 ${b.code === selectedBookCode ? 'bg-[#58cc02] text-white border-2 border-emerald-600' : `${t.card} border`}`}>
-              {b.code}
-            </button>
-          ))}
+        {/* 12 TA ALOHIDA KITOB TABI (1A ~ 6B) */}
+        <div className="space-y-1 pt-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <span className="text-[11px] font-black text-slate-400 tracking-wider uppercase shrink-0 mr-1">서울대</span>
+            {snuBooks.map((b) => {
+              const active = b.code === selectedBookCode;
+              return (
+                <button
+                  key={b.code}
+                  onClick={() => setSelectedBookCode(b.code)}
+                  className={`px-3 h-8 rounded-lg font-black text-xs shrink-0 transition ${
+                    active
+                      ? isDark ? 'bg-slate-800 border-2 border-emerald-400 text-white' : 'bg-white border-2 border-[#1e1e1e] text-[#1e1e1e]'
+                      : isDark ? 'bg-rose-950/60 text-rose-200' : 'bg-[#f8dce2] text-[#7f2d3f]'
+                  }`}
+                >
+                  {b.code}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-[11px] font-bold text-slate-400 px-0.5">
+            <span>{currentBook.label}</span>
+            <span>{currentBook.range}</span>
+          </div>
         </div>
 
         <div className="space-y-2.5">
@@ -528,34 +707,77 @@ export default function App() {
             const isDone = completedIds.includes(lesson.id);
             const prev = idx > 0 ? currentBook.lessons[idx - 1] : null;
             const isOpen = isUnlockedAll || idx === 0 || isDone || (prev && completedIds.includes(prev.id));
+
             return (
-              <div key={lesson.id} onClick={() => { if (!isOpen) return alert("Avval oldingi darsni tugating!"); startLesson(lesson); }} className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer ${isOpen ? 'hover:border-emerald-400' : 'opacity-65'}`}>
+              <div
+                key={lesson.id}
+                onClick={() => {
+                  if (!isOpen) {
+                    alert(uiLang === 'uz' ? "Avval oldingi darsni tugating!" : "이전 과를 먼저 완료하세요!");
+                    return;
+                  }
+                  startLesson(lesson);
+                }}
+                className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer transition ${
+                  isOpen ? 'hover:border-emerald-400' : 'opacity-65'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : isOpen ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'}`}>{lesson.num}</span>
+                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${
+                    isDone
+                      ? 'bg-[#58cc02] text-white'
+                      : isOpen
+                        ? 'bg-[#dbeafe] text-[#1d4ed8]'
+                        : 'bg-[#fce7eb] text-[#be123c]'
+                  }`}>
+                    {lesson.num}
+                  </span>
                   <span className="text-base">{lesson.emoji}</span>
                   <div>
                     <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
-                    <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
+                    {uiLang === 'uz' && <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>}
                   </div>
                 </div>
-                <div>{isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : !isOpen ? <Lock size={15} className="text-slate-300" /> : <span className="text-emerald-600">›</span>}</div>
+
+                <div>
+                  {isDone ? (
+                    <CheckCircle2 size={17} className="text-[#58cc02]" />
+                  ) : !isOpen ? (
+                    <Lock size={15} className="text-slate-300" />
+                  ) : (
+                    <span className="text-[10px] font-black text-emerald-600">›</span>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
-        {!isUnlockedAll && <button onClick={() => setIsUnlockedAll(true)} className="w-full py-3.5 rounded-2xl bg-rose-600 text-white font-black text-xs">Barcha darslarni ochish</button>}
+        {!isUnlockedAll && (
+          <button
+            onClick={() => {
+              setIsUnlockedAll(true);
+              localStorage.setItem('hs_unlocked', 'true');
+            }}
+            className="w-full py-3.5 rounded-2xl bg-[#e11d48] hover:bg-rose-600 text-white font-black text-xs tracking-wide shadow-md mt-2"
+          >
+            {uiLang === 'uz' ? '전체 코스 열기 (Barcha darslarni ochish)' : '전체 코스 열기'}
+          </button>
+        )}
       </div>
     );
   };
 
   // =========================================================================
-  // VOCABULARY SCREEN
+  // 1.5. LUG'ATLAR VA SAVOL-JAVOB EKRANI (1A ~ 6A)
   // =========================================================================
   const renderVocab = () => {
     const vBook = vocabBooks.find(b => b.code === selectedVocabBook) || vocabBooks[0];
     const vTopic = vBook.topics.find(tp => tp.id === selectedVocabTopicId) || vBook.topics[0];
-    const filteredWords = vTopic.words.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
+    const filteredWords = vTopic.words.filter(w =>
+      w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+      w.uz.toLowerCase().includes(vocabSearch.toLowerCase())
+    );
 
     const startVocabQuiz = (dir = vocabQuizDirection) => {
       const pool = vTopic.words.length >= 4 ? vTopic.words : allVocabWords;
@@ -576,65 +798,178 @@ export default function App() {
     return (
       <div className="space-y-3.5 pb-28">
         <div className="flex items-center justify-between pt-2">
-          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> <span>Lug‘atlar</span></button>
-          <button onClick={() => { if (vocabQuizMode) setVocabQuizMode(false); else { setVocabQuizScore(0); setVocabQuizCount(0); startVocabQuiz(vocabQuizDirection); } }} className="px-3.5 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-black">
-            {vocabQuizMode ? '📖 Ro‘yxat' : '🎯 Savol-Javob'}
+          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
+            <ArrowLeft size={16} /> <span>📚 Lug‘atlar ({vBook.code})</span>
+          </button>
+          <button
+            onClick={() => {
+              if (vocabQuizMode) {
+                setVocabQuizMode(false);
+              } else {
+                setVocabQuizScore(0);
+                setVocabQuizCount(0);
+                startVocabQuiz(vocabQuizDirection);
+              }
+            }}
+            className="px-3.5 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-black shadow-xs"
+          >
+            {vocabQuizMode ? '📖 Lug‘at ro‘yxati' : '🎯 Savol-Javob Test'}
           </button>
         </div>
 
+        {/* Kitoblar tanlovi (1A ~ 6A) */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {vocabBooks.map(b => (
-            <button key={b.code} onClick={() => { setSelectedVocabBook(b.code); setSelectedVocabTopicId(b.topics[0].id); setVocabQuizMode(false); }} className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 ${selectedVocabBook === b.code ? 'bg-indigo-600 text-white' : `${t.card} border`}`}>
-              {b.code}
+          {vocabBooks.map(b => {
+            const totalW = b.topics.reduce((s, tp) => s + tp.words.length, 0);
+            return (
+              <button
+                key={b.code}
+                onClick={() => {
+                  setSelectedVocabBook(b.code);
+                  setSelectedVocabTopicId(b.topics[0].id);
+                  setVocabSearch('');
+                  setVocabQuizMode(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition ${
+                  selectedVocabBook === b.code ? 'bg-indigo-600 text-white' : `${t.card} border ${t.textMain}`
+                }`}
+              >
+                {b.code} ({totalW})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mavzular tanlovi */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {vBook.topics.map(tp => (
+            <button
+              key={tp.id}
+              onClick={() => {
+                setSelectedVocabTopicId(tp.id);
+                setVocabSearch('');
+                if (vocabQuizMode) {
+                  setTimeout(() => startVocabQuiz(vocabQuizDirection), 50);
+                }
+              }}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-black shrink-0 border transition ${
+                vTopic.id === tp.id ? 'bg-[#58cc02] text-white border-emerald-600' : `${t.sub} ${t.textMuted}`
+              }`}
+            >
+              {tp.name} ({tp.words.length})
             </button>
           ))}
         </div>
 
         {vocabQuizMode && vocabQuizWord ? (
           <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
-            <div className="flex justify-between text-xs font-black text-indigo-500">
-              <span>Test rejimi</span>
-              <span>To‘g‘ri: {vocabQuizScore}/{vocabQuizCount}</span>
+            <div className="flex items-center justify-between text-xs font-black">
+              <span className="text-indigo-500">{vTopic.name}</span>
+              <span className="text-emerald-500">To‘g‘ri: {vocabQuizScore} / {vocabQuizCount}</span>
             </div>
-            <div onClick={() => speakKo(vocabQuizWord.ko)} className="py-4 cursor-pointer">
-              <div className={`text-2xl font-black ${t.textMain}`}>{vocabQuizDirection === 'ko2uz' ? vocabQuizWord.ko : vocabQuizWord.uz}</div>
-              <div className="text-xs text-indigo-500 mt-1 flex items-center justify-center gap-1"><Volume2 size={14} /> Eshitish</div>
+
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => {
+                  setVocabQuizDirection('ko2uz');
+                  startVocabQuiz('ko2uz');
+                }}
+                className={`py-2 rounded-xl text-[11px] font-black border ${
+                  vocabQuizDirection === 'ko2uz' ? 'bg-indigo-600 text-white border-indigo-700' : `${t.sub} ${t.textMuted}`
+                }`}
+              >
+                🇰🇷 Koreyscha → 🇺🇿 O‘zbekcha
+              </button>
+              <button
+                onClick={() => {
+                  setVocabQuizDirection('uz2ko');
+                  startVocabQuiz('uz2ko');
+                }}
+                className={`py-2 rounded-xl text-[11px] font-black border ${
+                  vocabQuizDirection === 'uz2ko' ? 'bg-indigo-600 text-white border-indigo-700' : `${t.sub} ${t.textMuted}`
+                }`}
+              >
+                🇺🇿 O‘zbekcha → 🇰🇷 Koreyscha
+              </button>
             </div>
+
+            <div onClick={() => speakKo(vocabQuizWord.ko)} className="py-4 cursor-pointer space-y-1.5">
+              <div className={`text-2xl font-black ${t.textMain}`}>
+                {vocabQuizDirection === 'ko2uz' ? vocabQuizWord.ko : vocabQuizWord.uz}
+              </div>
+              <div className="text-xs text-indigo-500 font-bold flex items-center justify-center gap-1">
+                <Volume2 size={14} /> Talaffuzni eshitish
+              </div>
+            </div>
+
             <div className="space-y-2 text-left">
               {vocabQuizOpts.map(opt => {
                 const correctAns = vocabQuizDirection === 'ko2uz' ? vocabQuizWord.uz : vocabQuizWord.ko;
                 return (
-                  <button key={opt} disabled={vocabQuizPick !== null} onClick={() => {
-                    setVocabQuizPick(opt);
-                    setVocabQuizCount(c => c + 1);
-                    if (opt === correctAns) {
-                      setVocabQuizScore(s => s + 1);
-                      setProfile(p => ({ ...p, xp: p.xp + 10 }));
-                    } else {
-                      setMistakes(m => [...m, { ko: vocabQuizWord.ko, uz: vocabQuizWord.uz }]);
-                    }
-                  }} className={`w-full p-3.5 rounded-2xl border text-xs font-black ${vocabQuizPick !== null ? (opt === correctAns ? 'bg-emerald-500 text-white' : vocabQuizPick === opt ? 'bg-rose-500 text-white' : `${t.sub}`) : `${t.sub} ${t.textMain}`}`}>
+                  <button
+                    key={opt}
+                    disabled={vocabQuizPick !== null}
+                    onClick={() => {
+                      setVocabQuizPick(opt);
+                      setVocabQuizCount(c => c + 1);
+                      if (vocabQuizDirection === 'uz2ko') speakKo(opt);
+                      if (opt === correctAns) {
+                        setVocabQuizScore(s => s + 1);
+                        setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
+                      } else {
+                        setMistakes(m => [...m, { ko: vocabQuizWord.ko, uz: vocabQuizWord.uz }]);
+                      }
+                    }}
+                    className={`w-full p-3.5 rounded-2xl border text-xs font-black transition ${
+                      vocabQuizPick !== null
+                        ? opt === correctAns
+                          ? 'bg-emerald-500 text-white border-emerald-600'
+                          : vocabQuizPick === opt
+                            ? 'bg-rose-500 text-white border-rose-600'
+                            : `${t.sub} opacity-50`
+                        : `${t.sub} ${t.textMain} hover:border-indigo-400`
+                    }`}
+                  >
                     {opt}
                   </button>
                 );
               })}
             </div>
-            {vocabQuizPick !== null && <button onClick={() => startVocabQuiz(vocabQuizDirection)} className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs">Keyingi →</button>}
+
+            {vocabQuizPick !== null && (
+              <button
+                onClick={() => startVocabQuiz(vocabQuizDirection)}
+                className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+              >
+                Keyingi savol (+10 XP) →
+              </button>
+            )}
           </div>
         ) : (
           <>
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
-              <input type="text" value={vocabSearch} onChange={e => setVocabSearch(e.target.value)} placeholder="So‘z qidirish..." className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`} />
+              <input
+                type="text"
+                value={vocabSearch}
+                onChange={e => setVocabSearch(e.target.value)}
+                placeholder={`${vTopic.name} (${vTopic.words.length} ta so‘z) ichidan qidirish...`}
+                className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`}
+              />
             </div>
+
             <div className="space-y-1.5">
               {filteredWords.map((w, idx) => (
-                <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
-                  <div>
+                <div
+                  key={idx}
+                  onClick={() => speakKo(w.ko)}
+                  className={`rounded-2xl ${t.card} border p-3 flex items-center justify-between cursor-pointer hover:border-indigo-400 active:scale-99 transition`}
+                >
+                  <div className="pr-2">
                     <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
-                    <div className="text-xs text-slate-400">{w.uz}</div>
+                    <div className="text-xs text-slate-400 font-bold mt-0.5">{w.uz}</div>
                   </div>
-                  <Volume2 size={16} className="text-indigo-500" />
+                  <Volume2 size={16} className="text-indigo-500 shrink-0" />
                 </div>
               ))}
             </div>
@@ -645,64 +980,474 @@ export default function App() {
   };
 
   // =========================================================================
-  // BUILDER SCREEN
+  // 2. "글자 조립"
   // =========================================================================
   const renderBuilder = () => (
     <div className="space-y-3.5 pb-28">
       <div className="flex items-center justify-between pt-2">
-        <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> <span>Harf Yig‘ish</span></button>
+        <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
+          <ArrowLeft size={16} /> <span>글자 조립</span>
+        </button>
+        <button
+          onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
+          className={`px-3 py-1 rounded-full ${t.card} border text-xs font-bold flex items-center gap-1`}
+        >
+          <Globe size={13} className="text-sky-500" /> {uiLang === 'uz' ? "O'zbekcha" : '한국어'}
+        </button>
       </div>
-      <div className={`rounded-3xl ${t.card} border p-4 space-y-4 text-center`}>
-        <div onClick={() => speakKo(composedSyllable)} className={`py-8 rounded-2xl ${t.sub} border cursor-pointer`}>
-          <div className={`text-6xl font-black ${t.textMain}`}>{composedSyllable}</div>
-          <div className="text-xs text-slate-400 mt-2">{romanGuide}</div>
+
+      <div className="grid grid-cols-4 gap-1.5">
+        {[
+          { id: 'no_batchim', icon: '가', label: '받침 없는 글자' },
+          { id: 'with_batchim', icon: '난', label: '받침 있는 글자' },
+          { id: 'word', icon: '🥗', label: '단어 조립' },
+          { id: 'pronounce', icon: '🔊', label: '발음 연습' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setBuilderTab(tab.id)}
+            className={`p-2.5 rounded-2xl border text-center transition ${
+              builderTab === tab.id
+                ? isDark ? 'bg-emerald-950/60 border-emerald-500 text-white font-black' : 'bg-[#eef6ee] border-[#9ec99e] font-black text-slate-900'
+                : `${t.card} ${t.textMuted}`
+            }`}
+          >
+            <div className="text-sm font-black">{tab.icon}</div>
+            <div className="text-[9px] mt-1 leading-tight">{tab.label}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className={`rounded-3xl ${t.card} border p-4 space-y-3.5`}>
+        <div className="text-[11px] font-bold text-slate-500">
+          자음과 모음을 눌러서 글자를 만들어 보세요
         </div>
-        <div className="text-xs font-bold text-slate-500">Zarur harflarni tanlab bo‘g‘in hosil qiling</div>
+
+        <div className="space-y-1.5">
+          <div className="text-[10px] font-bold text-slate-400">자음</div>
+          <div className="grid grid-cols-8 gap-1.5">
+            {(showDoubleCho ? [...basicCho, ...doubleCho] : basicCho).map(c => (
+              <button
+                key={c}
+                onClick={() => { setCho(c); speakKo(composeHangul(c, jung, activeJong)); }}
+                className={`py-2 rounded-xl border text-xs font-black transition ${
+                  cho === c
+                    ? 'bg-[#e6f3e6] border-[#82b982] text-emerald-900'
+                    : `${t.sub} ${t.textMain}`
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setShowDoubleCho(!showDoubleCho)} className="text-[10px] font-bold text-slate-400">
+            쌍자음 {showDoubleCho ? '▲' : '▼'}
+          </button>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="text-[10px] font-bold text-slate-400">모음</div>
+          <div className="grid grid-cols-8 gap-1.5">
+            {(showCompoundJung ? [...basicJung, ...compoundJung] : basicJung).map(v => (
+              <button
+                key={v}
+                onClick={() => { setJung(v); speakKo(composeHangul(cho, v, activeJong)); }}
+                className={`py-2 rounded-xl border text-xs font-black transition ${
+                  jung === v
+                    ? 'bg-[#e6f3e6] border-[#82b982] text-emerald-900'
+                    : `${t.sub} ${t.textMain}`
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setShowCompoundJung(!showCompoundJung)} className="text-[10px] font-bold text-slate-400">
+            겹모음 {showCompoundJung ? '▲' : '▼'}
+          </button>
+        </div>
+
+        {(builderTab === 'with_batchim' || builderTab === 'word') && (
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-bold text-slate-400">받침</div>
+            <div className="grid grid-cols-6 gap-1.5">
+              {batchims.map(b => (
+                <button
+                  key={b}
+                  onClick={() => { setJong(b); speakKo(composeHangul(cho, jung, b)); }}
+                  className={`py-1.5 rounded-xl border text-xs font-black ${
+                    jong === b ? 'bg-[#fdf2f4] border-rose-400 text-rose-800' : `${t.sub} ${t.textMain}`
+                  }`}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-12 gap-3 pt-2 items-center border-t border-slate-200/40">
+          <div
+            onClick={() => speakKo(composedSyllable)}
+            className={`col-span-5 aspect-square rounded-2xl ${t.sub} border flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400`}
+          >
+            <span className={`text-5xl font-black ${t.textMain}`}>{composedSyllable}</span>
+            <span className="text-[10px] font-bold text-slate-400 mt-1">{romanGuide}</span>
+            <span className="text-[9px] font-bold text-slate-500 mt-0.5">🔊 눌러서 듣기</span>
+          </div>
+
+          <div className="col-span-7 space-y-2">
+            <div className="text-[10px] font-bold text-slate-500">단어 조립</div>
+            <div className={`min-h-[38px] px-3 py-2 rounded-xl ${t.sub} border text-sm font-black ${t.textMain} flex items-center`}>
+              {wordBuffer || <span className="text-[10px] font-normal text-slate-400">글자를 추가하거나 입력</span>}
+            </div>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setWordBuffer(w => w + composedSyllable)}
+                className="px-3 py-1.5 rounded-xl bg-[#eef6ee] text-emerald-800 font-black text-[11px]"
+              >
+                + 추가
+              </button>
+              <button
+                onClick={() => setWordBuffer(w => w.slice(0, -1))}
+                className={`px-2.5 py-1.5 rounded-xl ${t.sub} border text-[11px] font-bold`}
+              >
+                ⌫
+              </button>
+              <button
+                onClick={() => setWordBuffer('')}
+                className={`px-2.5 py-1.5 rounded-xl ${t.sub} border text-[10px] font-bold`}
+              >
+                전체 지우기
+              </button>
+            </div>
+            <button
+              onClick={() => wordBuffer && speakKo(wordBuffer)}
+              className="px-3.5 py-1.5 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center gap-1"
+            >
+              <Volume2 size={12} /> 단어 듣기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-3`}>
+        <div className="flex justify-between items-center text-[11px] font-bold">
+          <span className={t.textMain}>🔊 랜덤 읽기 연습</span>
+          <span className="text-slate-400">지금까지 {practiceCount}개 연습</span>
+        </div>
+
+        <div className="flex items-center justify-center gap-4 py-1">
+          <span className={`text-5xl font-black ${t.textMain}`}>{randomChar}</span>
+          <button
+            onClick={() => speakKo(randomChar)}
+            className="text-[11px] font-bold text-slate-500 hover:text-emerald-600 flex items-center gap-1"
+          >
+            <Volume2 size={15} /> 발음 들어보기
+          </button>
+        </div>
+
+        <button
+          onClick={nextRandomSyllable}
+          className="px-6 py-2.5 rounded-full bg-[#2b2b2b] text-white font-bold text-xs shadow-xs active:scale-95 transition"
+        >
+          읽었어요, 다음 글자
+        </button>
       </div>
     </div>
   );
 
   // =========================================================================
-  // LESSON SCREEN
+  // 3. DARS EKRANI
   // =========================================================================
   const renderLesson = () => {
     if (!activeLesson) return null;
     const currentQ = quizList[qIdx];
+
     return (
       <div className="space-y-3.5 pb-28">
         <div className="flex items-center justify-between pt-2">
-          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-xs font-black ${t.textMuted}`}><ArrowLeft size={15} /> <span>{activeLesson.week}</span></button>
+          <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-xs font-black ${t.textMuted}`}>
+            <ArrowLeft size={15} /> <span>{activeLesson.week}</span>
+          </button>
+          <button
+            onClick={() => setUiLang(l => l === 'uz' ? 'ko' : 'uz')}
+            className={`px-3 py-1 rounded-full ${t.card} border text-[11px] font-bold flex items-center gap-1`}
+          >
+            <Globe size={12} className="text-sky-500" /> {uiLang === 'uz' ? "O'zbekcha" : '한국어'}
+          </button>
         </div>
 
-        <div className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5`}>
+        <div
+          onClick={() => toggleItem('hero', activeLesson.heroKo)}
+          className={`rounded-2xl ${t.card} border p-4 flex items-center gap-3.5 cursor-pointer`}
+        >
           <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl shrink-0" equipped={equippedItems} />
           <div>
             <div className="text-[10px] font-bold text-slate-400">{activeLesson.week}</div>
             <div className={`text-base font-black ${t.textMain}`}>{activeLesson.heroKo}</div>
+            {revealed['hero'] && (
+              <div className="text-xs font-bold text-indigo-500 mt-0.5">{activeLesson.heroUz}</div>
+            )}
           </div>
         </div>
 
+        <div className={`rounded-3xl ${isDark ? 'bg-rose-950/40 border-rose-800' : 'bg-[#fdf2f4] border-[#f5d5dc]'} border overflow-hidden`}>
+          <button
+            onClick={() => setOpenSec(p => ({ ...p, rule: !p.rule }))}
+            className="w-full p-4 flex items-center justify-between text-left"
+          >
+            <div>
+              <span className={`font-black text-sm ${t.textMain}`}>{activeLesson.pinkTitle} </span>
+              <span className="text-[11px] text-slate-500">{activeLesson.pinkSub}</span>
+            </div>
+            {openSec.rule ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+          </button>
+
+          {openSec.rule && (
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-4`}>
+              {activeLesson.pinkGroups.map((grp, gi) => (
+                <div key={gi} className="space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400">{grp.cond}</div>
+                  <div className="space-y-2">
+                    {grp.items.map((it, ii) => {
+                      const key = `p-${gi}-${ii}`;
+                      return (
+                        <div key={key} onClick={() => toggleItem(key, it.ko)} className="cursor-pointer">
+                          <div className={`text-sm font-black ${t.textMain} hover:text-rose-500`}>{it.ko}</div>
+                          {revealed[key] && (
+                            <div className="text-xs text-slate-400 font-bold">{it.uz}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-2 border-t border-slate-200/30">
+                {editingMemo ? (
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={memoInput}
+                      onChange={e => setMemoInput(e.target.value)}
+                      placeholder="Eslatma yozing..."
+                      className={`flex-1 ${t.sub} border rounded-xl px-3 py-1.5 text-xs`}
+                    />
+                    <button
+                      onClick={() => {
+                        setMemos(p => ({ ...p, [activeLesson.id]: memoInput }));
+                        setEditingMemo(false);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold"
+                    >
+                      OK
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => setEditingMemo(true)} className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <Edit3 size={12} /> {memos[activeLesson.id] || 'memo'}
+                    </button>
+                    <button
+                      onClick={() => setDoneSec(p => ({ ...p, rule: !p.rule }))}
+                      className={`px-3 py-1 rounded-lg border text-[11px] font-bold ${
+                        doneSec.rule ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-300 text-slate-400'
+                      }`}
+                    >
+                      {doneSec.rule ? '✓ 완료' : '☐ 완료'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-[#eef6ee] border-[#d6ead6]'} border overflow-hidden`}>
+          <button
+            onClick={() => setOpenSec(p => ({ ...p, struct: !p.struct }))}
+            className="w-full p-4 flex items-center justify-between text-left"
+          >
+            <div>
+              <span className={`font-black text-sm ${t.textMain}`}>{activeLesson.greenTitle} </span>
+              <span className="text-[11px] text-emerald-600 font-bold">{activeLesson.greenFormula}</span>
+            </div>
+            {openSec.struct ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+          </button>
+
+          {openSec.struct && (
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-3`}>
+              {activeLesson.greenRows.map((row, ri) => {
+                const key = `g-${ri}`;
+                return (
+                  <div key={key} onClick={() => toggleItem(key, row.res)} className="cursor-pointer space-y-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+                      {row.parts.map((pt, pi) => (
+                        <React.Fragment key={pi}>
+                          <span className={`px-2.5 py-1 rounded-lg ${t.sub} border`}>{pt}</span>
+                          {pi < row.parts.length - 1 && <span className="text-slate-400">+</span>}
+                        </React.Fragment>
+                      ))}
+                      <span className="text-slate-400">→</span>
+                      <span className={`font-black ${t.textMain}`}>{row.res}</span>
+                    </div>
+                    {revealed[key] && <div className="text-xs text-emerald-600 font-bold">{row.uz}</div>}
+                  </div>
+                );
+              })}
+
+              <div className="flex justify-end pt-1">
+                <button
+                  onClick={() => setDoneSec(p => ({ ...p, struct: !p.struct }))}
+                  className={`px-3 py-1 rounded-lg border text-[11px] font-bold ${
+                    doneSec.struct ? 'bg-emerald-500 text-white border-emerald-600' : 'border-slate-300 text-slate-400'
+                  }`}
+                >
+                  {doneSec.struct ? '✓ 완료' : '☐ 완료'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={`rounded-3xl ${isDark ? 'bg-indigo-950/40 border-indigo-800' : 'bg-[#f3f0fa] border-[#e0d7f5]'} border overflow-hidden`}>
+          <button
+            onClick={() => setOpenSec(p => ({ ...p, words: !p.words }))}
+            className="w-full p-4 flex items-center justify-between text-left"
+          >
+            <span className={`font-black text-sm ${t.textMain}`}>오늘의 핵심 단어 (Lug‘at)</span>
+            {openSec.words ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+          </button>
+
+          {openSec.words && (
+            <div className={`${isDark ? 'bg-[#141a29]' : 'bg-white'} p-4 space-y-2`}>
+              {activeLesson.words.map((w, wi) => {
+                const key = `w-${wi}`;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => toggleItem(key, w.ko)}
+                    className="py-1.5 border-b border-slate-200/30 last:border-none cursor-pointer flex justify-between items-center"
+                  >
+                    <div>
+                      <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
+                      <div className="text-[11px] text-slate-400 font-bold">
+                        {revealed[key] ? w.uz : '누르면 발음 & 번역'}
+                      </div>
+                    </div>
+                    <Volume2 size={15} className="text-indigo-400" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {activeLesson.homework && (
+          <div className={`rounded-3xl ${isDark ? 'bg-amber-950/35 border-amber-800' : 'bg-amber-50 border-amber-200'} border p-4 space-y-2.5`}>
+            <div className="flex justify-between items-center text-xs font-black text-amber-600 dark:text-amber-400">
+              <span>📝 오늘의 숙제 • Uyga Vazifa</span>
+              <button onClick={() => speakKo(activeLesson.homework.sampleKo)} className="flex items-center gap-1 underline">
+                <Volume2 size={13} /> Namuna
+              </button>
+            </div>
+            <p className={`text-xs font-bold ${t.textMain}`}>{activeLesson.homework.taskUz}</p>
+            <p className="text-[10px] text-slate-400">Yordam: {activeLesson.homework.hint}</p>
+            <div className="flex gap-1.5">
+              <input
+                type="text"
+                value={hwInput}
+                onChange={e => setHwInput(e.target.value)}
+                placeholder="Koreyscha javobingizni yozing..."
+                className={`flex-1 ${t.card} border rounded-xl px-3 py-2 text-xs font-bold outline-none`}
+              />
+              <button
+                onClick={() => {
+                  const cleanU = hwInput.replace(/[\s.?!]/g, '');
+                  const cleanA = activeLesson.homework.sampleKo.replace(/[\s.?!]/g, '');
+                  if (cleanU === cleanA) {
+                    speakKo(activeLesson.homework.sampleKo);
+                    setProfile(p => ({ ...p, xp: p.xp + 30, dailyXp: p.dailyXp + 30 }));
+                    setHwStatus({ ok: true, msg: "Ajoyib! Uyga vazifa to‘g‘ri bajarildi! 🎉 (+30 XP)" });
+                  } else {
+                    setHwStatus({ ok: false, msg: `Yana urinib ko‘ring! To‘g‘ri namuna: ${activeLesson.homework.sampleKo}` });
+                  }
+                }}
+                className="px-3.5 py-2 rounded-xl bg-amber-500 text-white font-black text-xs"
+              >
+                Tekshirish
+              </button>
+            </div>
+            {hwStatus && (
+              <div className={`p-2.5 rounded-xl text-xs font-bold ${hwStatus.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
+                {hwStatus.msg}
+              </div>
+            )}
+          </div>
+        )}
+
         {currentQ && (
           <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
-            <div className="text-xs font-black text-rose-500">Test ({qIdx + 1} / {quizList.length})</div>
+            <div className="flex items-center justify-between text-xs font-black">
+              <span className="text-rose-500 flex items-center gap-1">
+                <Shuffle size={13} /> 퀴즈 ({qIdx + 1} / {quizList.length})
+              </span>
+              <button onClick={() => startLesson(activeLesson)} className="text-[11px] text-indigo-500 underline">
+                Savollarni almashtirish
+              </button>
+            </div>
+
             <div className={`text-sm font-black ${t.textMain}`}>{currentQ.q}</div>
+
             <div className="space-y-2">
               {currentQ.opts.map(opt => (
-                <button key={opt} disabled={qAnswer !== null} onClick={() => {
-                  setQAnswer(opt);
-                  speakKo(opt);
-                  if (opt !== currentQ.ans) setMistakes(m => [...m, { ko: currentQ.ans, uz: currentQ.q }]);
-                }} className={`w-full p-3 rounded-2xl text-left border text-xs font-bold ${qAnswer !== null ? (opt === currentQ.ans ? 'bg-emerald-500 text-white' : qAnswer === opt ? 'bg-rose-500 text-white' : `${t.sub}`) : `${t.sub} ${t.textMain}`}`}>
+                <button
+                  key={opt}
+                  disabled={qAnswer !== null}
+                  onClick={() => {
+                    setQAnswer(opt);
+                    speakKo(opt);
+                    if (opt !== currentQ.ans) setMistakes(m => [...m, { ko: currentQ.ans, uz: currentQ.q }]);
+                  }}
+                  className={`w-full p-3 rounded-2xl text-left border text-xs font-bold transition ${
+                    qAnswer !== null
+                      ? opt === currentQ.ans
+                        ? 'bg-emerald-500 text-white border-emerald-600'
+                        : qAnswer === opt
+                          ? 'bg-rose-500 text-white border-rose-600'
+                          : `${t.sub} opacity-50`
+                      : `${t.sub} ${t.textMain} hover:border-rose-300`
+                  }`}
+                >
                   {opt}
                 </button>
               ))}
             </div>
+
             {qAnswer && (
-              <button onClick={() => {
-                if (qIdx + 1 < quizList.length) { setQIdx(qIdx + 1); setQAnswer(null); }
-                else { setCompletedIds(p => [...new Set([...p, activeLesson.id])]); setProfile(p => ({ ...p, xp: p.xp + 50 })); setScreen('home'); }
-              }} className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs">
-                {qIdx + 1 < quizList.length ? 'Keyingi →' : 'Tugatish (+50 XP)'}
+              <div className={`p-3 rounded-2xl text-xs ${qAnswer === currentQ.ans ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
+                <div className="font-black">{qAnswer === currentQ.ans ? '정답이에요! 🎉' : `오답! 정답: ${currentQ.ans}`}</div>
+                <div className="mt-0.5">{currentQ.exp}</div>
+              </div>
+            )}
+
+            {qAnswer && (
+              <button
+                onClick={() => {
+                  if (qIdx + 1 < quizList.length) {
+                    setQIdx(qIdx + 1);
+                    setQAnswer(null);
+                  } else {
+                    setCompletedIds(p => [...new Set([...p, activeLesson.id])]);
+                    setProfile(p => ({ ...p, xp: p.xp + 50, dailyXp: p.dailyXp + 50 }));
+                    setScreen('home');
+                  }
+                }}
+                className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+              >
+                {qIdx + 1 < quizList.length ? '다음 문제 →' : '학습 완료 (+50 XP)'}
               </button>
             )}
           </div>
@@ -712,135 +1457,428 @@ export default function App() {
   };
 
   // =========================================================================
-  // AI TUTOR SCREEN
+  // 4. HAQIQIY GEMINI AI USTOZ — 토히르벡
   // =========================================================================
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
-      <div className="flex items-center gap-2.5 pb-3">
-        <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
-        <div>
-          <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
-          <span className="text-[10px] font-bold text-emerald-500">● Jonli AI ustozi</span>
+      <div className="flex items-center justify-between pb-3">
+        <div className="flex items-center gap-2.5">
+          <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" equipped={equippedItems} />
+          <div>
+            <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡 </h2>
+            <span className="text-[10px] font-bold text-emerald-500">● Jonli AI ulangan • Istalgan savol bering</span>
+          </div>
         </div>
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto pb-2.5 no-scrollbar">
+        {[
+          'Koreys tilida qanday tez gapirish mumkin?',
+          '이에요 va 예요 farqini misollar bilan tushuntir',
+          'Kafeda buyurtma berish dialogini tuzib ber',
+          'TOPIK 4-daraja uchun muhim grammatikalar qaysilar?'
+        ].map(chip => (
+          <button
+            key={chip}
+            onClick={() => handleAiSend(chip)}
+            className={`shrink-0 px-3 py-1.5 rounded-full ${t.card} border text-[11px] font-bold text-emerald-600 dark:text-emerald-400`}
+          >
+            {chip}
+          </button>
+        ))}
       </div>
 
       <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
         {aiMessages.map((m, idx) => (
           <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
-              {m.ko && <div className="font-black">{m.ko}</div>}
-              {m.uz && <div className="text-[11px] opacity-90">{m.uz}</div>}
+            <div
+              onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)}
+              className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1.5 cursor-pointer ${
+                m.role === 'user'
+                  ? 'bg-[#58cc02] text-white font-bold'
+                  : `${t.sub} ${t.textMain}`
+              }`}
+            >
+              {m.role === 'ai' && (
+                <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                  <span>🦉 토히르벡 AI</span>
+                  <Volume2 size={12} />
+                </div>
+              )}
+              {m.ko && <div className="font-black leading-relaxed whitespace-pre-line">{m.ko}</div>}
+              {m.uz && <div className="text-[11px] opacity-90 leading-relaxed whitespace-pre-line">{m.uz}</div>}
             </div>
           </div>
         ))}
-        {aiLoading && <div className="text-xs text-slate-400 animate-pulse">토히르벡 yozmoqda...</div>}
+
+        {aiLoading && (
+          <div className="flex justify-start">
+            <div className={`rounded-2xl px-4 py-2.5 text-xs font-bold ${t.sub} ${t.textMuted} animate-pulse`}>
+              🦉 토히르벡 javob yozmoqda...
+            </div>
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
       <div className="pt-3 flex gap-2">
-        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Savol yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
-        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-4 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={18} /></button>
+        <input
+          type="text"
+          value={aiInput}
+          onChange={e => setAiInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAiSend()}
+          placeholder="토히르벡 ga istalgan savol yozing..."
+          className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`}
+        />
+        <button
+          onClick={() => handleAiSend()}
+          disabled={aiLoading}
+          className="px-4 rounded-2xl bg-[#58cc02] disabled:opacity-50 text-white font-black flex items-center justify-center"
+        >
+          <Send size={18} />
+        </button>
       </div>
     </div>
   );
 
   // =========================================================================
-  // REVIEW SCREEN
+  // 5. TAKRORLASH (MASHQ)
   // =========================================================================
-  const renderReview = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-        {[
-          { id: 'cards', label: 'So‘z' },
-          { id: 'mistakes', label: `오답 노트 (${mistakes.length})` }
-        ].map(m => (
-          <button key={m.id} onClick={() => setReviewMode(m.id)} className={`px-3.5 py-2 rounded-2xl border text-xs font-black ${reviewMode === m.id ? 'bg-[#58cc02] text-white border-emerald-600' : `${t.card} ${t.textMuted}`}`}>
-            {m.label}
-          </button>
-        ))}
-      </div>
+  const renderReview = () => {
+    const card = allWords[flashIdx % allWords.length];
+    const currentDialogObj = activeDialog.steps[dialogStep];
 
-      {reviewMode === 'cards' && (
-        <div className={`rounded-3xl ${t.card} border p-8 text-center space-y-4`}>
-          <div className={`text-3xl font-black ${t.textMain}`}>{allWords[flashIdx % allWords.length].ko}</div>
-          <div className="text-sm text-emerald-500 font-bold">{flashFlipped ? allWords[flashIdx % allWords.length].uz : 'Tarjimasi uchun bosing'}</div>
-          <button onClick={() => setFlashFlipped(!flashFlipped)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-black">Tarjimani ko‘rish</button>
-          <button onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); }} className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs">Keyingi so‘z →</button>
+    return (
+      <div className="space-y-4 pb-28 pt-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {[
+            { id: 'cards', icon: Layers, label: 'So‘z' },
+            { id: 'mistakes', icon: Bookmark, label: `오답 노트 (${mistakes.length})` },
+            { id: 'dialog', icon: MessageSquare, label: 'Dialog' },
+            { id: 'mock', icon: Clock, label: 'TOPIK' }
+          ].map(m => (
+            <button
+              key={m.id}
+              onClick={() => setReviewMode(m.id)}
+              className={`shrink-0 py-2.5 px-3 rounded-2xl border flex items-center gap-1.5 text-[11px] font-black transition ${
+                reviewMode === m.id
+                  ? 'bg-[#58cc02] text-white border-emerald-600 shadow'
+                  : `${t.card} ${t.textMuted}`
+              }`}
+            >
+              <m.icon size={14} />
+              <span>{m.label}</span>
+            </button>
+          ))}
         </div>
-      )}
 
-      {reviewMode === 'mistakes' && (
-        <div className="space-y-3">
-          <div className="flex justify-between items-center text-xs font-black">
-            <span className={t.textMain}>📌 Xatolar daftari</span>
-            {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
+        {reviewMode === 'cards' && card && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className={`text-base font-black ${t.textMain}`}>단어 카드 • So‘z Kartochkalari</h2>
+              <span className="text-xs font-bold text-slate-400">{(flashIdx % allWords.length) + 1} / {allWords.length}</span>
+            </div>
+
+            <div
+              onClick={() => { setFlashFlipped(!flashFlipped); speakKo(card.ko); }}
+              className={`rounded-3xl ${t.card} border-2 p-8 min-h-[240px] flex flex-col items-center justify-center text-center cursor-pointer space-y-3`}
+            >
+              <span className="text-[10px] font-black uppercase text-emerald-500">
+                {flashFlipped ? 'Tarjimasi' : 'Talaffuz va tarjima uchun bosing'}
+              </span>
+              {!flashFlipped ? (
+                <>
+                  <div className={`text-3xl font-black ${t.textMain}`}>{card.ko}</div>
+                  <Volume2 size={24} className="text-emerald-500" />
+                </>
+              ) : (
+                <div className="text-xl font-black text-emerald-500">{card.uz}</div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={() => { setFlashFlipped(false); setFlashIdx(Math.floor(Math.random() * allWords.length)); }}
+                className={`py-3.5 rounded-2xl ${t.card} border font-black text-xs flex items-center justify-center gap-1.5`}
+              >
+                <Shuffle size={15} /> Tasodifiy so‘z
+              </button>
+              <button
+                onClick={() => { setFlashFlipped(false); setFlashIdx(i => i + 1); setProfile(p => ({ ...p, xp: p.xp + 5, dailyXp: p.dailyXp + 5 })); }}
+                className="py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs"
+              >
+                Yodladim (+5 XP) →
+              </button>
+            </div>
           </div>
-          {mistakes.length === 0 ? (
-            <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
-          ) : (
-            mistakes.map((m, idx) => (
-              <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
-                <div>
-                  <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
-                  <div className="text-xs text-slate-400">{m.uz}</div>
-                </div>
-                <Volume2 size={16} className="text-rose-500" />
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
+        )}
 
-  // =========================================================================
-  // PROFILE SCREEN WITH NAME EDITING
-  // =========================================================================
-  const renderProfile = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
-        <div className="flex items-center gap-3.5">
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
-          <div>
-            {editingName ? (
-              <div className="flex gap-1.5">
-                <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold outline-none`} />
-                <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs font-bold rounded-xl">OK</button>
-              </div>
+        {reviewMode === 'mistakes' && (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-xs font-black">
+              <span className={t.textMain}>📌 Xatolar daftari (Qayta takrorlash)</span>
+              {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
+            </div>
+            {mistakes.length === 0 ? (
+              <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! Ajoyib! 🎉</div>
             ) : (
-              <div className="flex items-center gap-2">
-                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                <button onClick={() => { setNameDraft(profile.name); setEditingName(true); }} className="text-slate-400"><Edit3 size={14} /></button>
+              mistakes.map((m, idx) => (
+                <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
+                  <div>
+                    <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
+                    <div className="text-xs text-slate-400">{m.uz}</div>
+                  </div>
+                  <Volume2 size={16} className="text-rose-500" />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {reviewMode === 'dialog' && (
+          <div className={`rounded-3xl ${t.card} border p-5 space-y-4`}>
+            <div className="text-xs font-black text-sky-500">🎭 Real Dialog Simulyatori</div>
+            <div onClick={() => speakKo(currentDialogObj.npcKo)} className={`p-4 rounded-2xl ${t.sub} border cursor-pointer`}>
+              <div className="text-[10px] font-black text-emerald-500 flex items-center gap-1">
+                <Volume2 size={13} /> Suhbatdosh (Eshitish uchun bosing):
+              </div>
+              <div className={`text-base font-black ${t.textMain}`}>{currentDialogObj.npcKo}</div>
+              <div className="text-xs text-slate-400">{currentDialogObj.npcUz}</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-[11px] font-bold text-slate-400">Javobni tanlang:</div>
+              {currentDialogObj.opts.map((opt, idx) => (
+                <button key={idx} onClick={() => {
+                  speakKo(opt.ko);
+                  if (opt.ok) {
+                    setProfile(p => ({ ...p, xp: p.xp + 15 }));
+                    setDialogFeedback({ ok: true, msg: "To‘g‘ri va tabiiy javob! 🎉 (+15 XP)" });
+                  } else {
+                    setDialogFeedback({ ok: false, msg: "Bu javob vaziyatga mos kelmadi. Boshqasini tanlang!" });
+                  }
+                }} className={`w-full p-3.5 rounded-2xl text-left border text-xs font-black ${t.sub} ${t.textMain}`}>
+                  {opt.ko} ({opt.uz})
+                </button>
+              ))}
+            </div>
+            {dialogFeedback && (
+              <div className={`p-3 rounded-2xl text-xs font-black ${dialogFeedback.ok ? 'bg-emerald-500/15 text-emerald-600' : 'bg-rose-500/15 text-rose-500'}`}>
+                {dialogFeedback.msg}
               </div>
             )}
-            <p className="text-xs text-slate-400">{currentUser?.email || 'guest@ziyoprep.uz'}</p>
+            {dialogFeedback?.ok && (
+              <button onClick={() => {
+                if (dialogStep + 1 < activeDialog.steps.length) {
+                  setDialogStep(s => s + 1);
+                  setDialogFeedback(null);
+                  speakKo(activeDialog.steps[dialogStep + 1].npcKo);
+                } else {
+                  setDialogStep(0);
+                  setDialogFeedback(null);
+                  alert("Dialog muvaffaqiyatli yakunlandi!");
+                }
+              }} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs">
+                Keyingi suhbat →
+              </button>
+            )}
+          </div>
+        )}
+
+        {reviewMode === 'mock' && (
+          <div className={`rounded-3xl ${t.card} border p-5 text-center space-y-4`}>
+            {!mockActive ? (
+              <div className="py-4 space-y-3">
+                <div className="text-4xl">📝</div>
+                <h3 className={`text-lg font-black ${t.textMain}`}>TOPIK I & II Mock Test</h3>
+                <p className="text-xs text-slate-400">8 ta aralash imtihon savoli va vaqt nazorati.</p>
+                <button onClick={launchTopikMock} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow">Imtihonni Boshlash</button>
+              </div>
+            ) : !mockDone ? (
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between text-xs font-black text-emerald-500">
+                  <span>Savol {mockStep + 1} / {mockList.length}</span>
+                  <span>⏱ {mockSeconds}s</span>
+                </div>
+                <div className={`text-sm font-black ${t.textMain}`}>{mockList[mockStep]?.q}</div>
+                <div className="space-y-2">
+                  {mockList[mockStep]?.opts.map(opt => (
+                    <button key={opt} onClick={() => setMockSelected({ ...mockSelected, [mockStep]: opt })} className={`w-full p-3 rounded-2xl border text-xs font-black ${mockSelected[mockStep] === opt ? 'bg-emerald-500 text-white border-emerald-600' : `${t.sub} ${t.textMain}`}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => { if (mockStep + 1 < mockList.length) setMockStep(s => s + 1); else setMockDone(true); }} className="w-full py-3.5 rounded-2xl bg-slate-900 text-white font-black text-xs">
+                  {mockStep + 1 < mockList.length ? 'Keyingi savol →' : 'Imtihonni Yakunlash'}
+                </button>
+              </div>
+            ) : (
+              <div className="py-4 space-y-3">
+                <div className="text-4xl">🎓</div>
+                <h3 className={`text-xl font-black ${t.textMain}`}>Imtihon yakunlandi!</h3>
+                <p className="text-xs font-bold text-emerald-500">Natijangiz saqlandi va XP qo‘shildi.</p>
+                <button onClick={() => setMockActive(false)} className="w-full py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-xs">Bosh sahifaga qaytish</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // 6. PROFIL, XP DO'KONI VA TALABALAR REYTINGI
+  // =========================================================================
+  const renderProfile = () => {
+    const shopItems = [
+      { id: 'glasses', icon: '🕶️', name: 'Aqlli Ko‘zoynak', price: 200, desc: 'Boyo‘g‘liga zamonaviy ko‘zoynak taqing' },
+      { id: 'gradCap', icon: '🎓', name: 'TOPIK 6 Qalpoqchasi', price: 400, desc: 'Akademik bitiruvchi bosh kiyimi' },
+      { id: 'crown', icon: '👑', name: 'Oltin Qirollik Toji', price: 700, desc: 'Eng faol talabalar toji' }
+    ];
+
+    const leaderboard = [
+      { name: '김민준 (Seul)', xp: 2450, badge: 'TOPIK 5' },
+      { name: 'Fariza', xp: 1890, badge: 'TOPIK 4' },
+      { name: `${profile.name} (Siz)`, xp: profile.xp, badge: 'TOPIK 4', isMe: true },
+      { name: '김예인', xp: 1320, badge: 'TOPIK 3' },
+      { name: '투굴두르', xp: 980, badge: 'TOPIK 2' }
+    ].sort((a, b) => b.xp - a.xp);
+
+    return (
+      <div className="space-y-4 pb-28 pt-2">
+        <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
+          <div className="flex items-center gap-3.5">
+            <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
+            <div>
+              {editingName ? (
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onChange={e => setNameDraft(e.target.value)}
+                    className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs font-bold outline-none`}
+                  />
+                  <button
+                    onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }}
+                    className="px-2.5 py-1 rounded-xl bg-emerald-500 text-white text-xs font-bold"
+                  >
+                    OK
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
+                  <button onClick={() => { setNameDraft(profile.name); setEditingName(true); }} className="text-slate-400"><Edit3 size={13} /></button>
+                </div>
+              )}
+              <p className="text-xs text-slate-400 mt-0.5">{currentUser?.email}</p>
+            </div>
+          </div>
+          <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>
+            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-slate-700" />}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Flame size={20} className="mx-auto text-amber-500 fill-amber-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Kunlik Streak</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <Zap size={20} className="mx-auto text-sky-500 fill-sky-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Mavjud XP</div>
+          </div>
+          <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+            <CheckCircle2 size={20} className="mx-auto text-emerald-500" />
+            <div className={`text-lg font-black mt-1 ${t.textMain}`}>{completedIds.length} / {allLessons.length}</div>
+            <div className="text-[10px] text-slate-400 font-bold">Darslar</div>
           </div>
         </div>
-        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+
+        <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
+          <div className="flex justify-between items-center text-xs font-black">
+            <span className="flex items-center gap-1.5 text-emerald-500"><ShoppingBag size={15} /> XP Do‘koni (Maskot Kiyimlari)</span>
+            <span className="text-sky-500">⚡ {profile.xp} XP</span>
+          </div>
+
+          <div className="space-y-2">
+            {shopItems.map(item => {
+              const isOwned = ownedItems[item.id];
+              const isEquipped = equippedItems[item.id];
+              return (
+                <div key={item.id} className={`p-3 rounded-2xl ${t.sub} border flex items-center justify-between`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">{item.icon}</span>
+                    <div>
+                      <div className={`text-xs font-black ${t.textMain}`}>{item.name}</div>
+                      <div className="text-[10px] text-slate-400">{item.desc}</div>
+                    </div>
+                  </div>
+                  {isOwned ? (
+                    <button
+                      onClick={() => setEquippedItems(p => ({ ...p, [item.id]: !p[item.id] }))}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-black ${
+                        isEquipped ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-white'
+                      }`}
+                    >
+                      {isEquipped ? 'Kiyilgan ✓' : 'Kiyish'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (profile.xp < item.price) return alert("XP yetarli emas! Dars yoki mashq bajarib XP yig‘ing.");
+                        setProfile(p => ({ ...p, xp: p.xp - item.price }));
+                        setOwnedItems(p => ({ ...p, [item.id]: true }));
+                        setEquippedItems(p => ({ ...p, [item.id]: true }));
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500 text-white text-[11px] font-black"
+                    >
+                      ⚡ {item.price}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={`rounded-3xl ${t.card} border p-4 space-y-2.5`}>
+          <div className="text-xs font-black flex items-center gap-1.5 text-amber-500">
+            <Trophy size={15} /> Haftalik Talabalar Reytingi
+          </div>
+          <div className="space-y-1.5">
+            {leaderboard.map((st, i) => (
+              <div
+                key={st.name}
+                className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs font-black ${
+                  st.isMe ? 'bg-emerald-500/15 border-emerald-500 text-emerald-500' : `${t.sub} ${t.textMain}`
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="w-5 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+                  <span>{st.name}</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-500/15 text-slate-400">{st.badge}</span>
+                </div>
+                <span>⚡ {st.xp} XP</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={handleLogout}
+          className="w-full py-3.5 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-500 font-black text-xs flex items-center justify-center gap-2"
+        >
+          <LogOut size={16} /> Akkauntdan chiqish (Login sahifaga qaytish)
+        </button>
       </div>
+    );
+  };
 
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Flame size={20} className="mx-auto text-amber-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
-          <div className="text-[10px] text-slate-400">Streak</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Zap size={20} className="mx-auto text-sky-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-          <div className="text-[10px] text-slate-400">XP</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Award size={20} className="mx-auto text-indigo-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
-          <div className="text-[10px] text-slate-400">Daraja</div>
-        </div>
-      </div>
-
-      <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
-    </div>
-  );
-
+  // =========================================================================
+  // ASOSIY SHELL + PASTKI 5 TA MENYU
+  // =========================================================================
   return (
     <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
       <main className="max-w-md mx-auto px-4 pt-8 pb-2">
@@ -855,11 +1893,54 @@ export default function App() {
 
       <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
         <div className="max-w-md mx-auto flex items-center justify-around">
-          <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
-          <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
-          <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
-          <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
-          <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
+          <button
+            onClick={() => setScreen('home')}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted
+            }`}
+          >
+            <BookOpen size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">학습 • Dars</span>
+          </button>
+
+          <button
+            onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'vocab' ? 'text-indigo-500' : t.textMuted
+            }`}
+          >
+            <Sparkles size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">단어 • Lug‘at</span>
+          </button>
+
+          <button
+            onClick={() => setScreen('ai')}
+            className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl active:translate-y-0.5 transition overflow-hidden p-0.5"
+          >
+            <ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} />
+          </button>
+
+          <button
+            onClick={() => {
+              setScreen('review');
+            }}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'review' ? 'text-amber-500' : t.textMuted
+            }`}
+          >
+            <RotateCcw size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">복습 • Mashq</span>
+          </button>
+
+          <button
+            onClick={() => setScreen('profile')}
+            className={`flex flex-col items-center py-1 px-2 rounded-2xl transition active:scale-95 ${
+              screen === 'profile' ? 'text-indigo-500' : t.textMuted
+            }`}
+          >
+            <User size={25} strokeWidth={2.3} />
+            <span className="text-[11px] font-black mt-1">프로필 • Profil</span>
+          </button>
         </div>
       </nav>
     </div>
