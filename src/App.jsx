@@ -4,9 +4,9 @@ import {
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, MicOff, Clock, Layers, Timer,
+  Headphones, Mic, Clock, Layers, Timer,
   MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target, Radio
+  Bookmark, CheckSquare, Award, Target
 } from 'lucide-react';
 
 // Darslik fayllari
@@ -28,7 +28,7 @@ import { vocab5A } from './data/vocab5A.js';
 import { vocab5B } from './data/vocab5B.js';
 import { vocab6A } from './data/vocab6A.js';
 
-// ZiyoOwl Avatar
+// ZiyoPrep Yashil Boyo'g'li Maskot
 function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   return (
     <div className={`${className} overflow-hidden shadow-md relative select-none`}>
@@ -48,45 +48,57 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
             <stop offset="100%" stopColor="#1e3a8a" />
           </linearGradient>
         </defs>
+
         <rect width="200" height="200" rx="44" fill="url(#skyGrad)" />
+        <circle cx="155" cy="42" r="18" fill="#ffffff" opacity="0.6" />
+        <circle cx="142" cy="46" r="13" fill="#ffffff" opacity="0.6" />
+
+        <rect x="166" y="45" width="4" height="65" fill="#94a3b8" />
+        <rect x="167.2" y="25" width="1.6" height="22" fill="#ef4444" />
+        <ellipse cx="168" cy="52" rx="11" ry="4.5" fill="#f8fafc" stroke="#64748b" strokeWidth="1" />
+        <rect x="161" y="48" width="14" height="4" rx="1" fill="#3b82f6" />
+
         <ellipse cx="100" cy="185" rx="115" ry="45" fill="#4ade80" />
+        <ellipse cx="45" cy="188" rx="75" ry="35" fill="#22c55e" />
+        <circle cx="178" cy="145" r="16" fill="#f9a8d4" opacity="0.85" />
+        <ellipse cx="24" cy="72" rx="6" ry="3.5" transform="rotate(-25 24 72)" fill="#f472b6" />
+        <ellipse cx="175" cy="112" rx="5" ry="3" transform="rotate(20 175 112)" fill="#f472b6" />
+
+        <path d="M44 58 Q46 26 68 38 Z" fill="#65d318" />
+        <path d="M156 58 Q154 26 132 38 Z" fill="#65d318" />
         <ellipse cx="100" cy="108" rx="64" ry="62" fill="url(#owlBody)" />
-        <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">ZiyoPrep</text>
+
+        <path d="M36 66 Q100 50 164 66 L160 86 Q100 70 40 86 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
+        <text x="86" y="75" textAnchor="middle" fill="#0f172a" fontSize="14.5" fontWeight="900" fontFamily="sans-serif">
+          ZiyoPrep
+        </text>
+
         <circle cx="72" cy="105" r="22" fill="#ffffff" />
         <circle cx="128" cy="105" r="22" fill="#ffffff" />
         <circle cx="76" cy="105" r="11.5" fill="#1e293b" />
         <circle cx="124" cy="105" r="11.5" fill="#1e293b" />
-        <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
-      </svg>
-    </div>
-  );
-}
+        <circle cx="80" cy="100" r="4.2" fill="#ffffff" />
+        <circle cx="128" cy="100" r="4.2" fill="#ffffff" />
 
-// 3D Stildagi Qizaloq Avatar (Emma / 토히르벡 AI)
-function LiveAiAvatar({ isSpeaking, isListening }) {
-  return (
-    <div className="relative flex items-center justify-center py-2">
-      <div className={`absolute w-28 h-28 rounded-full bg-emerald-500/20 blur-xl transition-all duration-700 ${isSpeaking || isListening ? 'scale-125 bg-emerald-400/40 animate-pulse' : 'scale-100'}`} />
-      <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-emerald-500 shadow-xl bg-gradient-to-b from-sky-400 to-emerald-600 flex flex-col items-center justify-center p-1">
-        <svg viewBox="0 0 150 150" className="w-full h-full drop-shadow-md">
-          <circle cx="75" cy="75" r="70" fill="#fbcfe8" opacity="0.3" />
-          <path d="M30 70 Q30 20 75 20 Q120 20 120 70 Q120 120 100 140 L50 140 Q30 120 30 70 Z" fill="#78350f" />
-          <ellipse cx="75" cy="80" rx="35" ry="40" fill="#fed7aa" />
-          <circle cx="63" cy="75" r="5" fill="#1e293b" />
-          <circle cx="87" cy="75" r="5" fill="#1e293b" />
-          <circle cx="65" cy="73" r="1.5" fill="#ffffff" />
-          <circle cx="89" cy="73" r="1.5" fill="#ffffff" />
-          <ellipse cx="56" cy="88" rx="5" ry="3" fill="#f43f5e" opacity="0.5" />
-          <ellipse cx="94" cy="88" rx="5" ry="3" fill="#f43f5e" opacity="0.5" />
-          {isSpeaking ? (
-            <ellipse cx="75" cy="98" rx="6" ry="8" fill="#991b1b" className="animate-bounce" />
-          ) : (
-            <path d="M68 96 Q75 103 82 96" stroke="#991b1b" strokeWidth="3" strokeLinecap="round" fill="none" />
-          )}
-          <path d="M42 75 Q42 45 75 45 Q108 45 108 75" stroke="#3b82f6" strokeWidth="5" fill="none" />
-          <circle cx="43" cy="78" r="7" fill="#1e293b" />
-        </svg>
-      </div>
+        {equipped.glasses && (
+          <g>
+            <circle cx="72" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
+            <circle cx="128" cy="105" r="24" fill="rgba(56,189,248,0.18)" stroke="#0f172a" strokeWidth="4.5" />
+            <line x1="96" y1="103" x2="104" y2="103" stroke="#0f172a" strokeWidth="5" />
+          </g>
+        )}
+
+        <path d="M91 116 Q100 111 109 116 L100 129 Z" fill="#f59e0b" />
+        <path d="M94 123 Q100 133 106 123 Z" fill="#ea580c" />
+
+        <path d="M46 132 L98 142 L98 184 L46 172 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1.5" />
+        <path d="M154 132 L102 142 L102 184 L154 172 Z" fill="url(#bookGrad)" stroke="#1e3a8a" strokeWidth="1.5" />
+        <path d="M50 130 L98 140 L102 140 L150 130 L150 135 L100 145 L50 135 Z" fill="#f8fafc" />
+
+        <text x="128" y="162" textAnchor="middle" fill="#ffffff" fontSize="12.5" fontWeight="900" fontFamily="sans-serif" transform="rotate(-11 128 162)">
+          한국어
+        </text>
+      </svg>
     </div>
   );
 }
@@ -113,6 +125,7 @@ function shuffleArray(arr) {
 }
 
 export default function App() {
+  // --- AUTH STATE ---
   const [currentUser, setCurrentUser] = useState(() => {
     try { const saved = localStorage.getItem('hs_auth_user'); return saved ? JSON.parse(saved) : null; } catch { return null; }
   });
@@ -186,6 +199,7 @@ export default function App() {
     setScreen('home');
   };
 
+  // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
   const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
@@ -256,20 +270,14 @@ export default function App() {
   useEffect(() => { localStorage.setItem('hs_planner', JSON.stringify(plannerTasks)); }, [plannerTasks]);
 
   const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
-
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text.replace(/[\(\)\[\]~]/g, '').trim());
       u.lang = 'ko-KR';
-      u.onstart = () => setIsAiSpeaking(true);
-      u.onend = () => setIsAiSpeaking(false);
       window.speechSynthesis.speak(u);
-    } catch {
-      setIsAiSpeaking(false);
-    }
+    } catch {}
   };
 
   const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B].filter(Boolean);
@@ -278,36 +286,15 @@ export default function App() {
   const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
 
-  // --- LIVE 3D AI TUTOR VOICE STATE ---
+  // --- AI CHAT STATE (토히르벡) ---
   const [aiMessages, setAiMessages] = useState([
-    { role: 'ai', ko: '안녕하세요! 저는 토히르벡 AI에요. 마이크를 누르고 대화해봐요!', uz: 'Assalomu alaykum! Men 토히르벡 AI man. Mikrofonni bosib gaplashing!' }
+    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 man.' }
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiLoading]);
-
-  const handleVoiceInput = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      alert("Brauzeringiz ovozli kiritishni qo‘llab-quvvatlamaydi.");
-      return;
-    }
-    const rec = new SR();
-    rec.lang = 'ko-KR';
-    rec.interimResults = false;
-    setIsRecording(true);
-    rec.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      setAiInput(transcript);
-      setIsRecording(false);
-      handleAiSend(transcript);
-    };
-    rec.onerror = () => setIsRecording(false);
-    rec.start();
-  };
 
   const handleAiSend = async (preset) => {
     const text = (preset || aiInput).trim();
@@ -316,7 +303,6 @@ export default function App() {
     setAiInput('');
     setAiLoading(true);
     setPlannerTasks(prev => prev.map(task => task.id === 3 ? { ...task, done: true } : task));
-    
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -324,18 +310,11 @@ export default function App() {
         body: JSON.stringify({ message: text, history: aiMessages, userName: profile.name })
       });
       const data = await res.json();
-      const replyKo = data.ko || '아주 잘했어요!';
-      const replyUz = data.uz || 'Ajoyib javob!';
-      setAiMessages(prev => [...prev, { role: 'ai', ko: replyKo, uz: replyUz }]);
-      speakKo(replyKo);
+      setAiMessages(prev => [...prev, { role: 'ai', ko: data.ko || '', uz: data.uz || '' }]);
+      if (data.ko) speakKo(data.ko);
     } catch {
-      let replyKo = `"${text}" — 아주 좋은 표현이에요! 함께 연습해봐요.`;
-      let replyUz = `Ajoyib! Buni birga mashq qilamiz.`;
-      setAiMessages(prev => [...prev, { role: 'ai', ko: replyKo, uz: replyUz }]);
-      speakKo(replyKo);
-    } finally {
-      setAiLoading(false);
-    }
+      setAiMessages(prev => [...prev, { role: 'ai', ko: '오류가 발생했어요.', uz: 'Server bilan aloqa xatosi.' }]);
+    } finally { setAiLoading(false); }
   };
 
   const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
@@ -354,6 +333,7 @@ export default function App() {
     setQIdx(0);
     setQAnswer(null);
     setScreen('lesson');
+    setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
   const t = {
@@ -609,43 +589,33 @@ export default function App() {
     );
   };
 
-  // --- 🎙️ LIVE 3D AI TUTOR (EMMA / 토히르벡 3D AI VIBE - PASTGA TUSHIRILGAN) ---
+  // --- AI TUTOR SCREEN (토히르벡) ---
   const renderAiTutor = () => (
-    <div className="flex flex-col h-[84vh] pb-20 pt-1">
-      <div className="flex items-center justify-between pb-1.5">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-          <h2 className={`font-black text-xs ${t.textMain}`}>Live AI Tutor — 토히르벡</h2>
+    <div className="flex flex-col h-[78vh] pb-24 pt-2">
+      <div className="flex items-center gap-2.5 pb-3">
+        <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
+        <div>
+          <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
+          <span className="text-[10px] font-bold text-emerald-500">● AI ustozi bilan muloqot</span>
         </div>
       </div>
 
-      <div className={`rounded-2xl ${t.card} border p-3 text-center space-y-1 flex flex-col items-center shrink-0`}>
-        <LiveAiAvatar isSpeaking={isAiSpeaking} isListening={isRecording} />
-        <div className={`text-sm font-black ${t.textMain}`}>토히르벡 AI</div>
-        <div className="text-[10px] text-emerald-500 font-bold">
-          {isRecording ? "🎤 Eshitilmoqda..." : isAiSpeaking ? "🔊 Gapirmoqda..." : "Suhbat uchun mikrofonni bosing"}
-        </div>
-      </div>
-
-      <div className={`flex-1 overflow-y-auto rounded-2xl ${t.card} border p-3 space-y-2 mt-2`}>
+      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
         {aiMessages.map((m, idx) => (
           <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
+            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
               {m.ko && <div className="font-black">{m.ko}</div>}
-              {m.uz && <div className="text-[10px] opacity-90">{m.uz}</div>}
+              {m.uz && <div className="text-[11px] opacity-90">{m.uz}</div>}
             </div>
           </div>
         ))}
-        {aiLoading && <div className="text-xs text-slate-400 animate-pulse text-center">토히르벡 o‘ylamoqda...</div>}
+        {aiLoading && <div className="text-xs text-slate-400 animate-pulse">토히르벡 yozmoqda...</div>}
         <div ref={chatEndRef} />
       </div>
 
-      <div className="pt-2 flex gap-2 items-center shrink-0">
-        <button onClick={handleVoiceInput} className={`p-3.5 rounded-full text-white shadow-lg ${isRecording ? 'bg-rose-600 animate-pulse scale-110' : 'bg-emerald-500'}`}>
-          <Mic size={20} />
-        </button>
-        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Yoki xabar yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
-        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-3.5 py-3 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={16} /></button>
+      <div className="pt-3 flex gap-2">
+        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Savol yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
+        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-4 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={18} /></button>
       </div>
     </div>
   );
