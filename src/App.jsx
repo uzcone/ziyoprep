@@ -4,9 +4,9 @@ import {
   ChevronUp, ChevronDown, Edit3, Shuffle, Play, 
   BookOpen, Sparkles, RotateCcw, User, 
   Flame, Zap, Send, Sun, Moon, LogOut,
-  Headphones, Mic, MicOff, Clock, Layers, Timer,
+  Headphones, Mic, Clock, Layers, Timer,
   MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target, Radio
+  Bookmark, CheckSquare, Award, Target
 } from 'lucide-react';
 
 // Darslik fayllari
@@ -358,11 +358,10 @@ export default function App() {
     setAiLoading(true);
     setPlannerTasks(prev => prev.map(task => task.id === 3 ? { ...task, done: true } : task));
     
-    // Offline / Fallback friendly AI smart reply
     setTimeout(() => {
       let replyKo = `"${text}" — 아주 좋은 표현이에요! 함께 연습해봐요.`;
       let replyUz = `Ajoyib! Buni birga mashq qilamiz.`;
-      if (text.includes('안녕하세요') || text.includes('salom')) {
+      if (text.toLowerCase().includes('salom') || text.includes('안녕하세요')) {
         replyKo = '안녕하세요! 만나서 반가워요. 오늘 기분이 어때요?';
         replyUz = 'Assalomu alaykum! Tanishganimdan xursandman. Bugun kayfiyatingiz qanday?';
       }
