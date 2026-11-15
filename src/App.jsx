@@ -583,28 +583,28 @@ export default function App() {
 
   // --- 🎙️ LIVE 3D AI TUTOR (EMMA / 토히르벡 3D AI VIBE) ---
   const renderAiTutor = () => (
-    <div className="flex flex-col h-[78vh] pb-24 pt-2">
-      <div className="flex items-center justify-between pb-2">
+    <div className="flex flex-col h-[84vh] pb-20 pt-1">
+      <div className="flex items-center justify-between pb-1.5">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
-          <h2 className={`font-black text-sm ${t.textMain}`}>Live AI Tutor — 토히르벡</h2>
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+          <h2 className={`font-black text-xs ${t.textMain}`}>Live AI Tutor — 토히르벡</h2>
         </div>
       </div>
 
-      <div className={`rounded-3xl ${t.card} border p-4 text-center space-y-2 flex flex-col items-center`}>
+      <div className={`rounded-2xl ${t.card} border p-3 text-center space-y-1 flex flex-col items-center shrink-0`}>
         <LiveAiAvatar isSpeaking={isAiSpeaking} isListening={isRecording} />
-        <div className={`text-base font-black ${t.textMain}`}>토히르벡 AI</div>
-        <div className="text-[11px] text-emerald-500 font-bold">
+        <div className={`text-sm font-black ${t.textMain}`}>토히르벡 AI</div>
+        <div className="text-[10px] text-emerald-500 font-bold">
           {isRecording ? "🎤 Eshitilmoqda..." : isAiSpeaking ? "🔊 Gapirmoqda..." : "Suhbat uchun mikrofonni bosing"}
         </div>
       </div>
 
-      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3 mt-2`}>
+      <div className={`flex-1 overflow-y-auto rounded-2xl ${t.card} border p-3 space-y-2 mt-2`}>
         {aiMessages.map((m, idx) => (
           <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
+            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
               {m.ko && <div className="font-black">{m.ko}</div>}
-              {m.uz && <div className="text-[11px] opacity-90">{m.uz}</div>}
+              {m.uz && <div className="text-[10px] opacity-90">{m.uz}</div>}
             </div>
           </div>
         ))}
@@ -612,12 +612,12 @@ export default function App() {
         <div ref={chatEndRef} />
       </div>
 
-      <div className="pt-3 flex gap-2 items-center">
-        <button onClick={handleVoiceInput} className={`p-4 rounded-full text-white shadow-xl ${isRecording ? 'bg-rose-600 animate-pulse scale-110' : 'bg-emerald-500'}`}>
-          <Mic size={24} />
+      <div className="pt-2 flex gap-2 items-center shrink-0">
+        <button onClick={handleVoiceInput} className={`p-3.5 rounded-full text-white shadow-lg ${isRecording ? 'bg-rose-600 animate-pulse scale-110' : 'bg-emerald-500'}`}>
+          <Mic size={20} />
         </button>
         <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Yoki xabar yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
-        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-4 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={18} /></button>
+        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-3.5 py-3 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={16} /></button>
       </div>
     </div>
   );
