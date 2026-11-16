@@ -203,13 +203,13 @@ export default function App() {
       return JSON.parse(localStorage.getItem('hs_planner')) || [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: '토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     } catch {
       return [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: ' 토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     }
   });
@@ -218,7 +218,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- MASHQ YO'LAKCHASI (PATH / TRACK) STATES ---
+  // --- CHEKSIZ MASHQ YO'LAKCHASI (INFINITE PATH / TRACK) ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -227,14 +227,24 @@ export default function App() {
   const [exSelected, setExSelected] = useState(null);
   const [showExitAlert, setShowExitAlert] = useState(false);
 
-  // Darajalar ro'yxati (1-darajadan boshlanib qiyinlashib boradi)
-  const exerciseLevels = [
-    { id: 1, title: '1-daraja: Asosiy so‘zlar va alifbo', subtitle: 'Oson', icon: '⭐', difficulty: 1 },
-    { id: 2, title: '2-daraja: Kundalik fe’llar', subtitle: 'Boshlang‘ich', icon: '🌱', difficulty: 2 },
-    { id: 3, title: '3-daraja: Oziq-ovqat va kafelar', subtitle: 'O‘rta', icon: '☕', difficulty: 3 },
-    { id: 4, title: '4-daraja: Vaqt va raqamlar', subtitle: 'Murakkabroq', icon: '⏰', difficulty: 4 },
-    { id: 5, title: '5-daraja: TOPIK grammatikasi', subtitle: 'Qiyin', icon: '🔥', difficulty: 5 }
-  ];
+  // 60 ta darajadan iborat cheksiz yo'lakcha generatori
+  const exerciseLevels = Array.from({ length: 60 }, (_, i) => {
+    const id = i + 1;
+    const icons = ['⭐', '🌱', '☕', '⏰', '🔥', '💎', '🚀', '🎯', '🏆', '👑'];
+    const themes = [
+      'Alifbo va unlilar', 'Asosiy so‘zlar', 'Salomlashish', 'Oila a’zolari', 
+      'Raqamlar va vaqt', 'Oziq-ovqat', 'Kafeda buyurtma', 'Shahar va transport', 
+      'Kasblar', 'Do‘kon va xarid', 'Ob-havo', 'Hissiyotlar', 
+      'Sayohat', 'X koronasi', 'TOPIK 1 lug‘atlari', 'Murakkab fe’llar'
+    ];
+    return {
+      id,
+      title: `${id}-daraja: ${themes[(id - 1) % themes.length]}`,
+      subtitle: id <= 10 ? 'Boshlang‘ich (1-daraja)' : id <= 30 ? 'O‘rta daraja' : 'Yuqori daraja (TOPIK)',
+      icon: icons[(id - 1) % icons.length],
+      difficulty: Math.min(5, Math.ceil(id / 12))
+    };
+  });
 
   const [completedLevels, setCompletedLevels] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_completed_levels')) || [1]; } catch { return [1]; }
@@ -285,7 +295,7 @@ export default function App() {
 
   // --- AI CHAT STATE (토히르벡) ---
   const [aiMessages, setAiMessages] = useState([
-    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 man.' }
+    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men  토히르벡 man.' }
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -326,7 +336,6 @@ export default function App() {
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
-  // Yo'lakchadan daraja tanlab mashqni boshlash (qiyinlik darajasiga qarab so'z tanlanadi)
   const startLevelExercise = (level) => {
     setCurrentLevelId(level.id);
     const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
@@ -562,15 +571,13 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ YO'LAKCHASI (DUOLINGO STYLE PATH) & TEST SCREEN ---
+  // --- 🏔️ CHEKSIZ MASHQ YO'LAKCHASI (INFINITE TRACK) & TEST SCREEN ---
   const renderReview = () => {
-    // Agar biron daraja tanlanib mashq boshlansa
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
 
       return (
         <div className="space-y-6 pb-32 pt-2 select-none">
-          {/* Yuqori Panel: Chiqish (✕) va Progress Bar */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowExitAlert(true)} 
@@ -586,7 +593,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Chiqish ogohlantirish oynasi */}
           {showExitAlert && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
               <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl`}>
@@ -616,7 +622,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi */}
           <div className="space-y-3 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-indigo-500 tracking-wider">
               {exerciseLevels.find(l => l.id === currentLevelId)?.title}
@@ -632,7 +637,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 4 ta kartochka */}
           <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -665,7 +669,6 @@ export default function App() {
             })}
           </div>
 
-          {/* Pastki Tasdiqlash Paneli */}
           {exSelected !== null && (
             <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#141a29]' : 'bg-white'} border-t p-4 space-y-3 z-50 shadow-2xl`}>
               <div className="max-w-md mx-auto flex items-center justify-between">
@@ -677,7 +680,6 @@ export default function App() {
                 <button
                   onClick={() => {
                     if (exStep + 1 >= 5) {
-                      // Daraja muvaffaqiyatli yakunlandi, keyingisini ochish
                       if (!completedLevels.includes(currentLevelId + 1) && currentLevelId < exerciseLevels.length) {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
@@ -700,22 +702,20 @@ export default function App() {
       );
     }
 
-    // Asosiy Yo'lakcha (Path) Ko'rinishi - 1-darajadan boshlab qiyinlashib boradi
+    // Cheksiz yo'lakcha (Infinite Snake Track)
     return (
       <div className="space-y-6 pb-28 pt-2">
         <div className="text-center space-y-1">
           <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi</h2>
-          <p className="text-xs text-slate-400">1-darajadan boshlab bosqichma-bosqich qiyinlashib boradi[span_1](start_span)[span_1](end_span)</p>
+          <p className="text-xs text-slate-400">1-darajadan boshlab cheksiz davom etadi[span_0](start_span)[span_0](end_span)</p>
         </div>
 
-        {/* Snake Path Layout (Yo'lakcha zanjiri) */}
         <div className="flex flex-col items-center space-y-6 py-4 relative">
           {exerciseLevels.map((lvl, idx) => {
             const isUnlocked = completedLevels.includes(lvl.id) || lvl.id === 1;
             const isCompleted = completedLevels.includes(lvl.id + 1) || (lvl.id < Math.max(...completedLevels));
 
-            // Zanjir siljishi uchun offset (Duolingo uslubidagi ilon izi)
-            const offsets = ['translate-x-0', 'translate-x-10', '-translate-x-10', 'translate-x-8', '-translate-x-8'];
+            const offsets = ['translate-x-0', 'translate-x-12', '-translate-x-12', 'translate-x-8', '-translate-x-8'];
             const alignClass = offsets[idx % offsets.length];
 
             return (
