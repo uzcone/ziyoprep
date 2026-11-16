@@ -377,7 +377,7 @@ export default function App() {
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
             <div>
               <span className={`font-black text-lg ${t.textMain}`}>ZiyoPrep</span>
-              <span className="text-[10px] font-black text-emerald-500 block">한글 스튜디오</span>
+              <span className="text-[10px] font-black text-emerald-500 block"> </span>
             </div>
           </div>
           <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>{isDark ? <Sun size={16} /> : <Moon size={16} />}</button>
@@ -423,7 +423,7 @@ export default function App() {
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
               <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
-              <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오 • 1A–6B</span>
+              <span className="text-[10px] font-bold text-emerald-600"> </span>
             </div>
           </div>
           <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
