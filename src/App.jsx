@@ -6,7 +6,7 @@ import {
   Flame, Zap, Send, Sun, Moon, LogOut,
   Headphones, Mic, Clock, Layers, Timer,
   MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target
+  Bookmark, CheckSquare, Award, Target, Star
 } from 'lucide-react';
 
 // Darslik fayllari
@@ -218,14 +218,29 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- DUOLINGO STYLE EXERCISE STATES ---
+  // --- MASHQ YO'LAKCHASI (PATH / TRACK) STATES ---
   const [exerciseActive, setExerciseActive] = useState(false);
+  const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
-  const [exScore, setExScore] = useState(0);
   const [exTarget, setExTarget] = useState(null);
   const [exOpts, setExOpts] = useState([]);
   const [exSelected, setExSelected] = useState(null);
   const [showExitAlert, setShowExitAlert] = useState(false);
+
+  // Darajalar ro'yxati (1-darajadan boshlanib qiyinlashib boradi)
+  const exerciseLevels = [
+    { id: 1, title: '1-daraja: Asosiy so‘zlar va alifbo', subtitle: 'Oson', icon: '⭐', difficulty: 1 },
+    { id: 2, title: '2-daraja: Kundalik fe’llar', subtitle: 'Boshlang‘ich', icon: '🌱', difficulty: 2 },
+    { id: 3, title: '3-daraja: Oziq-ovqat va kafelar', subtitle: 'O‘rta', icon: '☕', difficulty: 3 },
+    { id: 4, title: '4-daraja: Vaqt va raqamlar', subtitle: 'Murakkabroq', icon: '⏰', difficulty: 4 },
+    { id: 5, title: '5-daraja: TOPIK grammatikasi', subtitle: 'Qiyin', icon: '🔥', difficulty: 5 }
+  ];
+
+  const [completedLevels, setCompletedLevels] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hs_completed_levels')) || [1]; } catch { return [1]; }
+  });
+
+  useEffect(() => { localStorage.setItem('hs_completed_levels', JSON.stringify(completedLevels)); }, [completedLevels]);
 
   const [profile, setProfile] = useState(() => {
     try {
@@ -311,7 +326,9 @@ export default function App() {
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
-  const startDuolingoExercise = () => {
+  // Yo'lakchadan daraja tanlab mashqni boshlash (qiyinlik darajasiga qarab so'z tanlanadi)
+  const startLevelExercise = (level) => {
+    setCurrentLevelId(level.id);
     const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
     const target = pool[Math.floor(Math.random() * pool.length)];
     const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
@@ -545,8 +562,9 @@ export default function App() {
     );
   };
 
-  // --- 🎯 DUOLINGO STYLE REVIEW & VOCABULARY PRACTICE SCREEN ---
+  // --- 🏔️ MASHQ YO'LAKCHASI (DUOLINGO STYLE PATH) & TEST SCREEN ---
   const renderReview = () => {
+    // Agar biron daraja tanlanib mashq boshlansa
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
 
@@ -568,7 +586,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Chiqish ogohlantirish oynasi (Exit Alert Modal) */}
+          {/* Chiqish ogohlantirish oynasi */}
           {showExitAlert && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
               <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl`}>
@@ -600,7 +618,9 @@ export default function App() {
 
           {/* Savol qismi */}
           <div className="space-y-3 text-center pt-2">
-            <span className="text-[11px] font-black uppercase text-indigo-500 tracking-wider">Yangi so‘z</span>
+            <span className="text-[11px] font-black uppercase text-indigo-500 tracking-wider">
+              {exerciseLevels.find(l => l.id === currentLevelId)?.title}
+            </span>
             <h2 className={`text-lg font-black ${t.textMain}`}>To‘g‘ri ma'noni tanlang</h2>
             
             <div 
@@ -612,7 +632,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* 4 ta Duolingo uslubidagi tanlov kartochkalari */}
+          {/* 4 ta kartochka */}
           <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -632,7 +652,6 @@ export default function App() {
                   onClick={() => {
                     setExSelected(opt);
                     if (isCorrect) {
-                      setExScore(s => s + 1);
                       setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
                     } else {
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
@@ -646,7 +665,7 @@ export default function App() {
             })}
           </div>
 
-          {/* Pastki Tasdiqlash va Keyingisiga o'tish Paneli (Toza va ko'rinadigan) */}
+          {/* Pastki Tasdiqlash Paneli */}
           {exSelected !== null && (
             <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#141a29]' : 'bg-white'} border-t p-4 space-y-3 z-50 shadow-2xl`}>
               <div className="max-w-md mx-auto flex items-center justify-between">
@@ -658,11 +677,16 @@ export default function App() {
                 <button
                   onClick={() => {
                     if (exStep + 1 >= 5) {
+                      // Daraja muvaffaqiyatli yakunlandi, keyingisini ochish
+                      if (!completedLevels.includes(currentLevelId + 1) && currentLevelId < exerciseLevels.length) {
+                        setCompletedLevels(prev => [...prev, currentLevelId + 1]);
+                      }
                       setExerciseActive(false);
-                      alert("Tabriklayman! Mashq muvaffaqiyatli yakunlandi! 🏆");
+                      alert(`Tabriklayman! ${currentLevelId}-daraja yakunlandi! 🏆 +50 XP`);
+                      setProfile(p => ({ ...p, xp: p.xp + 50 }));
                     } else {
                       setExStep(s => s + 1);
-                      startDuolingoExercise();
+                      startLevelExercise(exerciseLevels.find(l => l.id === currentLevelId));
                     }
                   }}
                   className="py-3 px-8 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
@@ -676,35 +700,66 @@ export default function App() {
       );
     }
 
+    // Asosiy Yo'lakcha (Path) Ko'rinishi - 1-darajadan boshlab qiyinlashib boradi
     return (
-      <div className="space-y-4 pb-28 pt-2">
-        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-5 text-center space-y-3`}>
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#58cc02] text-white flex items-center justify-center text-2xl shadow-md">
-            🎯
-          </div>
-          <h2 className={`text-base font-black ${t.textMain}`}>Duolingo Uslubidagi Lug‘at Mashqi</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-            So‘zlarni qiziqarli vizual testlar orqali yodlang va XP yig‘ing!
-          </p>
-          <button
-            onClick={() => {
-              setExStep(0);
-              setExScore(0);
-              startDuolingoExercise();
-            }}
-            className="w-full py-3.5 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] border-b-4 border-[#46a302] text-white font-black text-xs uppercase shadow-lg active:translate-y-0.5 transition"
-          >
-            Mashqni Boshlash 🚀
-          </button>
+      <div className="space-y-6 pb-28 pt-2">
+        <div className="text-center space-y-1">
+          <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi</h2>
+          <p className="text-xs text-slate-400">1-darajadan boshlab bosqichma-bosqich qiyinlashib boradi[span_1](start_span)[span_1](end_span)</p>
         </div>
 
-        <div className="space-y-3 pt-2">
+        {/* Snake Path Layout (Yo'lakcha zanjiri) */}
+        <div className="flex flex-col items-center space-y-6 py-4 relative">
+          {exerciseLevels.map((lvl, idx) => {
+            const isUnlocked = completedLevels.includes(lvl.id) || lvl.id === 1;
+            const isCompleted = completedLevels.includes(lvl.id + 1) || (lvl.id < Math.max(...completedLevels));
+
+            // Zanjir siljishi uchun offset (Duolingo uslubidagi ilon izi)
+            const offsets = ['translate-x-0', 'translate-x-10', '-translate-x-10', 'translate-x-8', '-translate-x-8'];
+            const alignClass = offsets[idx % offsets.length];
+
+            return (
+              <div key={lvl.id} className={`flex flex-col items-center transition-transform ${alignClass}`}>
+                <button
+                  disabled={!isUnlocked}
+                  onClick={() => {
+                    setExStep(0);
+                    startLevelExercise(lvl);
+                  }}
+                  className={`w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-xl border-4 transition-all active:scale-95 ${
+                    isUnlocked
+                      ? isCompleted 
+                        ? 'bg-amber-400 border-amber-600 text-white' 
+                        : 'bg-[#58cc02] border-emerald-600 text-white animate-bounce'
+                      : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  {isUnlocked ? (
+                    <>
+                      <span className="text-2xl">{lvl.icon}</span>
+                      <span className="text-[10px] font-black">{lvl.id}-daraja</span>
+                    </>
+                  ) : (
+                    <Lock size={22} />
+                  )}
+                </button>
+                <div className="mt-2 text-center">
+                  <div className={`text-xs font-black ${t.textMain}`}>{lvl.title}</div>
+                  <div className="text-[10px] text-slate-400 font-bold">{lvl.subtitle}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Xatolar daftari */}
+        <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex justify-between items-center text-xs font-black px-1">
             <span className={t.textMain}>📌 Xatolar daftari ({mistakes.length})</span>
             {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
           </div>
           {mistakes.length === 0 ? (
-            <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
+            <div className={`rounded-3xl ${t.card} border p-6 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
           ) : (
             mistakes.map((m, idx) => (
               <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-indigo-400 transition`}>
