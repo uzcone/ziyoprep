@@ -6,7 +6,7 @@ import {
   Flame, Zap, Send, Sun, Moon, LogOut,
   Headphones, Mic, Clock, Layers, Timer,
   MessageSquare, Keyboard, ShoppingBag, Trophy, Search,
-  Bookmark, CheckSquare, Award, Target, Star, ShieldCheck
+  Bookmark, CheckSquare, Award, Target, Star
 } from 'lucide-react';
 
 // Darslik fayllari
@@ -112,14 +112,14 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// Har bir so'z va ma'niga mos keluvchi Duolingo uslubidagi rang-barang va chiroyli SVG illyustratsiyalar
+// Duolingo uslubidagi chiroyli vektor SVG illyustratsiyalar (Harflar o'rniga haqiqiy rasmlar)
 function WordIllustration({ word = '' }) {
   const w = String(word).toLowerCase();
 
   // Kofe / 커피
   if (w.includes('kofe') || w.includes('커피')) {
     return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16 drop-duration">
+      <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-sm">
         <path d="M25 45 H75 V70 C75 82 65 90 50 90 C35 90 25 82 25 70 Z" fill="#78350f" />
         <path d="M20 40 H80 V45 H20 Z" fill="#e2e8f0" rx="3" />
         <path d="M75 50 C88 50 90 70 75 75" fill="none" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
@@ -188,41 +188,43 @@ function WordIllustration({ word = '' }) {
       </svg>
     );
   }
-  // Mashina / 자동차
-  if (w.includes('mashina') || w.includes('차')) {
+  // Sovrin / yulduz / oltin kubok (gold trophy)
+  if (w.includes('gold') || w.includes('mukofot') || w.includes('sovrin') || w.includes('farovon')) {
     return (
       <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M15 55 L30 35 H70 L85 55 V75 H15 Z" fill="#06b6d4" />
-        <circle cx="30" cy="75" r="10" fill="#1e293b" />
-        <circle cx="70" cy="75" r="10" fill="#1e293b" />
+        <path d="M30 25 H70 V50 C70 65 58 75 50 75 C42 75 30 65 30 50 Z" fill="#fbbf24" />
+        <rect x="42" y="75" width="16" height="12" fill="#d97706" />
+        <rect x="32" y="87" width="36" height="6" rx="3" fill="#b45309" />
+        <path d="M22 30 C15 30 15 45 30 48" fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" />
+        <path d="M78 30 C85 30 85 45 70 48" fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" />
       </svg>
     );
   }
-  // Fikr / 사고방식 / halol
-  if (w.includes('fikr') || w.includes('halol') || w.includes('mardona')) {
+  // Yulduz / Star
+  if (w.includes('star') || w.includes('nur') || w.includes('orqali') || w.includes('yordam')) {
     return (
       <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <circle cx="50" cy="50" r="32" fill="#10b981" />
-        <path d="M35 50 L45 60 L65 38" fill="none" stroke="#ffffff" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+        <polygon points="50,15 61,38 86,41 68,59 73,84 50,71 27,84 32,59 14,41 39,38" fill="#f59e0b" />
+      </svg>
+    );
+  }
+  // Yurak / Heart / sevgi
+  if (w.includes('sevgi') || w.includes('yurak') || w.includes('halol') || w.includes('mardona')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-16 h-16">
+        <path d="M50 82 C50 82 20 60 20 38 C20 25 30 18 40 18 C48 18 50 26 50 26 C50 26 52 18 60 18 C70 18 80 25 80 38 C80 60 50 82 50 82 Z" fill="#ef4444" />
       </svg>
     );
   }
 
-  // Dinamik hash asosida har bir so'z uchun chiroyli va o'ziga xos rangli vektor ikonka
-  let hash = 0;
-  for (let i = 0; i < w.length; i++) {
-    hash = w.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#06b6d4', '#6366f1'];
-  const bgCol = colors[Math.abs(hash) % colors.length];
-  const charCode = w.charCodeAt(0) || 65;
-
+  // Boshqa barcha so'zlar uchun chiroyli sovg'a qutisi yoki yorqin olmos (Diamond)
   return (
     <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-sm">
-      <rect x="20" y="20" width="60" height="60" rx="16" fill={bgCol} />
-      <text x="50" y="58" textAnchor="middle" fill="#ffffff" fontSize="28" fontWeight="900" fontFamily="sans-serif">
-        {String.fromCharCode(65 + (charCode % 26))}
-      </text>
+      <polygon points="50,15 85,40 68,85 32,85 15,40" fill="#8b5cf6" />
+      <polygon points="50,15 85,40 50,55" fill="#a78bfa" />
+      <polygon points="50,15 15,40 50,55" fill="#7c3aed" />
+      <line x1="50" y1="55" x2="68" y2="85" stroke="#c4b5fd" strokeWidth="3" />
+      <line x1="50" y1="55" x2="32" y2="85" stroke="#c4b5fd" strokeWidth="3" />
     </svg>
   );
 }
@@ -239,7 +241,6 @@ export default function App() {
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
-  const [showGoogleModal, setShowGoogleModal] = useState(false); // Google hisob tanlash oynasi
 
   const handleGuestLogin = () => {
     const guest = { uid: 'guest', name: 'Tokhirbek', email: 'guest@ziyoprep.uz', isGuest: true };
@@ -248,13 +249,9 @@ export default function App() {
     setProfile(p => ({ ...p, name: 'Tokhirbek' }));
   };
 
-  // Google orqali haqiqiy kirishni simulyatsiya qiluvchi funksiya
-  const handleGoogleLoginSelect = (googleEmail, googleName) => {
-    const gUser = { uid: 'google_' + googleEmail, name: googleName, email: googleEmail };
-    setCurrentUser(gUser);
-    localStorage.setItem('hs_auth_user', JSON.stringify(gUser));
-    setProfile(p => ({ ...p, name: googleName }));
-    setShowGoogleModal(false);
+  // Google rasmiy saytiga yo'naltirish
+  const handleGoogleLogin = () => {
+    window.location.href = "https://accounts.google.com/signin";
   };
 
   const handleEmailAuth = (e) => {
@@ -303,10 +300,10 @@ export default function App() {
   // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark'] === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
-  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
+  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked'] === 'true');
 
   const [mistakes, setMistakes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
@@ -509,7 +506,7 @@ export default function App() {
               <h1 className={`text-2xl font-black ${t.textMain}`}>ZiyoPrep bilan koreys tilini o‘rganing!</h1>
               <div className="space-y-3">
                 <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-sm uppercase shadow">Tezkor kirish (Mehmon)</button>
-                <button onClick={() => setShowGoogleModal(true)} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain} flex items-center justify-center gap-2 shadow-xs`}>
+                <button onClick={handleGoogleLogin} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain} flex items-center justify-center gap-2 shadow-xs`}>
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
                     <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.15 21.32 7.22 24 12 24z"/>
@@ -520,39 +517,6 @@ export default function App() {
                 </button>
               </div>
             </>
-          )}
-
-          {/* GOOGLE ACCOUNT CHOOSER MODAL */}
-          {showGoogleModal && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-left space-y-4 shadow-2xl`}>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.15 21.32 7.22 24 12 24z"/>
-                      <path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.18C.43 8.12 0 9.83 0 12s.43 3.88 1.18 5.39l4.09-3.15z"/>
-                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.22 0 3.15 2.68 1.18 6.61l4.09 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/>
-                    </svg>
-                    <span className={`font-black text-sm ${t.textMain}`}>Google bilan kirish</span>
-                  </div>
-                  <button onClick={() => setShowGoogleModal(false)} className="text-slate-400 font-bold text-sm">✕</button>
-                </div>
-                <p className="text-xs text-slate-400">ZiyoPrep ilovasiga ulanish uchun hisobni tanlang:</p>
-                <div className="space-y-2 pt-1">
-                  <div 
-                    onClick={() => handleGoogleLoginSelect('tokhirbek@gmail.com', 'Tokhirbek Yuldashev')}
-                    className={`p-3 rounded-2xl border ${t.sub} flex items-center gap-3 cursor-pointer hover:border-emerald-500 transition`}
-                  >
-                    <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-black flex items-center justify-center text-xs">T</div>
-                    <div>
-                      <div className={`text-xs font-black ${t.textMain}`}>Tokhirbek Yuldashev</div>
-                      <div className="text-[10px] text-slate-400">tokhirbek@gmail.com</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
         </div>
         <div className="text-center text-[11px] text-slate-400">ZiyoPrep</div>
@@ -743,7 +707,6 @@ export default function App() {
             <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
           </div>
 
-          {/* Aniq natija va ballga qarab to'g'ri/xato ko'rsatkichi */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className={`${t.card} border-2 border-amber-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-amber-500">XP Olingan</span>
@@ -832,7 +795,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi va vektor rasm illyustratsiyasi */}
           <div className="space-y-2 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
@@ -852,7 +814,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* HAR BIR VARIANT KARTADAN (Vektor Illyustratsiya + Matn) */}
           <div className="grid grid-cols-2 gap-3.5 pt-1">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
