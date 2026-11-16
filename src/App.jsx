@@ -190,7 +190,7 @@ export default function App() {
   // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark'] === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
   const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
@@ -218,7 +218,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- CHEKSIZ MASHQ YO'LAKCHASI VA TABRIK EKRANI ---
+  // --- CHEKSIZ MASHQ YO'LAKCHASI VA DINAMIK STATISTIKA ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -226,7 +226,11 @@ export default function App() {
   const [exOpts, setExOpts] = useState([]);
   const [exSelected, setExSelected] = useState(null);
   const [showExitAlert, setShowExitAlert] = useState(false);
-  const [levelCompleteData, setLevelCompleteData] = useState(null); // Daraja tugaganda chiqadigan tabrik ekrani
+  const [levelCompleteData, setLevelCompleteData] = useState(null);
+
+  // Dinamik vaqt va xatolarni o'lchash uchun state'lar
+  const [exStartTime, setExStartTime] = useState(null);
+  const [sessionMistakes, setSessionMistakes] = useState(0);
 
   const exerciseLevels = Array.from({ length: 60 }, (_, i) => {
     const id = i + 1;
@@ -278,7 +282,6 @@ export default function App() {
 
   const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
 
-  // Jozibali va tabiiy koreys qiz bola ovozi (Tabrik uchun ham ishlatiladi)
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -287,7 +290,7 @@ export default function App() {
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = 'ko-KR';
       u.rate = 0.95;
-      u.pitch = 1.2; // Jozibali va quvnoq ohang
+      u.pitch = 1.2;
 
       const voices = window.speechSynthesis.getVoices();
       const femaleVoice = voices.find(v => v.lang.includes('ko') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Heami') || v.name.includes('Sun-Hi')));
@@ -358,6 +361,8 @@ export default function App() {
     setExSelected(null);
     setExerciseActive(true);
     setLevelCompleteData(null);
+    setExStartTime(Date.now()); // Vaqtni o'lchashni boshlash
+    setSessionMistakes(0);     // Xatolarni nollash
     speakKo(target.ko);
   };
 
@@ -584,9 +589,9 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (YO'LAKCHA + TABRIK EKRANI) ---
+  // --- 🏔️ MASHQ SCREEN (Dinamik Vaqt va Aniqlik Bilan) ---
   const renderReview = () => {
-    // Daraja tugaganda chiqadigan Duolingo uslubidagi Tabrik Ekrani
+    // Daraja tugaganda chiqadigan Tabrik Ekrani (Haqiqiy statistika bilan)
     if (levelCompleteData) {
       return (
         <div className="space-y-6 pb-28 pt-4 text-center select-none animate-fade-in">
@@ -599,7 +604,7 @@ export default function App() {
             <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
           </div>
 
-          {/* Statistika Kartochkalari (XP, Aniqlik, Vaqt) */}
+          {/* Dinamik Statistika Kartochkalari */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className={`${t.card} border-2 border-amber-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-amber-500">XP Olingan</span>
@@ -610,7 +615,7 @@ export default function App() {
               <span className="text-xl font-black mt-1 text-emerald-600">🎯 {levelCompleteData.accuracy}</span>
             </div>
             <div className={`${t.card} border-2 border-sky-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
-              <span className="text-[10px] font-black uppercase text-sky-500">Tezlik</span>
+              <span className="text-[10px] font-black uppercase text-sky-500">Vaqt</span>
               <span className="text-xl font-black mt-1 text-sky-500">⏱️ {levelCompleteData.time}</span>
             </div>
           </div>
@@ -725,6 +730,7 @@ export default function App() {
                     if (isCorrect) {
                       setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
                     } else {
+                      setSessionMistakes(prev => prev + 1); // Xatoni hisobga qo'shish
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
                     }
                   }}
@@ -747,16 +753,27 @@ export default function App() {
                 <button
                   onClick={() => {
                     if (exStep + 1 >= 5) {
-                      // Daraja tugadi -> Tabrik ekraniga o'tish va ovoz chiqarish
+                      // Daraja yakunlandi -> Haqiqiy vaqt va aniqlikni hisoblash
                       if (!completedLevels.includes(currentLevelId + 1) && currentLevelId < exerciseLevels.length) {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
-                      speakKo("참 잘했어요! 정말 대단해요!"); // Jozibali ovozda tabrik
+
+                      // Vaqtni hisoblash (sekundlarda)
+                      const elapsedSec = Math.floor((Date.now() - (exStartTime || Date.now())) / 1000);
+                      const mins = Math.floor(elapsedSec / 60);
+                      const secs = elapsedSec % 60;
+                      const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+                      // Aniqlik foizini hisoblash (Jami 5 ta savol)
+                      const correctCount = Math.max(0, 5 - sessionMistakes);
+                      const accuracyVal = Math.round((correctCount / 5) * 100) + '%';
+
+                      speakKo("참 잘했어요! 정말 대단해요!");
                       setLevelCompleteData({
                         levelId: currentLevelId,
                         xpGained: 50,
-                        accuracy: '100%',
-                        time: '1:45'
+                        accuracy: accuracyVal,
+                        time: timeStr
                       });
                       setProfile(p => ({ ...p, xp: p.xp + 50, streak: p.streak + 1 }));
                     } else {
