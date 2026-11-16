@@ -210,7 +210,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- MASHQ VA STATISTIKA ---
+  // --- MASHQ VA STATISTIKA (XATOLAR TO'G'RI HISOBLANISHI UCHUN) ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -342,18 +342,25 @@ export default function App() {
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
+  // Darajani boshlash (faqat bir marta timer va xatolarni nollaymiz)
   const startLevelExercise = (level) => {
     setCurrentLevelId(level.id);
+    setExStep(0);
+    setSessionMistakes(0);
+    startTimeRef.current = Date.now();
+    setLevelCompleteData(null);
+    loadNextQuestion();
+    setExerciseActive(true);
+  };
+
+  // Keyingi savolni yuklash (xatolarni qaytadan nollamaydi!)
+  const loadNextQuestion = () => {
     const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
     const target = pool[Math.floor(Math.random() * pool.length)];
     const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
     setExTarget(target);
     setExOpts(shuffleArray([target.uz, ...wrongs]));
     setExSelected(null);
-    setExerciseActive(true);
-    setLevelCompleteData(null);
-    startTimeRef.current = Date.now();
-    setSessionMistakes(0);
     speakKo(target.ko);
   };
 
@@ -509,7 +516,7 @@ export default function App() {
     return (
       <div className="space-y-3.5 pb-28">
         <div className="flex justify-between pt-2">
-          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Lug‘atlar</button>
+          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size5="16" /> Lug‘atlar</button>
         </div>
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
@@ -575,7 +582,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (RASMSIZ / TOZA MATNLI VARIANTLAR) ---
+  // --- 🏔️ MASHQ SCREEN (RASMSIZ TOZA MATN) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -693,7 +700,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* RASMSIZ TOZA MATNLI 4 TA KARTODHKA */}
+          {/* Rasmsiz toza matnli 4 ta kartochka */}
           <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -761,7 +768,7 @@ export default function App() {
                       setProfile(p => ({ ...p, xp: p.xp + earnedXp, streak: p.streak + 1 }));
                     } else {
                       setExStep(s => s + 1);
-                      startLevelExercise(exerciseLevels.find(l => l.id === currentLevelId));
+                      loadNextQuestion(); // Yangi savolni xatolarni nollamasdan yuklaymiz
                     }
                   }}
                   className="py-3 px-8 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
