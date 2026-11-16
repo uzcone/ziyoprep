@@ -112,133 +112,6 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// Barcha so'zlar uchun Duolingo uslubidagi toza rang-barang vektor rasmlar (Illyustratsiyalar)
-function WordIllustration({ word = '' }) {
-  const w = String(word).toLowerCase();
-
-  // Kofe / 커피
-  if (w.includes('kofe') || w.includes('커피')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-sm">
-        <path d="M25 45 H75 V70 C75 82 65 90 50 90 C35 90 25 82 25 70 Z" fill="#78350f" />
-        <path d="M20 40 H80 V45 H20 Z" fill="#e2e8f0" rx="3" />
-        <path d="M75 50 C88 50 90 70 75 75" fill="none" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
-        <path d="M35 25 Q50 15 65 25" fill="none" stroke="#cbd5e1" strokeWidth="4" strokeLinecap="round" opacity="0.7" />
-      </svg>
-    );
-  }
-  // Sut / 우유
-  if (w.includes('sut') || w.includes('우유')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <rect x="30" y="20" width="40" height="70" rx="6" fill="#3b82f6" />
-        <rect x="35" y="10" width="30" height="15" rx="3" fill="#60a5fa" />
-        <rect x="40" y="35" width="20" height="25" rx="3" fill="#ffffff" />
-        <circle cx="50" cy="47" r="5" fill="#3b82f6" />
-      </svg>
-    );
-  }
-  // Choy / 차
-  if (w.includes('choy') || w.includes('차')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M25 50 H75 C75 75 60 85 50 85 C40 85 25 75 25 50 Z" fill="#fbbf24" />
-        <ellipse cx="50" cy="50" rx="25" ry="8" fill="#fde68a" />
-        <path d="M75 55 C88 55 88 72 75 72" fill="none" stroke="#fbbf24" strokeWidth="6" strokeLinecap="round" />
-        <rect x="20" y="88" width="60" height="5" rx="2.5" fill="#d1d5db" />
-      </svg>
-    );
-  }
-  // Shakar / 설탕
-  if (w.includes('shakar') || w.includes('설탕')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <rect x="25" y="30" width="50" height="55" rx="8" fill="#2563eb" />
-        <rect x="35" y="45" width="30" height="25" rx="4" fill="#ffffff" />
-        <rect x="65" y="65" width="22" height="22" rx="4" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="2" />
-      </svg>
-    );
-  }
-  // Suv / 물
-  if (w.includes('suv') || w.includes('물')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M35 25 Q50 15 65 25 L70 80 Q70 88 50 88 Q30 88 30 80 Z" fill="#0ea5e9" opacity="0.8" />
-        <path d="M40 30 Q50 23 60 30 L64 75 Q64 82 50 82 Q36 82 36 75 Z" fill="#38bdf8" />
-      </svg>
-    );
-  }
-  // Kitob / 책
-  if (w.includes('kitob') || w.includes('책')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M20 30 C35 25 50 30 50 30 V80 C50 80 35 75 20 80 Z" fill="#4f46e5" />
-        <path d="M80 30 C65 25 50 30 50 30 V80 C50 80 65 75 80 80 Z" fill="#6366f1" />
-        <path d="M48 30 H52 V80 H48 Z" fill="#312e81" />
-      </svg>
-    );
-  }
-  // Uy / 집
-  if (w.includes('uy') || w.includes('집')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <polygon points="50,15 85,45 15,45" fill="#f43f5e" />
-        <rect x="25" y="45" width="50" height="40" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="3" />
-        <rect x="42" y="60" width="16" height="25" fill="#3b82f6" />
-      </svg>
-    );
-  }
-  // Mashina / 자동차
-  if (w.includes('mashina') || w.includes('차')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M15 55 L30 35 H70 L85 55 V75 H15 Z" fill="#06b6d4" />
-        <circle cx="30" cy="75" r="10" fill="#1e293b" />
-        <circle cx="70" cy="75" r="10" fill="#1e293b" />
-      </svg>
-    );
-  }
-  // Sovrin / yulduz / oltin kubok
-  if (w.includes('gold') || w.includes('mukofot') || w.includes('sovrin') || w.includes('farovon')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M30 25 H70 V50 C70 65 58 75 50 75 C42 75 30 65 30 50 Z" fill="#fbbf24" />
-        <rect x="42" y="75" width="16" height="12" fill="#d97706" />
-        <rect x="32" y="87" width="36" height="6" rx="3" fill="#b45309" />
-        <path d="M22 30 C15 30 15 45 30 48" fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" />
-        <path d="M78 30 C85 30 85 45 70 48" fill="none" stroke="#fbbf24" strokeWidth="5" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  // Yulduz / Star
-  if (w.includes('star') || w.includes('nur') || w.includes('orqali') || w.includes('yordam')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <polygon points="50,15 61,38 86,41 68,59 73,84 50,71 27,84 32,59 14,41 39,38" fill="#f59e0b" />
-      </svg>
-    );
-  }
-  // Yurak / Heart / sevgi / halol
-  if (w.includes('sevgi') || w.includes('yurak') || w.includes('halol') || w.includes('mardona')) {
-    return (
-      <svg viewBox="0 0 100 100" className="w-16 h-16">
-        <path d="M50 82 C50 82 20 60 20 38 C20 25 30 18 40 18 C48 18 50 26 50 26 C50 26 52 18 60 18 C70 18 80 25 80 38 C80 60 50 82 50 82 Z" fill="#ef4444" />
-      </svg>
-    );
-  }
-
-  // Universal chiroyli sovg'a qutisi (Boshqa barcha so'zlar uchun aniq rasm ko'rinishida)
-  return (
-    <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-sm">
-      <rect x="25" y="40" width="50" height="45" rx="4" fill="#ec4899" />
-      <rect x="20" y="30" width="60" height="15" rx="3" fill="#f43f5e" />
-      <rect x="45" y="30" width="10" height="55" fill="#fde047" />
-      <path d="M50 30 C40 10 20 20 35 30 Z" fill="none" stroke="#fde047" strokeWidth="6" strokeLinecap="round" />
-      <path d="M50 30 C60 10 80 20 65 30 Z" fill="none" stroke="#fde047" strokeWidth="6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function App() {
   // --- AUTH STATE ---
   const [currentUser, setCurrentUser] = useState(() => {
@@ -259,7 +132,6 @@ export default function App() {
     setProfile(p => ({ ...p, name: 'Tokhirbek' }));
   };
 
-  // Google rasmiy saytiga o'tish
   const handleGoogleLogin = () => {
     window.location.href = "https://accounts.google.com/signin";
   };
@@ -703,7 +575,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN ---
+  // --- 🏔️ MASHQ SCREEN (RASMSIZ / TOZA MATNLI VARIANTLAR) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -805,26 +677,24 @@ export default function App() {
             </div>
           )}
 
-          <div className="space-y-2 text-center pt-2">
+          {/* Rasmsiz toza matnli savol qismi */}
+          <div className="space-y-3 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
             </span>
             <h2 className={`text-sm font-black ${t.textMain}`}>올바른 의미를 선택하세요 (To'g'ri ma'noni tanlang)</h2>
             
-            <div className={`w-32 h-32 mx-auto rounded-3xl ${t.card} border-2 flex items-center justify-center shadow-md my-1 animate-bounce p-3`}>
-              <WordIllustration word={exTarget.uz || exTarget.ko} />
-            </div>
-
             <div 
               onClick={() => speakKo(exTarget.ko)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 cursor-pointer active:scale-95 transition mx-auto`}
+              className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 cursor-pointer active:scale-95 transition shadow-sm mx-auto`}
             >
-              <Volume2 size={18} />
-              <span className="text-xl font-black">{exTarget.ko}</span>
+              <Volume2 size={22} />
+              <span className="text-2xl font-black">{exTarget.ko}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3.5 pt-1">
+          {/* RASMSIZ TOZA MATNLI 4 TA KARTODHKA */}
+          <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
               const isCorrect = opt === exTarget.uz;
@@ -849,12 +719,9 @@ export default function App() {
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
                     }
                   }}
-                  className={`p-3.5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[135px] font-black transition-all active:scale-95 ${btnStyle}`}
+                  className={`p-5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[110px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-1.5 shadow-inner p-1">
-                    <WordIllustration word={opt} />
-                  </div>
-                  <span className="text-xs font-black">{opt}</span>
+                  <span>{opt}</span>
                 </button>
               );
             })}
@@ -908,6 +775,7 @@ export default function App() {
       );
     }
 
+    // Mashq sahifasi: Xatolar daftari kartochkasi + Yo'lakcha
     return (
       <div className="space-y-6 pb-28 pt-2">
         <div 
