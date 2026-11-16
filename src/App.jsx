@@ -621,95 +621,200 @@ export default function App() {
   );
 
   // --- REVIEW SCREEN ---
-  const renderReview = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className="flex justify-between items-center text-xs font-black px-1">
-        <span className={t.textMain}>📌 Xatolar daftari</span>
-        {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
-      </div>
-      {mistakes.length === 0 ? (
-        <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
-      ) : (
-        mistakes.map((m, idx) => (
-          <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
-            <div>
-              <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
-              <div className="text-xs text-slate-400">{m.uz}</div>
+
+  // --- DUOLINGO USLUBDAGI MASHQ VA LUG'AT TESTI ---
+  const [exerciseActive, setExerciseActive] = useState(false);
+  const [exStep, setExStep] = useState(0);
+  const [exScore, setExScore] = useState(0);
+  const [exTarget, setExTarget] = useState(null);
+  const [exOpts, setExOpts] = useState([]);
+  const [exSelected, setExSelected] = useState(null);
+  const [showExitAlert, setShowExitAlert] = useState(false);
+
+  const startDuolingoExercise = () => {
+    const pool = allWords.length >= 4 ? allWords : allVocabWords;
+    const target = pool[Math.floor(Math.random() * pool.length)];
+    const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setExTarget(target);
+    setExOpts(shuffleArray([target.uz, ...wrongs]));
+    setExSelected(null);
+    setExerciseActive(true);
+    speakKo(target.ko);
+  };
+
+  const renderReview = () => {
+    // Agar Duolingo uslubidagi mashq boshlangan bo'lsa
+    if (exerciseActive && exTarget) {
+      const progressPercent = Math.min(100, (exStep / 5) * 100);
+
+      return (
+        <div className="space-y-6 pb-28 pt-2 select-none">
+          {/* Yuqori Panel: Chiqish (✕) tugmasi va Progress bar */}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowExitAlert(true)} 
+              className="text-slate-400 hover:text-slate-600 font-black text-lg"
+            >
+              ✕
+            </button>
+            <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+              <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
             </div>
-            <Volume2 size={16} className="text-rose-500" />
+            <div className="flex items-center gap-1 text-rose-500 font-black text-xs">
+              ❤️ 5
+            </div>
           </div>
-        ))
-      )}
-    </div>
-  );
 
-  // --- PROFILE SCREEN ---
-  const renderProfile = () => (
-    <div className="space-y-4 pb-28 pt-2">
-      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
-        <div className="flex items-center gap-3.5">
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
-          <div>
-            {editingName ? (
-              <div className="flex gap-1.5">
-                <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs`} />
-                <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs rounded-xl">OK</button>
+          {/* Chiqish ogohlantirishi (Alert Modal) */}
+          {showExitAlert && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl`}>
+                <div className="text-3xl">⚠️</div>
+                <h3 className={`text-base font-black ${t.textMain}`}>Mashqni tark etasizmi?</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Agar hozir chiqib ketsangiz, to‘plagan yutuqlaringiz va streak saqlanmaydi!
+                </p>
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={() => setShowExitAlert(false)}
+                    className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase"
+                  >
+                    Mashqni davom ettirish
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowExitAlert(false);
+                      setExerciseActive(false);
+                    }}
+                    className="w-full py-3 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase"
+                  >
+                    Chiqib ketish
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
-                <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
-              </div>
-            )}
-            <p className="text-xs text-slate-400">{currentUser?.email}</p>
+            </div>
+          )}
+
+          {/* Savol qismi */}
+          <div className="space-y-3">
+            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">새로운 단어 • Yangi so‘z</span>
+            <h2 className={`text-lg font-black ${t.textMain}`}>To‘g‘ri tarjimani tanlang</h2>
+            
+            <div 
+              onClick={() => speakKo(exTarget.ko)}
+              className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 cursor-pointer active:scale-95 transition`}
+            >
+              <Volume2 size={18} />
+              <span className="text-xl font-black">{exTarget.ko}</span>
+            </div>
           </div>
+
+          {/* 4 ta tanlov kartochkalari (Grid) */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            {exOpts.map((opt, idx) => {
+              const isSelected = exSelected === opt;
+              const isCorrect = opt === exTarget.uz;
+
+              let btnStyle = `${t.card} border-2 ${t.textMain} hover:border-emerald-400`;
+              if (exSelected !== null) {
+                if (isCorrect) btnStyle = 'bg-emerald-500 text-white border-emerald-600 shadow-md';
+                else if (isSelected) btnStyle = 'bg-rose-500 text-white border-rose-600 shadow-md';
+                else btnStyle = `${t.card} opacity-40`;
+              }
+
+              return (
+                <button
+                  key={idx}
+                  disabled={exSelected !== null}
+                  onClick={() => {
+                    setExSelected(opt);
+                    if (isCorrect) {
+                      setExScore(s => s + 1);
+                      setProfile(p => ({ ...p, xp: p.xp + 10, dailyXp: p.dailyXp + 10 }));
+                    } else {
+                      setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
+                    }
+                  }}
+                  className={`p-4 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[110px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Pastki Tasdiqlash / Keyingi bosqich paneli */}
+          {exSelected !== null && (
+            <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#0b0f19]' : 'bg-white'} border-t p-4 space-y-3 z-30`}>
+              <div className="max-w-md mx-auto flex items-center justify-between">
+                <div>
+                  <div className={`font-black text-sm ${exSelected === exTarget.uz ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    {exSelected === exTarget.uz ? '참 잘했어요! 🎉 (Ajoyib!)' : `Xato! To‘g‘risi: ${exTarget.uz}`}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (exStep + 1 >= 5) {
+                      setExerciseActive(false);
+                      alert("Tabriklayman! Mashq muvaffaqiyatli yakunlandi! 🏆");
+                    } else {
+                      setExStep(s => s + 1);
+                      startDuolingoExercise();
+                    }
+                  }}
+                  className="py-3 px-8 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
+                >
+                  Davom etish ›
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+      );
+    }
+
+    // Asosiy Mashq menyusi
+    return (
+      <div className="space-y-4 pb-28 pt-2">
+        <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-5 text-center space-y-3`}>
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#58cc02] text-white flex items-center justify-center text-2xl shadow-md">
+            🎯
+          </div>
+          <h2 className={`text-base font-black ${t.textMain}`}>Duolingo Uslubidagi Interaktiv Mashq</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+            Lug‘atlar va so‘zlarni tezkor testlar orqali mustahkamlang va XP yig‘ing!
+          </p>
+          <button
+            onClick={() => {
+              setExStep(0);
+              setExScore(0);
+              startDuolingoExercise();
+            }}
+            className="w-full py-3.5 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] border-b-4 border-[#46a302] text-white font-black text-xs uppercase shadow-lg active:translate-y-0.5 transition"
+          >
+            Mashqni Boshlash 🚀
+          </button>
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <div className="flex justify-between items-center text-xs font-black px-1">
+            <span className={t.textMain}>📌 Xatolar daftari ({mistakes.length})</span>
+            {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
+          </div>
+          {mistakes.length === 0 ? (
+            <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! Ajoyib! 🎉</div>
+          ) : (
+            mistakes.map((m, idx) => (
+              <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-indigo-400 transition`}>
+                <div>
+                  <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
+                  <div className="text-xs text-slate-400 font-bold mt-0.5">{m.uz}</div>
+                </div>
+                <Volume2 size={16} className="text-rose-500" />
+              </div>
+            ))
+          )}
+        </div>
       </div>
-
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Flame size={20} className="mx-auto text-amber-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
-          <div className="text-[10px] text-slate-400">Streak</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Zap size={20} className="mx-auto text-sky-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
-          <div className="text-[10px] text-slate-400">XP</div>
-        </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
-          <Award size={20} className="mx-auto text-indigo-500" />
-          <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
-          <div className="text-[10px] text-slate-400">Daraja</div>
-        </div>
-      </div>
-
-      <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
-    </div>
-  );
-
-  return (
-    <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
-      <main className="max-w-md mx-auto px-4 pt-8 pb-2">
-        {screen === 'home' && renderHome()}
-        {screen === 'vocab' && renderVocab()}
-        {screen === 'builder' && renderBuilder()}
-        {screen === 'lesson' && renderLesson()}
-        {screen === 'ai' && renderAiTutor()}
-        {screen === 'review' && renderReview()}
-        {screen === 'profile' && renderProfile()}
-      </main>
-
-      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
-        <div className="max-w-md mx-auto flex items-center justify-around">
-          <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
-          <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
-          <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
-          <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
-          <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
-        </div>
-      </nav>
-    </div>
-  );
-}
+    );
+  };
