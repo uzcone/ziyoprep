@@ -210,7 +210,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- MASHQ VA STATISTIKA (XATOLAR TO'G'RI HISOBLANISHI UCHUN) ---
+  // --- MASHQ VA STATISTIKA ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -342,7 +342,6 @@ export default function App() {
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
-  // Darajani boshlash (faqat bir marta timer va xatolarni nollaymiz)
   const startLevelExercise = (level) => {
     setCurrentLevelId(level.id);
     setExStep(0);
@@ -353,7 +352,6 @@ export default function App() {
     setExerciseActive(true);
   };
 
-  // Keyingi savolni yuklash (xatolarni qaytadan nollamaydi!)
   const loadNextQuestion = () => {
     const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
     const target = pool[Math.floor(Math.random() * pool.length)];
@@ -373,7 +371,7 @@ export default function App() {
     textMuted: isDark ? 'text-slate-400' : 'text-slate-500'
   };
 
-  // --- AUTH SCREEN ---
+  // --- AUTH SCREEN (TO'LIQ TIKLANDI: Kirish, Ro'yxatdan o'tish, Parolni tiklash) ---
   if (!currentUser) {
     return (
       <div className={`min-h-screen w-full ${t.bg} flex flex-col justify-between p-6 pt-10 font-sans`}>
@@ -395,8 +393,10 @@ export default function App() {
               <h1 className={`text-2xl font-black ${t.textMain}`}>ZiyoPrep bilan koreys tilini o‘rganing!</h1>
               <div className="space-y-3">
                 <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-sm uppercase shadow">Tezkor kirish (Mehmon)</button>
-                <button onClick={handleGoogleLogin} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain} flex items-center justify-center gap-2 shadow-xs`}>
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <button onClick={() => { setAuthError(''); setAuthMode('login'); }} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain}`}>Tizimga kirish</button>
+                <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className={`w-full py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm uppercase`}>Ro‘yxatdan o‘tish</button>
+                <button onClick={handleGoogleLogin} className={`w-full py-3 rounded-2xl ${t.card} border font-black text-xs ${t.textMain} flex items-center justify-center gap-2 shadow-xs`}>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
                     <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.15 21.32 7.22 24 12 24z"/>
                     <path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.18C.43 8.12 0 9.83 0 12s.43 3.88 1.18 5.39l4.09-3.15z"/>
@@ -406,6 +406,45 @@ export default function App() {
                 </button>
               </div>
             </>
+          )}
+
+          {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && (
+            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left shadow-xl`}>
+              <button onClick={() => { setAuthError(''); setAuthMode('welcome'); }} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
+              <h2 className={`font-black text-base ${t.textMain}`}>
+                {authMode === 'login' && 'Tizimga kirish'}
+                {authMode === 'register' && 'Yangi аккаунт ochish'}
+                {authMode === 'forgot' && 'Parolni tiklash'}
+              </h2>
+              {authError && <div className="text-rose-500 text-xs font-bold">{authError}</div>}
+              {resetSuccess && <div className="text-emerald-500 text-xs font-bold">{resetSuccess}</div>}
+
+              <form onSubmit={handleEmailAuth} className="space-y-3">
+                {authMode === 'register' && (
+                  <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold`} />
+                )}
+                <input type="email" placeholder="Email manzilingiz" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold`} />
+                {authMode !== 'forgot' && (
+                  <input type="password" placeholder="Parol (kamida 4 ta belgi)" value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold`} />
+                )}
+                {authMode === 'forgot' && (
+                  <input type="password" placeholder="Yangi parol kiriting" value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs font-bold`} />
+                )}
+
+                <button type="submit" className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow">
+                  {authMode === 'login' && 'Kirish'}
+                  {authMode === 'register' && 'Ro‘yxatdan o‘tish'}
+                  {authMode === 'forgot' && 'Parolni yangilash'}
+                </button>
+              </form>
+
+              {authMode === 'login' && (
+                <div className="flex justify-between items-center text-[11px] pt-1">
+                  <button onClick={() => { setAuthError(''); setAuthMode('forgot'); }} className="text-slate-400 hover:underline">Parolni unutdingizmi?</button>
+                  <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className="text-emerald-500 font-bold hover:underline">Ro‘yxatdan o‘tish</button>
+                </div>
+              )}
+            </div>
           )}
         </div>
         <div className="text-center text-[11px] text-slate-400">ZiyoPrep</div>
@@ -473,8 +512,8 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center">단어</div>
             <div>
-              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar ({allVocabWords.length}+ so‘z)</div>
-              <div className="text-[10px] text-slate-400">서울대 1A–6A barcha lug'atlar</div>
+              <div className={`font-black text-xs ${t.textMain}`}>📚 Barcha Lug‘atlar ({allVocabWords.length}+ so‘z)</div>
+              <div className="text-[10px] text-slate-400">서울대 1A–6A to'liq lug'at bazasi</div>
             </div>
           </div>
           <span className="text-indigo-500 font-black text-xs">Ochish ›</span>
@@ -510,26 +549,26 @@ export default function App() {
     );
   };
 
-  // --- VOCABULARY SCREEN ---
+  // --- VOCABULARY SCREEN (Barcha lug'atlar to'liq chiqishi uchun cheklov olib tashlandi) ---
   const renderVocab = () => {
     const filteredWords = allVocabWords.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
     return (
       <div className="space-y-3.5 pb-28">
         <div className="flex justify-between pt-2">
-          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size5="16" /> Lug‘atlar</button>
+          <button onClick={() => setScreen('home')} className={`text-sm font-black ${t.textMain}`}><ArrowLeft size={16} /> Lug‘atlar ({filteredWords.length} ta so'z)</button>
         </div>
         <div className="relative">
           <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
           <input type="text" value={vocabSearch} onChange={e => setVocabSearch(e.target.value)} placeholder="So‘z qidirish..." className={`w-full ${t.card} border rounded-2xl pl-9 pr-4 py-2.5 text-xs font-bold outline-none`} />
         </div>
-        <div className="space-y-1.5">
-          {filteredWords.slice(0, 40).map((w, idx) => (
-            <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3 flex justify-between items-center cursor-pointer`}>
+        <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-1">
+          {filteredWords.map((w, idx) => (
+            <div key={idx} onClick={() => speakKo(w.ko)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-indigo-400 transition`}>
               <div>
                 <div className={`text-sm font-black ${t.textMain}`}>{w.ko}</div>
-                <div className="text-xs text-slate-400">{w.uz}</div>
+                <div className="text-xs text-slate-400 font-bold mt-0.5">{w.uz}</div>
               </div>
-              <Volume2 size={16} className="text-indigo-500" />
+              <Volume2 size={18} className="text-indigo-500 shrink-0" />
             </div>
           ))}
         </div>
@@ -582,7 +621,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (RASMSIZ TOZA MATN) ---
+  // --- 🏔️ MASHQ SCREEN ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -684,7 +723,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Rasmsiz toza matnli savol qismi */}
           <div className="space-y-3 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
@@ -700,7 +738,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Rasmsiz toza matnli 4 ta kartochka */}
           <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -768,7 +805,7 @@ export default function App() {
                       setProfile(p => ({ ...p, xp: p.xp + earnedXp, streak: p.streak + 1 }));
                     } else {
                       setExStep(s => s + 1);
-                      loadNextQuestion(); // Yangi savolni xatolarni nollamasdan yuklaymiz
+                      loadNextQuestion();
                     }
                   }}
                   className="py-3 px-8 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
@@ -782,7 +819,6 @@ export default function App() {
       );
     }
 
-    // Mashq sahifasi: Xatolar daftari kartochkasi + Yo'lakcha
     return (
       <div className="space-y-6 pb-28 pt-2">
         <div 
