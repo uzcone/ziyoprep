@@ -112,34 +112,100 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// So'z va mavzularga mos keluvchi kengaytirilgan emoji/rasm bazasi
-function getWordIllustration(word = '') {
+// Emoji o'rniga aniq Duolingo uslubidagi toza vektor SVG rasmlar (Illyustratsiyalar)
+function WordIllustration({ word = '' }) {
   const w = String(word).toLowerCase();
-  if (w.includes('suv') || w.includes('물')) return '🥛';
-  if (w.includes('kofe') || w.includes('커피')) return '☕';
-  if (w.includes('choy') || w.includes('차')) return '🍵';
-  if (w.includes('sut') || w.includes('우유')) return '🍼';
-  if (w.includes('shakar') || w.includes('설탕')) return '🧊';
-  if (w.includes('olma') || w.includes('사과')) return '🍎';
-  if (w.includes('kitob') || w.includes('책')) return '📖';
-  if (w.includes('maktab') || w.includes('학교')) return '🏫';
-  if (w.includes('talaba') || w.includes('학생')) return '👨‍🎓';
-  if (w.includes('o‘qituvchi') || w.includes('선생님')) return '👩‍🏫';
-  if (w.includes('do‘st') || w.includes('친구')) return '🧑‍🤝‍🧑';
-  if (w.includes('sevgi') || w.includes('사랑')) return '❤️';
-  if (w.includes('vaqt') || w.includes('시간')) return '⏰';
-  if (w.includes('pul') || w.includes('돈') || w.includes('debet')) return '💳';
-  if (w.includes('uy') || w.includes('집')) return '🏠';
-  if (w.includes('mashina') || w.includes('차')) return '🚗';
-  if (w.includes('ovqat') || w.includes('밥') || w.includes('food')) return '🍲';
-  if (w.includes('kompyuter') || w.includes('컴퓨터')) return '💻';
-  if (w.includes('telefon') || w.includes('전화')) return '📱';
-  if (w.includes('fikr') || w.includes('사고') || w.includes('ong')) return '🧠';
-  if (w.includes('xotira') || w.includes('marosim')) return '🕯️';
-  if (w.includes('boshqa')) return '🔀';
-  if (w.includes('ob-havo') || w.includes('havo')) return '🌤️';
-  if (w.includes('hissiyot')) return '😊';
-  return '💡';
+
+  // Kofe / 커피
+  if (w.includes('kofe') || w.includes('커피')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <path d="M25 45 H75 V70 C75 82 65 90 50 90 C35 90 25 82 25 70 Z" fill="#78350f" />
+        <path d="M20 40 H80 V45 H20 Z" fill="#e2e8f0" rx="3" />
+        <path d="M75 50 C88 50 90 70 75 75" fill="none" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
+        <path d="M35 25 Q50 15 65 25" fill="none" stroke="#cbd5e1" strokeWidth="4" strokeLinecap="round" opacity="0.7" />
+      </svg>
+    );
+  }
+  // Sut / 우유
+  if (w.includes('sut') || w.includes('우유')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <rect x="30" y="20" width="40" height="70" rx="6" fill="#3b82f6" />
+        <rect x="35" y="10" width="30" height="15" rx="3" fill="#60a5fa" />
+        <rect x="40" y="35" width="20" height="25" rx="3" fill="#ffffff" />
+        <circle cx="50" cy="47" r="5" fill="#3b82f6" />
+      </svg>
+    );
+  }
+  // Choy / 차
+  if (w.includes('choy') || w.includes('차')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <path d="M25 50 H75 C75 75 60 85 50 85 C40 85 25 75 25 50 Z" fill="#fbbf24" />
+        <ellipse cx="50" cy="50" rx="25" ry="8" fill="#fde68a" />
+        <path d="M75 55 C88 55 88 72 75 72" fill="none" stroke="#fbbf24" strokeWidth="6" strokeLinecap="round" />
+        <rect x="20" y="88" width="60" height="5" rx="2.5" fill="#d1d5db" />
+      </svg>
+    );
+  }
+  // Shakar / 설탕
+  if (w.includes('shakar') || w.includes('설탕')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <rect x="25" y="30" width="50" height="55" rx="8" fill="#2563eb" />
+        <rect x="35" y="45" width="30" height="25" rx="4" fill="#ffffff" />
+        <rect x="65" y="65" width="22" height="22" rx="4" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="2" />
+      </svg>
+    );
+  }
+  // Suv / 물
+  if (w.includes('suv') || w.includes('물')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <path d="M35 25 Q50 15 65 25 L70 80 Q70 88 50 88 Q30 88 30 80 Z" fill="#0ea5e9" opacity="0.8" />
+        <path d="M40 30 Q50 23 60 30 L64 75 Q64 82 50 82 Q36 82 36 75 Z" fill="#38bdf8" />
+      </svg>
+    );
+  }
+  // Kitob / 책
+  if (w.includes('kitob') || w.includes('책')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <path d="M20 30 C35 25 50 30 50 30 V80 C50 80 35 75 20 80 Z" fill="#4f46e5" />
+        <path d="M80 30 C65 25 50 30 50 30 V80 C50 80 65 75 80 80 Z" fill="#6366f1" />
+        <path d="M48 30 H52 V80 H48 Z" fill="#312e81" />
+      </svg>
+    );
+  }
+  // Uy / 집
+  if (w.includes('uy') || w.includes('집')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <polygon points="50,15 85,45 15,45" fill="#f43f5e" />
+        <rect x="25" y="45" width="50" height="40" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="3" />
+        <rect x="42" y="60" width="16" height="25" fill="#3b82f6" />
+      </svg>
+    );
+  }
+  // Mashina / 자동차
+  if (w.includes('mashina') || w.includes('차')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+        <path d="M15 55 L30 35 H70 L85 55 V75 H15 Z" fill="#06b6d4" />
+        <circle cx="30" cy="75" r="10" fill="#1e293b" />
+        <circle cx="70" cy="75" r="10" fill="#1e293b" />
+      </svg>
+    );
+  }
+
+  // Standart chiroyli vektor icon (boshqa barcha so'zlar uchun)
+  return (
+    <svg viewBox="0 0 100 100" className="w-14 h-14 drop-shadow-sm">
+      <circle cx="50" cy="50" r="35" fill="#8b5cf6" />
+      <path d="M40 50 L48 58 L62 42" fill="none" stroke="#ffffff" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 export default function App() {
@@ -220,10 +286,10 @@ export default function App() {
   // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark'] === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
-  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
+  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked'] === 'true');
 
   const [mistakes, setMistakes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
@@ -618,7 +684,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (DUOLINGO STYLE VISUAL CARD OPTIONS) ---
+  // --- 🏔️ MASHQ SCREEN (DUOLINGO STYLE SVG ILLUSTRATIONS) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -632,7 +698,7 @@ export default function App() {
             <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
           </div>
 
-          {/* Aniq natija va ballga qarab XP */}
+          {/* Aniq natija va ballga qarab to'g'ri/xato ko'rsatkichi */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className={`${t.card} border-2 border-amber-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-amber-500">XP Olingan</span>
@@ -640,7 +706,7 @@ export default function App() {
             </div>
             <div className={`${t.card} border-2 border-emerald-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-emerald-500">To'g'ri javoblar</span>
-              <span className="text-lg font-black mt-1 text-emerald-600">🎯 {levelCompleteData.scoreText}</span>
+              <span className="text-sm font-black mt-1 text-emerald-600">🎯 {levelCompleteData.scoreText}</span>
             </div>
             <div className={`${t.card} border-2 border-sky-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-sky-500">Vaqt</span>
@@ -674,7 +740,6 @@ export default function App() {
 
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
-      const mainEmoji = getWordIllustration(exTarget.uz || exTarget.ko);
 
       return (
         <div className="space-y-6 pb-32 pt-2 select-none">
@@ -722,15 +787,15 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi va mos rasm (Emoji) */}
+          {/* Savol qismi va vektor rasm illyustratsiyasi */}
           <div className="space-y-2 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
             </span>
             <h2 className={`text-sm font-black ${t.textMain}`}>올바른 의미를 선택하세요 (To'g'ri ma'noni tanlang)</h2>
             
-            <div className={`w-28 h-28 mx-auto rounded-3xl ${t.card} border-2 flex items-center justify-center text-5xl shadow-md my-1 animate-bounce`}>
-              {mainEmoji}
+            <div className={`w-32 h-32 mx-auto rounded-3xl ${t.card} border-2 flex items-center justify-center shadow-md my-1 animate-bounce p-3`}>
+              <WordIllustration word={exTarget.uz || exTarget.ko} />
             </div>
 
             <div 
@@ -742,12 +807,11 @@ export default function App() {
             </div>
           </div>
 
-          {/* HAR BIR VARIANT KARTADAN (Illyustratsiya + Matn) */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          {/* HAR BIR VARIANT KARTADAN (Vektor Illyustratsiya + Matn) */}
+          <div className="grid grid-cols-2 gap-3.5 pt-1">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
               const isCorrect = opt === exTarget.uz;
-              const cardEmoji = getWordIllustration(opt);
 
               let btnStyle = `${t.card} border-2 ${t.textMain} hover:border-emerald-400`;
               if (exSelected !== null) {
@@ -769,12 +833,12 @@ export default function App() {
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
                     }
                   }}
-                  className={`p-3.5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[125px] font-black transition-all active:scale-95 ${btnStyle}`}
+                  className={`p-3.5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[135px] font-black transition-all active:scale-95 ${btnStyle}`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl mb-1.5 shadow-inner">
-                    {cardEmoji}
+                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-1.5 shadow-inner p-1">
+                    <WordIllustration word={opt} />
                   </div>
-                  <span className="text-xs">{opt}</span>
+                  <span className="text-xs font-black">{opt}</span>
                 </button>
               );
             })}
@@ -795,16 +859,14 @@ export default function App() {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
 
-                      // Haqiqiy o'tgan vaqtni hisoblash
                       const elapsedSec = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
                       const mins = Math.floor(elapsedSec / 60);
                       const secs = elapsedSec % 60;
                       const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
-                      // To'g'ri javoblar soniga qarab XP berish
                       const correctCount = Math.max(0, 5 - sessionMistakes);
-                      const earnedXp = correctCount * 10; // Har bir to'g'ri javobga 10 XP
-                      const scoreText = `${correctCount} / 5 to'g'ri`;
+                      const earnedXp = correctCount * 10;
+                      const scoreText = `${correctCount} / 5 to'g'ri (${sessionMistakes} ta xato)`;
 
                       speakKo("참 잘했어요! 정말 대단해요!");
                       setLevelCompleteData({
