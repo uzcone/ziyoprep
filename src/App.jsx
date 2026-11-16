@@ -203,13 +203,13 @@ export default function App() {
       return JSON.parse(localStorage.getItem('hs_planner')) || [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: '토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     } catch {
       return [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: ' 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     }
   });
@@ -218,7 +218,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- CHEKSIZ MASHQ YO'LAKCHASI ---
+  // --- CHEKSIZ MASHQ YO'LAKCHASI VA TABRIK EKRANI ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -226,6 +226,7 @@ export default function App() {
   const [exOpts, setExOpts] = useState([]);
   const [exSelected, setExSelected] = useState(null);
   const [showExitAlert, setShowExitAlert] = useState(false);
+  const [levelCompleteData, setLevelCompleteData] = useState(null); // Daraja tugaganda chiqadigan tabrik ekrani
 
   const exerciseLevels = Array.from({ length: 60 }, (_, i) => {
     const id = i + 1;
@@ -277,7 +278,7 @@ export default function App() {
 
   const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
 
-  // Jozibali va tabiiy koreys qiz bola ovozi
+  // Jozibali va tabiiy koreys qiz bola ovozi (Tabrik uchun ham ishlatiladi)
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -285,8 +286,8 @@ export default function App() {
       const clean = text.replace(/[\(\)\[\]~]/g, '').trim();
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = 'ko-KR';
-      u.rate = 0.92;
-      u.pitch = 1.15;
+      u.rate = 0.95;
+      u.pitch = 1.2; // Jozibali va quvnoq ohang
 
       const voices = window.speechSynthesis.getVoices();
       const femaleVoice = voices.find(v => v.lang.includes('ko') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Heami') || v.name.includes('Sun-Hi')));
@@ -306,7 +307,7 @@ export default function App() {
 
   // --- AI CHAT STATE (토히르벡) ---
   const [aiMessages, setAiMessages] = useState([
-    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men  토히르벡 man.' }
+    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 man.' }
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -356,6 +357,7 @@ export default function App() {
     setExOpts(shuffleArray([target.uz, ...wrongs]));
     setExSelected(null);
     setExerciseActive(true);
+    setLevelCompleteData(null);
     speakKo(target.ko);
   };
 
@@ -377,7 +379,7 @@ export default function App() {
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" />
             <div>
               <span className={`font-black text-lg ${t.textMain}`}>ZiyoPrep</span>
-              <span className="text-[10px] font-black text-emerald-500 block"> </span>
+              <span className="text-[10px] font-black text-emerald-500 block">한글 스튜디오</span>
             </div>
           </div>
           <button onClick={toggleDark} className={`p-2.5 rounded-full ${t.card} border`}>{isDark ? <Sun size={16} /> : <Moon size={16} />}</button>
@@ -423,7 +425,7 @@ export default function App() {
             <ZiyoOwlAvatar className="w-10 h-10 rounded-2xl" equipped={equippedItems} />
             <div>
               <h1 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep</h1>
-              <span className="text-[10px] font-bold text-emerald-600"> </span>
+              <span className="text-[10px] font-bold text-emerald-600">한글 스튜디오 • 1A–6B</span>
             </div>
           </div>
           <button onClick={toggleDark} className={`p-2 rounded-full ${t.card} border`}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
@@ -582,8 +584,62 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (YO'LAKCHA + ALOHIDA XATOLAR DAFTARI KARTOSHkasi) ---
+  // --- 🏔️ MASHQ SCREEN (YO'LAKCHA + TABRIK EKRANI) ---
   const renderReview = () => {
+    // Daraja tugaganda chiqadigan Duolingo uslubidagi Tabrik Ekrani
+    if (levelCompleteData) {
+      return (
+        <div className="space-y-6 pb-28 pt-4 text-center select-none animate-fade-in">
+          <div className="w-32 h-32 mx-auto">
+            <ZiyoOwlAvatar className="w-full h-full rounded-full border-4 border-emerald-500 shadow-2xl" equipped={equippedItems} />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className={`text-2xl font-black text-emerald-600 dark:text-emerald-400`}>참 잘했어요! 대단해요!</h2>
+            <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
+          </div>
+
+          {/* Statistika Kartochkalari (XP, Aniqlik, Vaqt) */}
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <div className={`${t.card} border-2 border-amber-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
+              <span className="text-[10px] font-black uppercase text-amber-500">XP Olingan</span>
+              <span className="text-xl font-black mt-1 text-amber-500 flex items-center gap-1">⚡ +{levelCompleteData.xpGained}</span>
+            </div>
+            <div className={`${t.card} border-2 border-emerald-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
+              <span className="text-[10px] font-black uppercase text-emerald-500">Aniqlik</span>
+              <span className="text-xl font-black mt-1 text-emerald-600">🎯 {levelCompleteData.accuracy}</span>
+            </div>
+            <div className={`${t.card} border-2 border-sky-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
+              <span className="text-[10px] font-black uppercase text-sky-500">Tezlik</span>
+              <span className="text-xl font-black mt-1 text-sky-500">⏱️ {levelCompleteData.time}</span>
+            </div>
+          </div>
+
+          {/* Streak ma'lumoti */}
+          <div className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between`}>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🔥</span>
+              <div className="text-left">
+                <div className={`text-sm font-black ${t.textMain}`}>{profile.streak} kunlik ketma-ketlik!</div>
+                <div className="text-[10px] text-slate-400">Har kuni o'qishni unutmang!</div>
+              </div>
+            </div>
+            <span className="text-xs font-black text-emerald-500">Faol ✓</span>
+          </div>
+
+          <button
+            onClick={() => {
+              setLevelCompleteData(null);
+              setExerciseActive(false);
+            }}
+            className="w-full py-4 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-xl active:scale-95 transition"
+          >
+            XP ni olish va davom etish ›
+          </button>
+        </div>
+      );
+    }
+
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
 
@@ -691,12 +747,18 @@ export default function App() {
                 <button
                   onClick={() => {
                     if (exStep + 1 >= 5) {
+                      // Daraja tugadi -> Tabrik ekraniga o'tish va ovoz chiqarish
                       if (!completedLevels.includes(currentLevelId + 1) && currentLevelId < exerciseLevels.length) {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
-                      setExerciseActive(false);
-                      alert(`Tabriklayman! ${currentLevelId}-daraja yakunlandi! 🏆 +50 XP`);
-                      setProfile(p => ({ ...p, xp: p.xp + 50 }));
+                      speakKo("참 잘했어요! 정말 대단해요!"); // Jozibali ovozda tabrik
+                      setLevelCompleteData({
+                        levelId: currentLevelId,
+                        xpGained: 50,
+                        accuracy: '100%',
+                        time: '1:45'
+                      });
+                      setProfile(p => ({ ...p, xp: p.xp + 50, streak: p.streak + 1 }));
                     } else {
                       setExStep(s => s + 1);
                       startLevelExercise(exerciseLevels.find(l => l.id === currentLevelId));
@@ -713,10 +775,9 @@ export default function App() {
       );
     }
 
-    // Mashq sahifasi: Xatolar daftari kartochkasi (bosilganda alohida bo'limga o'tadi) + Yo'lakcha
+    // Mashq sahifasi: Xatolar daftari kartochkasi + Yo'lakcha
     return (
       <div className="space-y-6 pb-28 pt-2">
-        {/* Xatolar daftari kartochkasi (Bosganda alohida bo'limga o'tadi) */}
         <div 
           onClick={() => setScreen('mistakes')}
           className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between cursor-pointer hover:border-rose-400 transition shadow-xs`}
@@ -783,7 +844,7 @@ export default function App() {
     );
   };
 
-  // --- 📌 XATOLAR DAFTARI ALOHIDA BO'LIMI (SCREEN) ---
+  // --- 📌 XATOLAR DAFTARI ALOHIDA BO'LIMI ---
   const renderMistakesScreen = () => (
     <div className="space-y-4 pb-28 pt-2">
       <div className="flex items-center justify-between pt-2">
@@ -834,7 +895,7 @@ export default function App() {
         <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
         <div>
           <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
-          <span className="text-[10px] font-bold text-emerald-500">● 토히르벡 bilan muloqot</span>
+          <span className="text-[10px] font-bold text-emerald-500">● AI ustozi bilan muloqot</span>
         </div>
       </div>
 
