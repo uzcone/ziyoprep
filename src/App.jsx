@@ -203,13 +203,13 @@ export default function App() {
       return JSON.parse(localStorage.getItem('hs_planner')) || [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: ' 토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     } catch {
       return [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: 'AI ustoz 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: ' 토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     }
   });
@@ -277,7 +277,7 @@ export default function App() {
 
   const toggleDark = () => setIsDark(prev => { const next = !prev; localStorage.setItem('hs_dark', String(next)); return next; });
 
-  // Jilolanib turuvchi, jozibali qiz bola ovozi (ko-KR)
+  // Jozibali va tabiiy koreys qiz bola ovozi
   const speakKo = (text) => {
     if (!('speechSynthesis' in window)) return;
     try {
@@ -285,8 +285,8 @@ export default function App() {
       const clean = text.replace(/[\(\)\[\]~]/g, '').trim();
       const u = new SpeechSynthesisUtterance(clean);
       u.lang = 'ko-KR';
-      u.rate = 0.92; // Tabiiy va ravon tezlik
-      u.pitch = 1.15; // Biroz jozibali va yoqimli ohang uchun
+      u.rate = 0.92;
+      u.pitch = 1.15;
 
       const voices = window.speechSynthesis.getVoices();
       const femaleVoice = voices.find(v => v.lang.includes('ko') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Heami') || v.name.includes('Sun-Hi')));
@@ -306,7 +306,7 @@ export default function App() {
 
   // --- AI CHAT STATE (토히르벡) ---
   const [aiMessages, setAiMessages] = useState([
-    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men AI ustoz 토히르벡 man.' }
+    { role: 'ai', ko: '안녕하세요! 토히르벡이에요. 무엇이든 물어보세요!', uz: 'Assalomu alaykum! Men  토히르벡 man.' }
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -582,7 +582,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (XATOLAR DAFTARI TEPADA + CHEKSIZ YO'LAKCHA) ---
+  // --- 🏔️ MASHQ SCREEN (YO'LAKCHA + ALOHIDA XATOLAR DAFTARI KARTOSHkasi) ---
   const renderReview = () => {
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
@@ -713,37 +713,26 @@ export default function App() {
       );
     }
 
-    // Mashq sahifasi: Xatolar daftari ENG TEPADA, keyin cheksiz yo'lakcha
+    // Mashq sahifasi: Xatolar daftari kartochkasi (bosilganda alohida bo'limga o'tadi) + Yo'lakcha
     return (
       <div className="space-y-6 pb-28 pt-2">
-        {/* 1. XATOLAR DAFTARI - ENG TEPADA */}
-        <div className={`rounded-3xl ${t.card} border p-4 space-y-3 shadow-xs`}>
-          <div className="flex justify-between items-center text-xs font-black px-1">
-            <span className="flex items-center gap-1.5 text-rose-500">
-              <Bookmark size={15} /> Xatolar daftari ({mistakes.length})
-            </span>
-            {mistakes.length > 0 && (
-              <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>
-            )}
-          </div>
-          {mistakes.length === 0 ? (
-            <div className="text-center text-xs text-slate-400 py-3">Hozircha xatolar yo‘q! Ajoyib! 🎉</div>
-          ) : (
-            <div className="space-y-2 max-h-52 overflow-y-auto no-scrollbar">
-              {mistakes.map((m, idx) => (
-                <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.sub} border p-3 flex justify-between items-center cursor-pointer hover:border-indigo-400 transition`}>
-                  <div>
-                    <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
-                    <div className="text-xs text-slate-400 font-bold mt-0.5">{m.uz}</div>
-                  </div>
-                  <Volume2 size={16} className="text-rose-500 shrink-0" />
-                </div>
-              ))}
+        {/* Xatolar daftari kartochkasi (Bosganda alohida bo'limga o'tadi) */}
+        <div 
+          onClick={() => setScreen('mistakes')}
+          className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between cursor-pointer hover:border-rose-400 transition shadow-xs`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center text-xl font-black">
+              📌
             </div>
-          )}
+            <div>
+              <h3 className={`text-sm font-black ${t.textMain}`}>Xatolar daftari</h3>
+              <p className="text-xs text-slate-400 font-bold">{mistakes.length} ta xato saqlangan</p>
+            </div>
+          </div>
+          <span className="text-rose-500 font-black text-sm">Ochish ›</span>
         </div>
 
-        {/* 2. ZIYOPREP O'QUV YO'LAKCHASI */}
         <div className="text-center space-y-1 pt-2">
           <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi</h2>
           <p className="text-xs text-slate-400">1-darajadan boshlab cheksiz davom etadi</p>
@@ -794,6 +783,50 @@ export default function App() {
     );
   };
 
+  // --- 📌 XATOLAR DAFTARI ALOHIDA BO'LIMI (SCREEN) ---
+  const renderMistakesScreen = () => (
+    <div className="space-y-4 pb-28 pt-2">
+      <div className="flex items-center justify-between pt-2">
+        <button onClick={() => setScreen('review')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
+          <ArrowLeft size={16} /> <span>Xatolar daftari</span>
+        </button>
+        {mistakes.length > 0 && (
+          <button onClick={() => setMistakes([])} className="text-rose-500 font-bold text-xs hover:underline">
+            Tozalash
+          </button>
+        )}
+      </div>
+
+      <div className="text-xs text-slate-400">
+        Mashqlar paytida xato qilingan so‘zlaringiz shu yerda saqlanadi. Ustiga bosib talaffuzini eshitishingiz mumkin.
+      </div>
+
+      {mistakes.length === 0 ? (
+        <div className={`rounded-3xl ${t.card} border p-12 text-center space-y-2`}>
+          <div className="text-4xl">🎉</div>
+          <div className={`text-base font-black ${t.textMain}`}>Hozircha xatolar yo‘q!</div>
+          <p className="text-xs text-slate-400">Barakalla, barcha so‘zlarni to‘g‘ri topyapsiz.</p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {mistakes.map((m, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => speakKo(m.ko)} 
+              className={`rounded-2xl ${t.card} border p-4 flex justify-between items-center cursor-pointer hover:border-rose-400 transition`}
+            >
+              <div>
+                <div className={`text-sm font-black ${t.textMain}`}>{m.ko}</div>
+                <div className="text-xs text-slate-400 font-bold mt-0.5">{m.uz}</div>
+              </div>
+              <Volume2 size={18} className="text-rose-500 shrink-0" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   // --- AI TUTOR SCREEN (토히르벡) ---
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
@@ -801,7 +834,7 @@ export default function App() {
         <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
         <div>
           <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
-          <span className="text-[10px] font-bold text-emerald-500">● AI ustozi bilan muloqot</span>
+          <span className="text-[10px] font-bold text-emerald-500">● 토히르벡 bilan muloqot</span>
         </div>
       </div>
 
@@ -880,6 +913,7 @@ export default function App() {
         {screen === 'lesson' && renderLesson()}
         {screen === 'ai' && renderAiTutor()}
         {screen === 'review' && renderReview()}
+        {screen === 'mistakes' && renderMistakesScreen()}
         {screen === 'profile' && renderProfile()}
       </main>
 
@@ -890,7 +924,7 @@ export default function App() {
             <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
             <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
             <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
-            <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
+            <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' || screen === 'mistakes' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
             <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
           </div>
         </nav>
