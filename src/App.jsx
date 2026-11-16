@@ -186,12 +186,11 @@ export default function App() {
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
 
-  // Bildirishnomalar holati (Notifications Modal & Smart Alerts)
+  // Bildirishnomalar holati va Zinapoya yarmida tashlab ketilsa ogohlantirish qo'shish
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 1, title: '⚡ Zinapoya yarmida to‘xtadi!', desc: '1A kursini oxirigacha yakunlash uchun davom eting!', time: '10 daqiqa oldin', unread: true },
-    { id: 2, title: '🔔 Kunlik vazifa eslatmasi', desc: 'Bugungi 15 daqiqalik o‘quv rejangizni bajarishni unutmang.', time: '2 soat oldin', unread: true },
-    { id: 3, title: '🔥 Ajoyib natija!', desc: '24 kunlik streak saqlanib qoldi. Barakalla!', time: 'Kecha', unread: false }
+    { id: 1, title: '⚡ Zinapoya yarmida to‘xtatildi!', desc: '1A darajasini oxirigacha yakunlash uchun davom eting!', time: 'Hozir', unread: true },
+    { id: 2, title: '🔔 Kunlik vazifa eslatmasi', desc: 'Bugungi 15 daqiqalik o‘quv rejangizni bajarishni unutmang.', time: '2 soat oldin', unread: true }
   ]);
 
   const [mistakes, setMistakes] = useState(() => {
@@ -482,7 +481,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* NOTIFICATIONS MODAL (Bildirishnomalar oynasi) */}
+        {/* NOTIFICATIONS MODAL */}
         {showNotifications && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
             <div className={`${t.card} border rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl`}>
@@ -534,7 +533,7 @@ export default function App() {
           <span className="text-slate-300 font-bold text-lg">›</span>
         </div>
 
-        {/* Main Lesson Card (1 - Asosiy dars) */}
+        {/* 1 - Asosiy Dars Card */}
         <div 
           onClick={() => startLesson(nextLesson)} 
           className="rounded-[32px] overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 text-white p-6 relative shadow-xl cursor-pointer active:scale-98 transition group"
@@ -558,9 +557,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* 3, 4 va YANGI 5-blok: Grammatika, Tinglash, Gapirish (Barchasi turlicha funksiyada) */}
+        {/* 3, 4 va YANGI 5-blok: Grammatika, Tinglash, Gapirish (Barchasi turlicha!) */}
         <div className="grid grid-cols-3 gap-3">
-          {/* 5-blok O'RNIGA: Grammatika o'rganish bo'limi */}
+          {/* 5-blok o'rniga: Grammatika o'rganish */}
           <div onClick={() => setScreen('grammar')} className={`${t.card} border rounded-3xl p-4 text-center cursor-pointer hover:border-purple-400 transition space-y-2`}>
             <div className="w-10 h-10 mx-auto rounded-2xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
               <BookOpen size={20} />
@@ -634,7 +633,7 @@ export default function App() {
     );
   };
 
-  // --- 📚 GRAMMAR LEARNING SCREEN (문법 학습 - lug'at o'rniga yangi bo'lim) ---
+  // --- 📚 GRAMMAR LEARNING SCREEN (문법 학습) ---
   const renderGrammarScreen = () => {
     const grammarRules = [
       { title: '-아요 / 어요 (Hozirgi zamon rasmiy-hurmatli)', desc: 'Fe’l o‘zaklarida unli tovushga qarab qo‘shiladi.', example: '가다 -> 가요 (Boraman/Boradi)' },
@@ -668,7 +667,7 @@ export default function App() {
     );
   };
 
-  // --- VOCABULARY SCREEN (단어장) ---
+  // --- VOCABULARY SCREEN ---
   const renderVocab = () => {
     const filteredWords = allVocabWords.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
     return (
@@ -740,7 +739,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN ---
+  // --- 🏔️ MASHQ SCREEN (Zinapoyadan yarmida chiqib ketilsa bildirishnoma qo'shiladi) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -802,7 +801,15 @@ export default function App() {
                 <h3 className={`text-base font-black ${t.textMain}`}>Mashqni tark etasizmi?</h3>
                 <div className="space-y-2 pt-2">
                   <button onClick={() => setShowExitAlert(false)} className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow">Davom etish</button>
-                  <button onClick={() => { setShowExitAlert(false); setExerciseActive(false); }} className="w-full py-3 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase">Chiqib ketish</button>
+                  <button onClick={() => {
+                    setShowExitAlert(false);
+                    setExerciseActive(false);
+                    // Zinapoya yarmida tashlab ketilsa bildirishnoma qo'shish
+                    setNotifications(prev => [
+                      { id: Date.now(), title: '⚡ Zinapoya yarmida to‘xtatildi!', desc: `${currentLevelId}-darajani oxirigacha tugatmadingiz. Qaytadan urinib ko‘ring!`, time: 'Hozir', unread: true },
+                      ...prev
+                    ]);
+                  }} className="w-full py-3 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase">Chiqib ketish</button>
                 </div>
               </div>
             </div>
@@ -1004,17 +1011,17 @@ export default function App() {
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+        <div className={`${t.card} border p-3.5 text-center rounded-2xl`}>
           <Flame size={20} className="mx-auto text-amber-500" />
           <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
           <div className="text-[10px] text-slate-400">Streak</div>
         </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+        <div className={`${t.card} border p-3.5 text-center rounded-2xl`}>
           <Zap size={20} className="mx-auto text-sky-500" />
           <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
           <div className="text-[10px] text-slate-400">XP</div>
         </div>
-        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+        <div className={`${t.card} border p-3.5 text-center rounded-2xl`}>
           <Award size={20} className="mx-auto text-indigo-500" />
           <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
           <div className="text-[10px] text-slate-400">Daraja</div>
