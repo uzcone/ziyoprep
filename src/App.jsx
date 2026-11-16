@@ -112,17 +112,34 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// Har bir so'zga mos Duolingo uslubidagi vizual rasm/emoji illyustratsiya
-function getWordIllustration(word) {
-  const map = {
-    'suv': '🥛', 'kofe': '☕', 'choy': '🍵', 'shakar': '🧊', 'sut': '🍼',
-    'olma': '🍎', 'kitob': '📖', 'maktab': '🏫', 'talaba': '👨‍🎓', 'o‘qituvchi': '👩‍🏫',
-    'do‘st': '🧑‍🤝‍🧑', 'sevgi': '❤️', 'vaqt': '⏰', 'pul': '💰', 'uy': '🏠',
-    'mashina': '🚗', 'ovqat': '🍲', 'non': '🍞', 'kompyuter': '💻', 'telefon': '📱',
-    'it': '🐕', 'mushuk': '🐈', 'gul': '🌸', 'suv': '💧', 'quyosh': '☀️',
-    'teatr': '🎭', 'did': '✨', 'odam': '👥', 'taxminan': '📊'
-  };
-  return map[word.toLowerCase()] || '💡';
+// So'z va mavzularga mos keluvchi kengaytirilgan emoji/rasm bazasi
+function getWordIllustration(word = '') {
+  const w = String(word).toLowerCase();
+  if (w.includes('suv') || w.includes('물')) return '🥛';
+  if (w.includes('kofe') || w.includes('커피')) return '☕';
+  if (w.includes('choy') || w.includes('차')) return '🍵';
+  if (w.includes('sut') || w.includes('우유')) return '🍼';
+  if (w.includes('shakar') || w.includes('설탕')) return '🧊';
+  if (w.includes('olma') || w.includes('사과')) return '🍎';
+  if (w.includes('kitob') || w.includes('책')) return '📖';
+  if (w.includes('maktab') || w.includes('학교')) return '🏫';
+  if (w.includes('talaba') || w.includes('학생')) return '👨‍🎓';
+  if (w.includes('o‘qituvchi') || w.includes('선생님')) return '👩‍🏫';
+  if (w.includes('do‘st') || w.includes('친구')) return '🧑‍🤝‍🧑';
+  if (w.includes('sevgi') || w.includes('사랑')) return '❤️';
+  if (w.includes('vaqt') || w.includes('시간')) return '⏰';
+  if (w.includes('pul') || w.includes('돈') || w.includes('debet')) return '💳';
+  if (w.includes('uy') || w.includes('집')) return '🏠';
+  if (w.includes('mashina') || w.includes('차')) return '🚗';
+  if (w.includes('ovqat') || w.includes('밥') || w.includes('food')) return '🍲';
+  if (w.includes('kompyuter') || w.includes('컴퓨터')) return '💻';
+  if (w.includes('telefon') || w.includes('전화')) return '📱';
+  if (w.includes('fikr') || w.includes('사고') || w.includes('ong')) return '🧠';
+  if (w.includes('xotira') || w.includes('marosim')) return '🕯️';
+  if (w.includes('boshqa')) return '🔀';
+  if (w.includes('ob-havo') || w.includes('havo')) return '🌤️';
+  if (w.includes('hissiyot')) return '😊';
+  return '💡';
 }
 
 export default function App() {
@@ -231,7 +248,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- CHEKSIZ MASHQ YO'LAKCHASI VA ANIQLIK/VAQT ---
+  // --- MASHQ VA STATISTIKA ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -615,15 +632,15 @@ export default function App() {
             <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
           </div>
 
-          {/* Dinamik Statistika Kartochkalari */}
+          {/* Aniq natija va ballga qarab XP */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className={`${t.card} border-2 border-amber-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-amber-500">XP Olingan</span>
               <span className="text-xl font-black mt-1 text-amber-500 flex items-center gap-1">⚡ +{levelCompleteData.xpGained}</span>
             </div>
             <div className={`${t.card} border-2 border-emerald-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
-              <span className="text-[10px] font-black uppercase text-emerald-500">Aniqlik</span>
-              <span className="text-xl font-black mt-1 text-emerald-600">🎯 {levelCompleteData.accuracy}</span>
+              <span className="text-[10px] font-black uppercase text-emerald-500">To'g'ri javoblar</span>
+              <span className="text-lg font-black mt-1 text-emerald-600">🎯 {levelCompleteData.scoreText}</span>
             </div>
             <div className={`${t.card} border-2 border-sky-400/80 rounded-2xl p-3 shadow-md flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-black uppercase text-sky-500">Vaqt</span>
@@ -657,7 +674,7 @@ export default function App() {
 
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
-      const mainEmoji = getWordIllustration(exTarget.ko);
+      const mainEmoji = getWordIllustration(exTarget.uz || exTarget.ko);
 
       return (
         <div className="space-y-6 pb-32 pt-2 select-none">
@@ -705,7 +722,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi va asosiy emoji */}
+          {/* Savol qismi va mos rasm (Emoji) */}
           <div className="space-y-2 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
@@ -725,7 +742,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* HAR BIR VARIANT KARTADAN (ILlyustratsiya + Matn) */}
+          {/* HAR BIR VARIANT KARTADAN (Illyustratsiya + Matn) */}
           <div className="grid grid-cols-2 gap-3 pt-1">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -778,22 +795,25 @@ export default function App() {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
 
+                      // Haqiqiy o'tgan vaqtni hisoblash
                       const elapsedSec = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
                       const mins = Math.floor(elapsedSec / 60);
                       const secs = elapsedSec % 60;
                       const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
+                      // To'g'ri javoblar soniga qarab XP berish
                       const correctCount = Math.max(0, 5 - sessionMistakes);
-                      const accuracyVal = Math.round((correctCount / 5) * 100) + '%';
+                      const earnedXp = correctCount * 10; // Har bir to'g'ri javobga 10 XP
+                      const scoreText = `${correctCount} / 5 to'g'ri`;
 
                       speakKo("참 잘했어요! 정말 대단해요!");
                       setLevelCompleteData({
                         levelId: currentLevelId,
-                        xpGained: 50,
-                        accuracy: accuracyVal,
+                        xpGained: earnedXp,
+                        scoreText: scoreText,
                         time: timeStr
                       });
-                      setProfile(p => ({ ...p, xp: p.xp + 50, streak: p.streak + 1 }));
+                      setProfile(p => ({ ...p, xp: p.xp + earnedXp, streak: p.streak + 1 }));
                     } else {
                       setExStep(s => s + 1);
                       startLevelExercise(exerciseLevels.find(l => l.id === currentLevelId));
