@@ -103,18 +103,6 @@ function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   );
 }
 
-const INITIALS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const MEDIALS = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
-const FINALS = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-
-function composeHangul(cho, jung, jong = '') {
-  const c = INITIALS.indexOf(cho);
-  const v = MEDIALS.indexOf(jung);
-  const f = FINALS.indexOf(jong);
-  if (c === -1 || v === -1) return cho || jung || '';
-  return String.fromCharCode(0xAC00 + (c * 21 * 28) + (v * 28) + (f > 0 ? f : 0));
-}
-
 function shuffleArray(arr) {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
@@ -228,15 +216,16 @@ export default function App() {
 
   const vocabBooks = [vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A].filter(Boolean);
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
-  const [selectedVocabTopicId, setSelectedVocabTopicId] = useState('1a-l1');
   const [vocabSearch, setVocabSearch] = useState('');
-  const [vocabQuizMode, setVocabQuizMode] = useState(false);
-  const [vocabQuizDirection, setVocabQuizDirection] = useState('ko2uz');
-  const [vocabQuizWord, setVocabQuizWord] = useState(null);
-  const [vocabQuizOpts, setVocabQuizOpts] = useState([]);
-  const [vocabQuizPick, setVocabQuizPick] = useState(null);
-  const [vocabQuizScore, setVocabQuizScore] = useState(0);
-  const [vocabQuizCount, setVocabQuizCount] = useState(0);
+
+  // --- DUOLINGO STYLE EXERCISE STATES ---
+  const [exerciseActive, setExerciseActive] = useState(false);
+  const [exStep, setExStep] = useState(0);
+  const [exScore, setExScore] = useState(0);
+  const [exTarget, setExTarget] = useState(null);
+  const [exOpts, setExOpts] = useState([]);
+  const [exSelected, setExSelected] = useState(null);
+  const [showExitAlert, setShowExitAlert] = useState(false);
 
   const [profile, setProfile] = useState(() => {
     try {
@@ -249,9 +238,6 @@ export default function App() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(profile.name);
 
-  const [ownedItems, setOwnedItems] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_owned_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
-  });
   const [equippedItems, setEquippedItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_equipped_items')) || { glasses: false, gradCap: false, crown: false }; } catch { return { glasses: false, gradCap: false, crown: false }; }
   });
@@ -259,13 +245,9 @@ export default function App() {
   const [completedIds, setCompletedIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_completed')) || []; } catch { return []; }
   });
-  const [memos, setMemos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_memos')) || {}; } catch { return {}; }
-  });
 
   useEffect(() => { localStorage.setItem('hs_profile', JSON.stringify(profile)); }, [profile]);
   useEffect(() => { localStorage.setItem('hs_completed', JSON.stringify(completedIds)); }, [completedIds]);
-  useEffect(() => { localStorage.setItem('hs_memos', JSON.stringify(memos)); }, [memos]);
   useEffect(() => { localStorage.setItem('hs_mistakes', JSON.stringify(mistakes)); }, [mistakes]);
   useEffect(() => { localStorage.setItem('hs_planner', JSON.stringify(plannerTasks)); }, [plannerTasks]);
 
@@ -296,8 +278,8 @@ export default function App() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiLoading]);
 
-  const handleAiSend = async (preset) => {
-    const text = (preset || aiInput).trim();
+  const handleAiSend = async () => {
+    const text = aiInput.trim();
     if (!text || aiLoading) return;
     setAiMessages(prev => [...prev, { role: 'user', ko: text }]);
     setAiInput('');
@@ -317,23 +299,30 @@ export default function App() {
     } finally { setAiLoading(false); }
   };
 
-  const [openSec, setOpenSec] = useState({ rule: true, struct: true, words: true });
-  const [doneSec, setDoneSec] = useState({ rule: false, struct: false });
-  const [revealed, setRevealed] = useState({});
   const [quizList, setQuizList] = useState([]);
   const [qIdx, setQIdx] = useState(0);
   const [qAnswer, setQAnswer] = useState(null);
 
-  const toggleItem = (key, ko) => { speakKo(ko); setRevealed(p => ({ ...p, [key]: !p[key] })); };
   const startLesson = (lesson) => {
     setActiveLesson(lesson);
-    setRevealed({});
     const shuffled = shuffleArray(lesson.quizzes || []).map(q => ({ ...q, opts: shuffleArray(q.opts) }));
     setQuizList(shuffled);
     setQIdx(0);
     setQAnswer(null);
     setScreen('lesson');
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
+  };
+
+  // Duolingo uslubidagi mashqni boshlash
+  const startDuolingoExercise = () => {
+    const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
+    const target = pool[Math.floor(Math.random() * pool.length)];
+    const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
+    setExTarget(target);
+    setExOpts(shuffleArray([target.uz, ...wrongs]));
+    setExSelected(null);
+    setExerciseActive(true);
+    speakKo(target.ko);
   };
 
   const t = {
@@ -368,11 +357,6 @@ export default function App() {
               <div className="space-y-3">
                 <button onClick={handleGuestLogin} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-sm uppercase shadow">Tezkor kirish (Mehmon)</button>
                 <button onClick={() => { setAuthError(''); setAuthMode('google'); }} className={`w-full py-4 rounded-2xl ${t.card} border font-black text-sm ${t.textMain}`}>Google bilan davom etish</button>
-                <div className="flex justify-center gap-4 pt-2">
-                  <button onClick={() => { setAuthError(''); setAuthMode('login'); }} className="text-xs font-black text-emerald-600">Email orqali kirish</button>
-                  <span className="text-slate-300">|</span>
-                  <button onClick={() => { setAuthError(''); setAuthMode('register'); }} className="text-xs font-black text-indigo-500">Ro‘yxatdan o‘tish</button>
-                </div>
               </div>
             </>
           )}
@@ -387,31 +371,6 @@ export default function App() {
                 <input type="email" placeholder="Gmail manzilingiz" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
                 <button type="submit" className="w-full py-3 rounded-2xl bg-blue-600 text-white font-black text-xs">Tasdiqlash</button>
               </form>
-            </div>
-          )}
-
-          {(authMode === 'login' || authMode === 'register' || authMode === 'forgot') && (
-            <div className={`${t.card} border rounded-3xl p-6 space-y-4 text-left`}>
-              <button onClick={() => { setAuthError(''); setResetSuccess(''); setAuthMode('welcome'); }} className="text-xs font-bold text-emerald-500">‹ Orqaga</button>
-              <h2 className={`font-black text-base ${t.textMain}`}>
-                {authMode === 'login' ? 'Tizimga kirish' : authMode === 'register' ? 'Ro‘yxatdan o‘tish' : 'Parolni tiklash'}
-              </h2>
-              {authError && <div className="text-rose-500 text-xs">{authError}</div>}
-              {resetSuccess && <div className="text-emerald-500 text-xs">{resetSuccess}</div>}
-              <form onSubmit={handleEmailAuth} className="space-y-3">
-                {authMode === 'register' && <input type="text" placeholder="Ismingiz" value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />}
-                <input type="email" placeholder="Email" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <input type="password" placeholder={authMode === 'forgot' ? "Yangi parol" : "Parol"} value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} className={`w-full ${t.sub} border rounded-2xl p-3 text-xs`} />
-                <button type="submit" className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs">
-                  {authMode === 'login' ? 'Kirish' : authMode === 'register' ? 'Yaratish' : 'Yangilash'}
-                </button>
-              </form>
-              {authMode === 'login' && (
-                <div className="flex justify-between pt-1 text-xs">
-                  <button onClick={() => setAuthMode('forgot')} className="text-slate-400">Parolni unutdingizmi?</button>
-                  <button onClick={() => setAuthMode('register')} className="text-emerald-600 font-bold">Ro‘yxatdan o‘tish</button>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -476,11 +435,11 @@ export default function App() {
           </div>
         </div>
 
-        <div onClick={() => { setVocabQuizMode(false); setScreen('vocab'); }} className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer`}>
+        <div onClick={() => setScreen('vocab')} className={`rounded-2xl ${t.card} border p-3.5 flex items-center justify-between cursor-pointer`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center">단어</div>
             <div>
-              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar & Savol-Javob ({allVocabWords.length}+ so‘z)</div>
+              <div className={`font-black text-xs ${t.textMain}`}>📚 Lug‘atlar ({allVocabWords.length}+ so‘z)</div>
               <div className="text-[10px] text-slate-400">서울대 1A–6A barcha lug'atlar</div>
             </div>
           </div>
@@ -589,67 +548,14 @@ export default function App() {
     );
   };
 
-  // --- AI TUTOR SCREEN (토히르벡) ---
-  const renderAiTutor = () => (
-    <div className="flex flex-col h-[78vh] pb-24 pt-2">
-      <div className="flex items-center gap-2.5 pb-3">
-        <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
-        <div>
-          <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
-          <span className="text-[10px] font-bold text-emerald-500">● AI ustozi bilan muloqot</span>
-        </div>
-      </div>
-
-      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
-        {aiMessages.map((m, idx) => (
-          <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
-              {m.ko && <div className="font-black">{m.ko}</div>}
-              {m.uz && <div className="text-[11px] opacity-90">{m.uz}</div>}
-            </div>
-          </div>
-        ))}
-        {aiLoading && <div className="text-xs text-slate-400 animate-pulse">토히르벡 yozmoqda...</div>}
-        <div ref={chatEndRef} />
-      </div>
-
-      <div className="pt-3 flex gap-2">
-        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Savol yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
-        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-4 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={18} /></button>
-      </div>
-    </div>
-  );
-
-  // --- REVIEW SCREEN ---
-
-  // --- DUOLINGO USLUBDAGI MASHQ VA LUG'AT TESTI ---
-  const [exerciseActive, setExerciseActive] = useState(false);
-  const [exStep, setExStep] = useState(0);
-  const [exScore, setExScore] = useState(0);
-  const [exTarget, setExTarget] = useState(null);
-  const [exOpts, setExOpts] = useState([]);
-  const [exSelected, setExSelected] = useState(null);
-  const [showExitAlert, setShowExitAlert] = useState(false);
-
-  const startDuolingoExercise = () => {
-    const pool = allWords.length >= 4 ? allWords : allVocabWords;
-    const target = pool[Math.floor(Math.random() * pool.length)];
-    const wrongs = shuffleArray(pool.filter(w => w.uz !== target.uz)).slice(0, 3).map(w => w.uz);
-    setExTarget(target);
-    setExOpts(shuffleArray([target.uz, ...wrongs]));
-    setExSelected(null);
-    setExerciseActive(true);
-    speakKo(target.ko);
-  };
-
+  // --- 🎯 DUOLINGO STYLE REVIEW & VOCABULARY PRACTICE SCREEN ---
   const renderReview = () => {
-    // Agar Duolingo uslubidagi mashq boshlangan bo'lsa
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, (exStep / 5) * 100);
 
       return (
         <div className="space-y-6 pb-28 pt-2 select-none">
-          {/* Yuqori Panel: Chiqish (✕) tugmasi va Progress bar */}
+          {/* Yuqori Panel: Chiqish (✕) va Progress Bar[span_1](start_span)[span_1](end_span) */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowExitAlert(true)} 
@@ -665,14 +571,14 @@ export default function App() {
             </div>
           </div>
 
-          {/* Chiqish ogohlantirishi (Alert Modal) */}
+          {/* Chiqish ogohlantirish oynasi (Exit Alert Modal) */}
           {showExitAlert && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
               <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl`}>
                 <div className="text-3xl">⚠️</div>
                 <h3 className={`text-base font-black ${t.textMain}`}>Mashqni tark etasizmi?</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Agar hozir chiqib ketsangiz, to‘plagan yutuqlaringiz va streak saqlanmaydi!
+                  Agar hozir chiqib ketsangiz, to‘plagan yutuqlaringiz saqlanmaydi!
                 </p>
                 <div className="space-y-2 pt-2">
                   <button
@@ -695,21 +601,21 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi */}
-          <div className="space-y-3">
-            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">새로운 단어 • Yangi so‘z</span>
-            <h2 className={`text-lg font-black ${t.textMain}`}>To‘g‘ri tarjimani tanlang</h2>
+          {/* Savol qismi[span_2](start_span)[span_2](end_span) */}
+          <div className="space-y-3 text-center">
+            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">새로운 단어 • Yangi so‘z[span_3](start_span)[span_3](end_span)</span>
+            <h2 className={`text-base font-black ${t.textMain}`}>To‘g‘ri ma'noni tanlang</h2>
             
             <div 
               onClick={() => speakKo(exTarget.ko)}
-              className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 cursor-pointer active:scale-95 transition`}
+              className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 cursor-pointer active:scale-95 transition shadow-sm mx-auto`}
             >
-              <Volume2 size={18} />
-              <span className="text-xl font-black">{exTarget.ko}</span>
+              <Volume2 size={20} />
+              <span className="text-2xl font-black">{exTarget.ko}</span>
             </div>
           </div>
 
-          {/* 4 ta tanlov kartochkalari (Grid) */}
+          {/* 4 ta Duolingo uslubidagi tanlov kartochkalari[span_4](start_span)[span_4](end_span) */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
@@ -743,9 +649,9 @@ export default function App() {
             })}
           </div>
 
-          {/* Pastki Tasdiqlash / Keyingi bosqich paneli */}
+          {/* Pastki Tasdiqlash Paneli[span_5](start_span)[span_5](end_span) */}
           {exSelected !== null && (
-            <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#0b0f19]' : 'bg-white'} border-t p-4 space-y-3 z-30`}>
+            <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#0b0f19]' : 'bg-white'} border-t p-4 space-y-3 z-30 shadow-lg`}>
               <div className="max-w-md mx-auto flex items-center justify-between">
                 <div>
                   <div className={`font-black text-sm ${exSelected === exTarget.uz ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -773,16 +679,15 @@ export default function App() {
       );
     }
 
-    // Asosiy Mashq menyusi
     return (
       <div className="space-y-4 pb-28 pt-2">
         <div className={`rounded-3xl ${isDark ? 'bg-emerald-950/40 border-emerald-800' : 'bg-gradient-to-r from-[#eef9e8] to-[#e4f5fc] border-[#cdeac0]'} border p-5 text-center space-y-3`}>
           <div className="w-14 h-14 mx-auto rounded-2xl bg-[#58cc02] text-white flex items-center justify-center text-2xl shadow-md">
             🎯
           </div>
-          <h2 className={`text-base font-black ${t.textMain}`}>Duolingo Uslubidagi Interaktiv Mashq</h2>
+          <h2 className={`text-base font-black ${t.textMain}`}>Duolingo Uslubidagi Lug‘at Mashqi</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-            Lug‘atlar va so‘zlarni tezkor testlar orqali mustahkamlang va XP yig‘ing!
+            So‘zlarni qiziqarli vizual testlar orqali yodlang va XP yig‘ing!
           </p>
           <button
             onClick={() => {
@@ -802,7 +707,7 @@ export default function App() {
             {mistakes.length > 0 && <button onClick={() => setMistakes([])} className="text-rose-500 underline text-[10px]">Tozalash</button>}
           </div>
           {mistakes.length === 0 ? (
-            <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! Ajoyib! 🎉</div>
+            <div className={`rounded-3xl ${t.card} border p-8 text-center text-xs text-slate-400`}>Hozircha xatolar yo‘q! 🎉</div>
           ) : (
             mistakes.map((m, idx) => (
               <div key={idx} onClick={() => speakKo(m.ko)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-indigo-400 transition`}>
@@ -818,3 +723,105 @@ export default function App() {
       </div>
     );
   };
+
+  // --- AI TUTOR SCREEN (토히르벡) ---
+  const renderAiTutor = () => (
+    <div className="flex flex-col h-[78vh] pb-24 pt-2">
+      <div className="flex items-center gap-2.5 pb-3">
+        <ZiyoOwlAvatar className="w-11 h-11 rounded-2xl" />
+        <div>
+          <h2 className={`font-black text-sm ${t.textMain}`}>토히르벡</h2>
+          <span className="text-[10px] font-bold text-emerald-500">● AI ustozi bilan muloqot</span>
+        </div>
+      </div>
+
+      <div className={`flex-1 overflow-y-auto rounded-3xl ${t.card} border p-4 space-y-3`}>
+        {aiMessages.map((m, idx) => (
+          <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div onClick={() => m.role === 'ai' && m.ko && speakKo(m.ko)} className={`max-w-[85%] rounded-2xl p-3.5 text-xs space-y-1 cursor-pointer ${m.role === 'user' ? 'bg-[#58cc02] text-white font-bold' : `${t.sub} ${t.textMain}`}`}>
+              {m.ko && <div className="font-black">{m.ko}</div>}
+              {m.uz && <div className="text-[11px] opacity-90">{m.uz}</div>}
+            </div>
+          </div>
+        ))}
+        {aiLoading && <div className="text-xs text-slate-400 animate-pulse">토히르벡 yozmoqda...</div>}
+        <div ref={chatEndRef} />
+      </div>
+
+      <div className="pt-3 flex gap-2">
+        <input type="text" value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAiSend()} placeholder="Savol yozing..." className={`flex-1 ${t.card} border rounded-2xl px-4 py-3 text-xs font-bold outline-none`} />
+        <button onClick={() => handleAiSend()} disabled={aiLoading} className="px-4 rounded-2xl bg-[#58cc02] text-white font-black"><Send size={18} /></button>
+      </div>
+    </div>
+  );
+
+  // --- PROFILE SCREEN ---
+  const renderProfile = () => (
+    <div className="space-y-4 pb-28 pt-2">
+      <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
+        <div className="flex items-center gap-3.5">
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
+          <div>
+            {editingName ? (
+              <div className="flex gap-1.5">
+                <input type="text" value={nameDraft} onChange={e => setNameDraft(e.target.value)} className={`${t.sub} border rounded-xl px-2.5 py-1 text-xs`} />
+                <button onClick={() => { setProfile(p => ({ ...p, name: nameDraft || 'Tokhirbek' })); setEditingName(false); }} className="px-2.5 py-1 bg-emerald-500 text-white text-xs rounded-xl">OK</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
+                <button onClick={() => setEditingName(true)} className="text-slate-400"><Edit3 size={13} /></button>
+              </div>
+            )}
+            <p className="text-xs text-slate-400">{currentUser?.email}</p>
+          </div>
+        </div>
+        <button onClick={toggleDark} className={`p-2.5 rounded-2xl ${t.sub} border`}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <Flame size={20} className="mx-auto text-amber-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.streak}</div>
+          <div className="text-[10px] text-slate-400">Streak</div>
+        </div>
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <Zap size={20} className="mx-auto text-sky-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>{profile.xp}</div>
+          <div className="text-[10px] text-slate-400">XP</div>
+        </div>
+        <div className={`rounded-2xl ${t.card} border p-3.5 text-center`}>
+          <Award size={20} className="mx-auto text-indigo-500" />
+          <div className={`text-lg font-black mt-1 ${t.textMain}`}>TOPIK 4</div>
+          <div className="text-[10px] text-slate-400">Daraja</div>
+        </div>
+      </div>
+
+      <button onClick={handleLogout} className="w-full py-3.5 rounded-2xl bg-rose-500/15 text-rose-500 font-black text-xs">Akkauntdan chiqish</button>
+    </div>
+  );
+
+  return (
+    <div className={`min-h-screen w-full ${t.bg} font-sans select-none transition-colors`}>
+      <main className="max-w-md mx-auto px-4 pt-8 pb-2">
+        {screen === 'home' && renderHome()}
+        {screen === 'vocab' && renderVocab()}
+        {screen === 'builder' && renderBuilder()}
+        {screen === 'lesson' && renderLesson()}
+        {screen === 'ai' && renderAiTutor()}
+        {screen === 'review' && renderReview()}
+        {screen === 'profile' && renderProfile()}
+      </main>
+
+      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
+        <div className="max-w-md mx-auto flex items-center justify-around">
+          <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
+          <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
+          <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
+          <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
+          <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
+        </div>
+      </nav>
+    </div>
+  );
+}
