@@ -112,15 +112,17 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// So'zlarga mos vizual emoji/rasm generatsiya qiluvchi yordamchi funksiya
-function getWordIllustration(koWord) {
+// Har bir so'zga mos Duolingo uslubidagi vizual rasm/emoji illyustratsiya
+function getWordIllustration(word) {
   const map = {
-    '물': '🥛', '咖啡': '☕', '커피': '☕', '우유': '🍼', '사과': '🍎',
-    '책': '📖', '학교': '🏫', '학생': '👨‍🎓', '선생님': '👩‍🏫', '친구': '🧑‍🤝‍🧑',
-    '사랑': '❤️', '시간': '⏰', '돈': '💰', '집': '🏠', '차': '🚗',
-    '음식': '🍲', '밥': '🍚', '물건': '📦', '컴퓨터': '💻', '전화': '📱'
+    'suv': '🥛', 'kofe': '☕', 'choy': '🍵', 'shakar': '🧊', 'sut': '🍼',
+    'olma': '🍎', 'kitob': '📖', 'maktab': '🏫', 'talaba': '👨‍🎓', 'o‘qituvchi': '👩‍🏫',
+    'do‘st': '🧑‍🤝‍🧑', 'sevgi': '❤️', 'vaqt': '⏰', 'pul': '💰', 'uy': '🏠',
+    'mashina': '🚗', 'ovqat': '🍲', 'non': '🍞', 'kompyuter': '💻', 'telefon': '📱',
+    'it': '🐕', 'mushuk': '🐈', 'gul': '🌸', 'suv': '💧', 'quyosh': '☀️',
+    'teatr': '🎭', 'did': '✨', 'odam': '👥', 'taxminan': '📊'
   };
-  return map[koWord] || '💡';
+  return map[word.toLowerCase()] || '💡';
 }
 
 export default function App() {
@@ -229,7 +231,7 @@ export default function App() {
   const [selectedVocabBook, setSelectedVocabBook] = useState('1A');
   const [vocabSearch, setVocabSearch] = useState('');
 
-  // --- CHEKSIZ MASHQ YO'LAKCHASI VA ANIQ VAQT HISOBLASH ---
+  // --- CHEKSIZ MASHQ YO'LAKCHASI VA ANIQLIK/VAQT ---
   const [exerciseActive, setExerciseActive] = useState(false);
   const [currentLevelId, setCurrentLevelId] = useState(null);
   const [exStep, setExStep] = useState(0);
@@ -239,7 +241,6 @@ export default function App() {
   const [showExitAlert, setShowExitAlert] = useState(false);
   const [levelCompleteData, setLevelCompleteData] = useState(null);
 
-  // Vaqtni aniq o'lchash uchun useRef
   const startTimeRef = useRef(null);
   const [sessionMistakes, setSessionMistakes] = useState(0);
 
@@ -372,8 +373,8 @@ export default function App() {
     setExSelected(null);
     setExerciseActive(true);
     setLevelCompleteData(null);
-    startTimeRef.current = Date.now(); // Vaqtni aniq boshlash
-    setSessionMistakes(0);            // Xatolarni nollash
+    startTimeRef.current = Date.now();
+    setSessionMistakes(0);
     speakKo(target.ko);
   };
 
@@ -600,9 +601,8 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (VIZUAL RASMLI KARTALAR VA TO'G'RI VAQT/ANIQLIK) ---
+  // --- 🏔️ MASHQ SCREEN (DUOLINGO STYLE VISUAL CARD OPTIONS) ---
   const renderReview = () => {
-    // Daraja tugaganda chiqadigan Tabrik Ekrani
     if (levelCompleteData) {
       return (
         <div className="space-y-6 pb-28 pt-4 text-center select-none animate-fade-in">
@@ -631,7 +631,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Streak ma'lumoti */}
           <div className={`rounded-3xl ${t.card} border p-4 flex items-center justify-between`}>
             <div className="flex items-center gap-3">
               <span className="text-3xl">🔥</span>
@@ -658,7 +657,7 @@ export default function App() {
 
     if (exerciseActive && exTarget) {
       const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
-      const illustrationEmoji = getWordIllustration(exTarget.ko);
+      const mainEmoji = getWordIllustration(exTarget.ko);
 
       return (
         <div className="space-y-6 pb-32 pt-2 select-none">
@@ -706,16 +705,15 @@ export default function App() {
             </div>
           )}
 
-          {/* VIZUAL RASMLI SAVOL QISMI (Duolingo Style Card) */}
-          <div className="space-y-3 text-center pt-2">
+          {/* Savol qismi va asosiy emoji */}
+          <div className="space-y-2 text-center pt-2">
             <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">
               새로운 단어 (Yangi so'z)
             </span>
-            <h2 className={`text-base font-black ${t.textMain}`}>올바른 의미를 선택하세요 (To'g'ri ma'noni tanlang)</h2>
+            <h2 className={`text-sm font-black ${t.textMain}`}>올바른 의미를 선택하세요 (To'g'ri ma'noni tanlang)</h2>
             
-            {/* Rasm / Emoji illyustratsiya qutisi */}
-            <div className={`w-32 h-32 mx-auto rounded-3xl ${t.card} border-2 flex items-center justify-center text-6xl shadow-md my-2 animate-bounce`}>
-              {illustrationEmoji}
+            <div className={`w-28 h-28 mx-auto rounded-3xl ${t.card} border-2 flex items-center justify-center text-5xl shadow-md my-1 animate-bounce`}>
+              {mainEmoji}
             </div>
 
             <div 
@@ -727,10 +725,12 @@ export default function App() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          {/* HAR BIR VARIANT KARTADAN (ILlyustratsiya + Matn) */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
               const isCorrect = opt === exTarget.uz;
+              const cardEmoji = getWordIllustration(opt);
 
               let btnStyle = `${t.card} border-2 ${t.textMain} hover:border-emerald-400`;
               if (exSelected !== null) {
@@ -752,9 +752,12 @@ export default function App() {
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
                     }
                   }}
-                  className={`p-4 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[100px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
+                  className={`p-3.5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[125px] font-black transition-all active:scale-95 ${btnStyle}`}
                 >
-                  <span>{opt}</span>
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl mb-1.5 shadow-inner">
+                    {cardEmoji}
+                  </div>
+                  <span className="text-xs">{opt}</span>
                 </button>
               );
             })}
@@ -775,13 +778,11 @@ export default function App() {
                         setCompletedLevels(prev => [...prev, currentLevelId + 1]);
                       }
 
-                      // Haqiqiy o'tgan vaqtni aniq hisoblash
                       const elapsedSec = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
                       const mins = Math.floor(elapsedSec / 60);
                       const secs = elapsedSec % 60;
                       const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
-                      // Aniqlik foizini xatolarga qarab hisoblash
                       const correctCount = Math.max(0, 5 - sessionMistakes);
                       const accuracyVal = Math.round((correctCount / 5) * 100) + '%';
 
