@@ -301,19 +301,16 @@ export default function App() {
 
   const [quizList, setQuizList] = useState([]);
   const [qIdx, setQIdx] = useState(0);
-  const [qAnswer, setQAnswer] = useState(null);
 
   const startLesson = (lesson) => {
     setActiveLesson(lesson);
     const shuffled = shuffleArray(lesson.quizzes || []).map(q => ({ ...q, opts: shuffleArray(q.opts) }));
     setQuizList(shuffled);
     setQIdx(0);
-    setQAnswer(null);
     setScreen('lesson');
     setPlannerTasks(prev => prev.map(task => task.id === 1 ? { ...task, done: true } : task));
   };
 
-  // Duolingo uslubidagi mashqni boshlash
   const startDuolingoExercise = () => {
     const pool = allVocabWords.length > 0 ? allVocabWords : allLessons.flatMap(l => l.words || []);
     const target = pool[Math.floor(Math.random() * pool.length)];
@@ -551,19 +548,19 @@ export default function App() {
   // --- 🎯 DUOLINGO STYLE REVIEW & VOCABULARY PRACTICE SCREEN ---
   const renderReview = () => {
     if (exerciseActive && exTarget) {
-      const progressPercent = Math.min(100, (exStep / 5) * 100);
+      const progressPercent = Math.min(100, ((exStep + 1) / 5) * 100);
 
       return (
-        <div className="space-y-6 pb-28 pt-2 select-none">
-          {/* Yuqori Panel: Chiqish (✕) va Progress Bar[span_1](start_span)[span_1](end_span) */}
+        <div className="space-y-6 pb-32 pt-2 select-none">
+          {/* Yuqori Panel: Chiqish (✕) va Progress Bar */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setShowExitAlert(true)} 
-              className="text-slate-400 hover:text-slate-600 font-black text-lg"
+              className="text-slate-400 hover:text-slate-600 font-black text-lg p-1"
             >
               ✕
             </button>
-            <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+            <div className="flex-1 h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
               <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
             </div>
             <div className="flex items-center gap-1 text-rose-500 font-black text-xs">
@@ -583,9 +580,9 @@ export default function App() {
                 <div className="space-y-2 pt-2">
                   <button
                     onClick={() => setShowExitAlert(false)}
-                    className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase"
+                    className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow"
                   >
-                    Mashqni davom ettirish
+                    Davom etish
                   </button>
                   <button
                     onClick={() => {
@@ -601,22 +598,22 @@ export default function App() {
             </div>
           )}
 
-          {/* Savol qismi[span_2](start_span)[span_2](end_span) */}
-          <div className="space-y-3 text-center">
-            <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">새로운 단어 • Yangi so‘z[span_3](start_span)[span_3](end_span)</span>
-            <h2 className={`text-base font-black ${t.textMain}`}>To‘g‘ri ma'noni tanlang</h2>
+          {/* Savol qismi */}
+          <div className="space-y-3 text-center pt-2">
+            <span className="text-[11px] font-black uppercase text-indigo-500 tracking-wider">Yangi so‘z</span>
+            <h2 className={`text-lg font-black ${t.textMain}`}>To‘g‘ri ma'noni tanlang</h2>
             
             <div 
               onClick={() => speakKo(exTarget.ko)}
-              className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 cursor-pointer active:scale-95 transition shadow-sm mx-auto`}
+              className={`inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 cursor-pointer active:scale-95 transition shadow-sm mx-auto`}
             >
-              <Volume2 size={20} />
+              <Volume2 size={22} />
               <span className="text-2xl font-black">{exTarget.ko}</span>
             </div>
           </div>
 
-          {/* 4 ta Duolingo uslubidagi tanlov kartochkalari[span_4](start_span)[span_4](end_span) */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          {/* 4 ta Duolingo uslubidagi tanlov kartochkalari */}
+          <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
               const isCorrect = opt === exTarget.uz;
@@ -641,7 +638,7 @@ export default function App() {
                       setMistakes(m => [...m, { ko: exTarget.ko, uz: exTarget.uz }]);
                     }
                   }}
-                  className={`p-4 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[110px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
+                  className={`p-5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[120px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
                 >
                   <span>{opt}</span>
                 </button>
@@ -649,13 +646,13 @@ export default function App() {
             })}
           </div>
 
-          {/* Pastki Tasdiqlash Paneli[span_5](start_span)[span_5](end_span) */}
+          {/* Pastki Tasdiqlash va Keyingisiga o'tish Paneli (Toza va ko'rinadigan) */}
           {exSelected !== null && (
-            <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#0b0f19]' : 'bg-white'} border-t p-4 space-y-3 z-30 shadow-lg`}>
+            <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#141a29]' : 'bg-white'} border-t p-4 space-y-3 z-50 shadow-2xl`}>
               <div className="max-w-md mx-auto flex items-center justify-between">
                 <div>
                   <div className={`font-black text-sm ${exSelected === exTarget.uz ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {exSelected === exTarget.uz ? '참 잘했어요! 🎉 (Ajoyib!)' : `Xato! To‘g‘risi: ${exTarget.uz}`}
+                    {exSelected === exTarget.uz ? '✨ Ajoyib, to‘g‘ri!' : `❌ Xato! To‘g‘risi: ${exTarget.uz}`}
                   </div>
                 </div>
                 <button
@@ -668,7 +665,7 @@ export default function App() {
                       startDuolingoExercise();
                     }
                   }}
-                  className="py-3 px-8 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
+                  className="py-3 px-8 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
                 >
                   Davom etish ›
                 </button>
@@ -813,15 +810,18 @@ export default function App() {
         {screen === 'profile' && renderProfile()}
       </main>
 
-      <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
-        <div className="max-w-md mx-auto flex items-center justify-around">
-          <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
-          <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
-          <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
-          <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
-          <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
-        </div>
-      </nav>
+      {/* Mashq (exercise) paytida pastki menyuni yashirish */}
+      {!exerciseActive && (
+        <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-2 pt-2.5 pb-4 backdrop-blur-xl shadow-lg`}>
+          <div className="max-w-md mx-auto flex items-center justify-around">
+            <button onClick={() => setScreen('home')} className={`flex flex-col items-center py-1 px-2 ${screen === 'home' || screen === 'lesson' ? 'text-[#58cc02]' : t.textMuted}`}><BookOpen size={25} /><span className="text-[11px] font-black">Dars</span></button>
+            <button onClick={() => setScreen('vocab')} className={`flex flex-col items-center py-1 px-2 ${screen === 'vocab' ? 'text-indigo-500' : t.textMuted}`}><Sparkles size={25} /><span className="text-[11px] font-black">Lug‘at</span></button>
+            <button onClick={() => setScreen('ai')} className="-mt-8 w-16 h-16 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl"><ZiyoOwlAvatar className="w-full h-full rounded-full" equipped={equippedItems} /></button>
+            <button onClick={() => setScreen('review')} className={`flex flex-col items-center py-1 px-2 ${screen === 'review' ? 'text-amber-500' : t.textMuted}`}><RotateCcw size={25} /><span className="text-[11px] font-black">Mashq</span></button>
+            <button onClick={() => setScreen('profile')} className={`flex flex-col items-center py-1 px-2 ${screen === 'profile' ? 'text-indigo-500' : t.textMuted}`}><User size={25} /><span className="text-[11px] font-black">Profil</span></button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
