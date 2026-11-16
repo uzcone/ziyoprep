@@ -203,7 +203,7 @@ export default function App() {
       return JSON.parse(localStorage.getItem('hs_planner')) || [
         { id: 1, title: '15 daqiqa dars qilish', done: false, xp: 20 },
         { id: 2, title: '10 ta so‘z takrorlash', done: false, xp: 15 },
-        { id: 3, title: ' 토히르벡 bilan muloqot', done: false, xp: 25 }
+        { id: 3, title: '토히르벡 bilan muloqot', done: false, xp: 25 }
       ];
     } catch {
       return [
