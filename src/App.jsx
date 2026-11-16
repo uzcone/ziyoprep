@@ -112,7 +112,7 @@ function shuffleArray(arr) {
   return copy;
 }
 
-// Duolingo uslubidagi chiroyli vektor SVG illyustratsiyalar (Harflar o'rniga haqiqiy rasmlar)
+// Barcha so'zlar uchun Duolingo uslubidagi toza rang-barang vektor rasmlar (Illyustratsiyalar)
 function WordIllustration({ word = '' }) {
   const w = String(word).toLowerCase();
 
@@ -188,7 +188,17 @@ function WordIllustration({ word = '' }) {
       </svg>
     );
   }
-  // Sovrin / yulduz / oltin kubok (gold trophy)
+  // Mashina / 자동차
+  if (w.includes('mashina') || w.includes('차')) {
+    return (
+      <svg viewBox="0 0 100 100" className="w-16 h-16">
+        <path d="M15 55 L30 35 H70 L85 55 V75 H15 Z" fill="#06b6d4" />
+        <circle cx="30" cy="75" r="10" fill="#1e293b" />
+        <circle cx="70" cy="75" r="10" fill="#1e293b" />
+      </svg>
+    );
+  }
+  // Sovrin / yulduz / oltin kubok
   if (w.includes('gold') || w.includes('mukofot') || w.includes('sovrin') || w.includes('farovon')) {
     return (
       <svg viewBox="0 0 100 100" className="w-16 h-16">
@@ -208,7 +218,7 @@ function WordIllustration({ word = '' }) {
       </svg>
     );
   }
-  // Yurak / Heart / sevgi
+  // Yurak / Heart / sevgi / halol
   if (w.includes('sevgi') || w.includes('yurak') || w.includes('halol') || w.includes('mardona')) {
     return (
       <svg viewBox="0 0 100 100" className="w-16 h-16">
@@ -217,14 +227,14 @@ function WordIllustration({ word = '' }) {
     );
   }
 
-  // Boshqa barcha so'zlar uchun chiroyli sovg'a qutisi yoki yorqin olmos (Diamond)
+  // Universal chiroyli sovg'a qutisi (Boshqa barcha so'zlar uchun aniq rasm ko'rinishida)
   return (
     <svg viewBox="0 0 100 100" className="w-16 h-16 drop-shadow-sm">
-      <polygon points="50,15 85,40 68,85 32,85 15,40" fill="#8b5cf6" />
-      <polygon points="50,15 85,40 50,55" fill="#a78bfa" />
-      <polygon points="50,15 15,40 50,55" fill="#7c3aed" />
-      <line x1="50" y1="55" x2="68" y2="85" stroke="#c4b5fd" strokeWidth="3" />
-      <line x1="50" y1="55" x2="32" y2="85" stroke="#c4b5fd" strokeWidth="3" />
+      <rect x="25" y="40" width="50" height="45" rx="4" fill="#ec4899" />
+      <rect x="20" y="30" width="60" height="15" rx="3" fill="#f43f5e" />
+      <rect x="45" y="30" width="10" height="55" fill="#fde047" />
+      <path d="M50 30 C40 10 20 20 35 30 Z" fill="none" stroke="#fde047" strokeWidth="6" strokeLinecap="round" />
+      <path d="M50 30 C60 10 80 20 65 30 Z" fill="none" stroke="#fde047" strokeWidth="6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -249,7 +259,7 @@ export default function App() {
     setProfile(p => ({ ...p, name: 'Tokhirbek' }));
   };
 
-  // Google rasmiy saytiga yo'naltirish
+  // Google rasmiy saytiga o'tish
   const handleGoogleLogin = () => {
     window.location.href = "https://accounts.google.com/signin";
   };
@@ -300,10 +310,10 @@ export default function App() {
   // --- CORE APP STATES ---
   const [screen, setScreen] = useState('home');
   const [uiLang, setUiLang] = useState('uz');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark'] === 'true');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
-  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked'] === 'true');
+  const [isUnlockedAll, setIsUnlockedAll] = useState(() => localStorage.getItem('hs_unlocked') === 'true');
 
   const [mistakes, setMistakes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
@@ -693,7 +703,7 @@ export default function App() {
     );
   };
 
-  // --- 🏔️ MASHQ SCREEN (DUOLINGO STYLE SVG ILLUSTRATIONS & EXACT SCORE) ---
+  // --- 🏔️ MASHQ SCREEN ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -898,7 +908,6 @@ export default function App() {
       );
     }
 
-    // Mashq sahifasi: Xatolar daftari kartochkasi + Yo'lakcha
     return (
       <div className="space-y-6 pb-28 pt-2">
         <div 
