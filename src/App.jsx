@@ -123,7 +123,6 @@ export default function App() {
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
 
-  // Seksni avtomatik boshqarish (20 ta savoldan keyin 2-seksga o'tish)
   const [currentSection, setCurrentSection] = useState(1);
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
 
@@ -325,11 +324,10 @@ export default function App() {
     );
   }
 
-  // --- DUOLINGO STYLE HOME SCREEN (Zinapoya & Seks dizayni rasmga moslab yaratildi) ---
+  // --- HOME SCREEN ---
   const renderHome = () => {
     return (
       <div className="space-y-6 pb-28 pt-2 font-sans select-none">
-        {/* Top Header Stats Bar */}
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs">🇰🇷</div>
@@ -349,7 +347,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* NOTIFICATIONS MODAL */}
         {showNotifications && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
             <div className={`${t.card} border rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl`}>
@@ -376,7 +373,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Section Header Banner (Seks 1 yoki Seks 2) */}
         <div className="bg-[#58cc02] text-white p-4 rounded-3xl shadow-md flex justify-between items-center">
           <div className="space-y-0.5">
             <span className="text-[11px] font-black uppercase tracking-wider opacity-90">섹션 {currentSection}, 유닛 10</span>
@@ -387,7 +383,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Streak badge */}
         <div className="flex justify-center">
           <div className="inline-flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-2xl shadow-lg">
             <Flame size={18} className="fill-white" />
@@ -395,7 +390,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Zinapoya Track (Rasmga mos tarzdagi tugmalar) */}
         <div className="flex flex-col items-center space-y-8 py-4">
           <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl text-3xl font-black active:scale-95 transition">
             ⭐
@@ -413,13 +407,8 @@ export default function App() {
           <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
             <Lock size={26} />
           </button>
-          
-          <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
-            <Lock size={26} />
-          </button>
         </div>
 
-        {/* Locked Section 2 Card */}
         <div className={`${t.card} border rounded-3xl p-5 space-y-3 shadow-sm`}>
           <div className="text-center text-slate-400 text-xs font-bold uppercase">다음 섹션</div>
           <div className="flex items-center gap-3">
@@ -439,7 +428,6 @@ export default function App() {
     );
   };
 
-  // --- GRAMMAR SCREEN ---
   const renderGrammarScreen = () => {
     const grammarRules = [
       { title: '-아요 / 어요 (Hozirgi zamon rasmiy-hurmatli)', desc: 'Fe’l o‘zaklarida unli tovushga qarab qo‘shiladi.', example: '가다 -> 가요 (Boraman/Boradi)' },
@@ -467,7 +455,6 @@ export default function App() {
     );
   };
 
-  // --- VOCABULARY SCREEN ---
   const renderVocab = () => {
     const filteredWords = allVocabWords.filter(w => w.ko.toLowerCase().includes(vocabSearch.toLowerCase()) || w.uz.toLowerCase().includes(vocabSearch.toLowerCase()));
     return (
@@ -495,7 +482,7 @@ export default function App() {
     );
   };
 
-  // --- MASHQ SCREEN (Har 20 ta savoldan keyin avtomatik 2-seksga o'tish) ---
+  // --- MASHQ SCREEN (Aniqlashtirilgan tekshiruv sharti: Xatoni to'g'ri aniqlash) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -539,7 +526,10 @@ export default function App() {
           <div className="grid grid-cols-2 gap-3.5 pt-2">
             {exOpts.map((opt, idx) => {
               const isSelected = exSelected === opt;
-              const isCorrect = opt === exTarget.uz;
+              // Aniq solishtirish uchun qavslar va bo'sh joylarni tozalab solishtiramiz
+              const cleanOpt = String(opt).replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
+              const cleanAns = String(exTarget.uz).replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
+              const isCorrect = cleanOpt === cleanAns;
 
               let btnStyle = `${t.card} border-2 ${t.textMain} hover:border-emerald-400`;
               if (exSelected !== null) {
@@ -572,16 +562,22 @@ export default function App() {
             <div className={`fixed bottom-0 inset-x-0 ${isDark ? 'bg-[#141a29]' : 'bg-white'} border-t p-4 space-y-3 z-50 shadow-2xl`}>
               <div className="max-w-md mx-auto flex items-center justify-between">
                 <div>
-                  <div className={`font-black text-sm ${exSelected === exTarget.uz ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {exSelected === exTarget.uz ? '✨ 참 잘했어요!' : `❌ Xato! To‘g‘risi: ${exTarget.uz}`}
-                  </div>
+                  {(() => {
+                    const cleanSel = String(exSelected).replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
+                    const cleanAns = String(exTarget.uz).replace(/\s*\(.*?\)/g, '').trim().toLowerCase();
+                    const isRight = cleanSel === cleanAns;
+                    return (
+                      <div className={`font-black text-sm ${isRight ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {isRight ? '✨ 참 잘했어요!' : `❌ Xato! To‘g‘risi: ${exTarget.uz}`}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <button
                   onClick={() => {
                     const nextTotal = totalQuestionsAnswered + 1;
                     setTotalQuestionsAnswered(nextTotal);
 
-                    // Har 20 ta savoldan keyin avtomatik 2-seksga o'tish
                     if (nextTotal >= 20 && currentSection === 1) {
                       setCurrentSection(2);
                       alert("Tabriklaymiz! Siz 20 ta savolni yakunladingiz va 섹션 2 ga o'tdingiz!");
@@ -624,7 +620,6 @@ export default function App() {
     );
   };
 
-  // --- AI TUTOR SCREEN ---
   const renderAiTutor = () => (
     <div className="flex flex-col h-[78vh] pb-24 pt-2">
       <div className="flex items-center gap-2.5 pb-3">
@@ -655,7 +650,6 @@ export default function App() {
     </div>
   );
 
-  // --- PROFILE SCREEN ---
   const renderProfile = () => (
     <div className="space-y-4 pb-28 pt-2">
       <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
