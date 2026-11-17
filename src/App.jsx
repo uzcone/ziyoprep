@@ -9,13 +9,11 @@ import {
   Bookmark, CheckSquare, Award, Target, Star, Bell, Check, AlertCircle, Box, BookMarked
 } from 'lucide-react';
 
-// Darslik fayllari
 import { snu1A } from './data/snu1A.js';
 import { snu1B } from './data/snu1B.js';
 import { snu2A, snu2B } from './data/snu2AB.js';
 import { snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B } from './data/snu3_6.js';
 
-// Lug'at fayllari (1A ~ 6A)
 import { vocab1A } from './data/vocab1A.js';
 import { vocab1B } from './data/vocab1B.js';
 import { vocab2A } from './data/vocab2A.js';
@@ -28,7 +26,6 @@ import { vocab5A } from './data/vocab5A.js';
 import { vocab5B } from './data/vocab5B.js';
 import { vocab6A } from './data/vocab6A.js';
 
-// ZiyoOwl Avatar
 function ZiyoOwlAvatar({ className = 'w-12 h-12', equipped = {} }) {
   return (
     <div className={`${className} overflow-hidden shadow-md relative select-none`}>
@@ -75,7 +72,6 @@ export default function App() {
   const [authMode, setAuthMode] = useState('welcome');
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authError, setAuthError] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
 
   const handleGuestLogin = () => {
     const guest = { uid: 'guest', name: 'Tokhirbek', email: 'guest@ziyoprep.uz', isGuest: true };
@@ -112,15 +108,6 @@ export default function App() {
       if (found.password !== password) return setAuthError("Parol xato!");
       setCurrentUser(found);
       setProfile(p => ({ ...p, name: found.name }));
-    } else if (authMode === 'forgot') {
-      const foundIndex = registeredUsers.findIndex(u => u.email === email);
-      if (foundIndex === -1) return setAuthError("Bunday email bazada topilmadi!");
-      const updated = [...registeredUsers];
-      updated[foundIndex].password = password;
-      setRegisteredUsers(updated);
-      localStorage.setItem('hs_registered_users', JSON.stringify(updated));
-      setResetSuccess("Parol muvaffaqiyatli o'zgartirildi!");
-      setTimeout(() => setAuthMode('login'), 2000);
     }
   };
 
@@ -136,15 +123,16 @@ export default function App() {
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
 
+  // Seksni boshqarish (20 ta savoldan keyin 2-seksga o'tish uchun)
+  const [currentSection, setCurrentSection] = useState(1);
+  const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, title: '⚡ Zinapoya yarmida to‘xtatildi!', desc: '1A darajasini oxirigacha yakunlash uchun davom eting!', time: 'Hozir', unread: true },
     { id: 2, title: '🔔 Kunlik vazifa eslatmasi', desc: 'Bugungi 15 daqiqalik o‘quv rejangizni bajarishni unutmang.', time: '2 soat oldin', unread: true }
   ]);
 
-  const [mistakes, setMistakes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hs_mistakes')) || []; } catch { return []; }
-  });
   const vocabBooks = [vocab1A, vocab1B, vocab2A, vocab2B, vocab3A, vocab3B, vocab4A, vocab4B, vocab5A, vocab5B, vocab6A].filter(Boolean);
   const [vocabSearch, setVocabSearch] = useState('');
 
@@ -187,14 +175,11 @@ export default function App() {
   const [profile, setProfile] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('hs_profile'));
-      return { name: saved?.name || 'Tokhirbek', xp: saved?.xp ?? 2700, dailyXp: saved?.dailyXp ?? 60, streak: saved?.streak ?? 24, freezes: saved?.freezes ?? 1 };
+      return { name: saved?.name || 'Tokhirbek', xp: saved?.xp ?? 2700, dailyXp: saved?.dailyXp ?? 60, streak: saved?.streak ?? 33, freezes: saved?.freezes ?? 1 };
     } catch {
-      return { name: 'Tokhirbek', xp: 2700, dailyXp: 60, streak: 24, freezes: 1 };
+      return { name: 'Tokhirbek', xp: 2700, dailyXp: 60, streak: 33, freezes: 1 };
     }
   });
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState(profile.name);
-  const [equippedItems, setEquippedItems] = useState({ glasses: false, gradCap: false, crown: false });
 
   const [completedIds, setCompletedIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('hs_completed')) || []; } catch { return []; }
@@ -219,6 +204,7 @@ export default function App() {
   };
 
   const snuBooks = [snu1A, snu1B, snu2A, snu2B, snu3A, snu3B, snu4A, snu4B, snu5A, snu5B, snu6A, snu6B].filter(Boolean);
+  const currentBook = snuBooks.find(b => b.code === selectedBookCode) || snuBooks[0];
   const allLessons = snuBooks.flatMap(b => b.lessons || []);
   const allVocabWords = vocabBooks.flatMap(b => (b.topics || []).flatMap(tp => tp.words || []));
   const nextLesson = allLessons.find(l => !completedIds.includes(l.id)) || allLessons[0];
@@ -339,7 +325,7 @@ export default function App() {
     );
   }
 
-  // --- DUOLINGO STYLE HOME SCREEN (Zinapoya / Track Style as requested) ---
+  // --- HOME SCREEN (Zinapoya & 1A-6B darslar ro'yxati to'liq qaytarildi) ---
   const renderHome = () => {
     return (
       <div className="space-y-6 pb-28 pt-2 font-sans select-none">
@@ -347,7 +333,7 @@ export default function App() {
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs">🇰🇷</div>
-            <span className="text-xs font-black text-slate-700 dark:text-slate-300">1</span>
+            <span className="text-xs font-black text-slate-700 dark:text-slate-300">{selectedBookCode}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
@@ -390,31 +376,57 @@ export default function App() {
           </div>
         )}
 
-        {/* Section / Unit Header Banner (Duolingo Style Green Banner) */}
+        {/* Section / Unit Header Banner (Seks avtomatik almashishi) */}
         <div className="bg-[#58cc02] text-white p-4 rounded-3xl shadow-md flex justify-between items-center">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-black uppercase tracking-wider opacity-90">섹션 1, 유닛 10[span_0](start_span)[span_0](end_span)</span>
-            <h2 className="text-base font-black">반려동물에 대해 이야기하기[span_1](start_span)[span_1](end_span)</h2>
+            <span className="text-[11px] font-black uppercase tracking-wider opacity-90">섹션 {currentSection}, 유닛 10[span_1](start_span)[span_1](end_span)</span>
+            <h2 className="text-base font-black">반려동물에 대해 이야기하기[span_2](start_span)[span_2](end_span)</h2>
           </div>
           <button onClick={() => setScreen('vocab')} className="p-2.5 rounded-2xl bg-black/10 hover:bg-black/20 transition">
             <BookMarked size={20} />
           </button>
         </div>
 
-        {/* Zinapoya (Track) qismlari */}
+        {/* 1A–6B Kurs tanlash qatori */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {snuBooks.map((b) => (
+            <button key={b.code} onClick={() => setSelectedBookCode(b.code)} className={`px-3.5 h-9 rounded-xl font-black text-xs shrink-0 ${b.code === selectedBookCode ? 'bg-[#58cc02] text-white border-2 border-emerald-600' : `${t.card} border`}`}>
+              {b.code}
+            </button>
+          ))}
+        </div>
+
+        {/* Tanlangan kurs darslari ro'yxati (Asosiy darslar) */}
+        <div className="space-y-2.5">
+          <h3 className={`text-xs font-black uppercase tracking-wider text-slate-400 px-1`}>{selectedBookCode} Darsliklari</h3>
+          {currentBook.lessons.map((lesson) => {
+            const isDone = completedIds.includes(lesson.id);
+            return (
+              <div key={lesson.id} onClick={() => startLesson(lesson)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-emerald-400 transition`}>
+                <div className="flex items-center gap-3">
+                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : 'bg-blue-100 text-blue-700'}`}>{lesson.num}</span>
+                  <div>
+                    <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
+                    <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
+                  </div>
+                </div>
+                {isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : <span className="text-slate-300">›</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Zinapoya (Track) qismi */}
         <div className="flex flex-col items-center space-y-6 py-4 relative">
-          {/* Streak milestone badge */}
           <div className="flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-2xl shadow-lg">
             <Flame size={20} className="fill-white" />
-            <span className="text-xs font-black">33일[span_2](start_span)[span_2](end_span)</span>
+            <span className="text-xs font-black">33일[span_3](start_span)[span_3](end_span)</span>
           </div>
 
-          {/* Zinapoya tugmalari (Duolingo layout) */}
           <div className="flex flex-col items-center space-y-8 w-full">
             <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl text-3xl font-black active:scale-95 transition">
               ⭐
             </button>
-            
             <div className="flex gap-16">
               <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-md">
                 <Box size={24} className="text-slate-400" />
@@ -423,32 +435,10 @@ export default function App() {
                 <BookOpen size={24} className="text-slate-500" />
               </div>
             </div>
-
-            <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
-              <Lock size={26} />
-            </button>
-            
             <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
               <Lock size={26} />
             </button>
           </div>
-        </div>
-
-        {/* Locked Section 2 Card */}
-        <div className={`${t.card} border rounded-3xl p-5 space-y-3 shadow-sm`}>
-          <div className="text-center text-slate-400 text-xs font-bold uppercase">다음 섹션[span_3](start_span)[span_3](end_span)</div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-              <Lock size={22} />
-            </div>
-            <div>
-              <h3 className={`text-sm font-black ${t.textMain}`}>섹션 2[span_4](start_span)[span_4](end_span)</h3>
-              <p className="text-xs text-slate-400 font-medium leading-tight">기본적인 인사를 위한 단어, 구문, 문법 개념을 익혀요.[span_5](start_span)[span_5](end_span)</p>
-            </div>
-          </div>
-          <button onClick={() => setScreen('grammar')} className="w-full py-3 rounded-2xl border text-blue-600 dark:text-blue-400 font-black text-xs uppercase hover:bg-blue-50 transition">
-            여기로 건너뛰할까요?[span_6](start_span)[span_6](end_span)
-          </button>
         </div>
       </div>
     );
@@ -514,16 +504,6 @@ export default function App() {
     );
   };
 
-  // --- BUILDER SCREEN ---
-  const renderBuilder = () => (
-    <div className="space-y-3.5 pb-28 pt-2">
-      <div className={`rounded-3xl ${t.card} border p-8 text-center`}>
-        <div className={`text-6xl font-black ${t.textMain}`}>한글</div>
-        <p className="text-xs text-slate-400 mt-2">Hangul alifbosi va bo'g'in yig'ish</p>
-      </div>
-    </div>
-  );
-
   // --- LESSON SCREEN ---
   const renderLesson = () => {
     if (!activeLesson) return null;
@@ -558,28 +538,26 @@ export default function App() {
     );
   };
 
-  // --- MASHQ SCREEN ---
+  // --- MASHQ SCREEN (Har 20 ta savoldan keyin 2-seksga o'tish mantiqi) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
         <div className="space-y-6 pb-28 pt-4 text-center select-none animate-fade-in">
           <div className="w-32 h-32 mx-auto">
-            <ZiyoOwlAvatar className="w-full h-full rounded-full border-4 border-emerald-500 shadow-2xl" equipped={equippedItems} />
+            <ZiyoOwlAvatar className="w-full h-full rounded-full border-4 border-emerald-500 shadow-2xl" />
           </div>
-
           <div className="space-y-1">
-            <h2 className={`text-2xl font-black text-emerald-600 dark:text-emerald-400`}>참 잘했어요! 대단해요!</h2>
-            <p className="text-xs font-bold text-slate-500">Ajoyib natija! {levelCompleteData.levelId}-darajani muvaffaqiyatli yakunladingiz!</p>
+            <h2 className={`text-2xl font-black text-emerald-600`}>참 잘했어요! 대단해요!</h2>
+            <p className="text-xs font-bold text-slate-500">Ajoyib natija! Seks {currentSection} yakunlandi!</p>
           </div>
-
           <button
             onClick={() => {
               setLevelCompleteData(null);
               setExerciseActive(false);
             }}
-            className="w-full py-4 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-xl active:scale-95 transition"
+            className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-xl"
           >
-            XP ni olish va davom etish ›
+            Davom etish ›
           </button>
         </div>
       );
@@ -591,38 +569,17 @@ export default function App() {
       return (
         <div className="space-y-6 pb-32 pt-2 select-none">
           <div className="flex items-center gap-4">
-            <button onClick={() => setShowExitAlert(true)} className="text-slate-400 hover:text-slate-600 font-black text-lg p-1">✕</button>
+            <button onClick={() => setShowExitAlert(true)} className="text-slate-400 font-black text-lg p-1">✕</button>
             <div className="flex-1 h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
               <div className="h-full bg-[#58cc02] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
             </div>
             <div className="flex items-center gap-1 text-rose-500 font-black text-xs">❤️ 5</div>
           </div>
 
-          {showExitAlert && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className={`${t.card} border rounded-3xl p-6 max-w-xs w-full text-center space-y-4 shadow-2xl`}>
-                <div className="text-3xl">⚠️</div>
-                <h3 className={`text-base font-black ${t.textMain}`}>Mashqni tark etasizmi?</h3>
-                <div className="space-y-2 pt-2">
-                  <button onClick={() => setShowExitAlert(false)} className="w-full py-3 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow">Davom etish</button>
-                  <button onClick={() => {
-                    setShowExitAlert(false);
-                    setExerciseActive(false);
-                    setNotifications(prev => [
-                      { id: Date.now(), title: '⚡ Zinapoya yarmida to‘xtatildi!', desc: `${currentLevelId}-darajani oxirigacha tugatmadingiz.`, time: 'Hozir', unread: true },
-                      ...prev
-                    ]);
-                  }} className="w-full py-3 rounded-2xl bg-rose-500/10 text-rose-500 font-black text-xs uppercase">Chiqib ketish</button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-3 text-center pt-2">
-            <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">새로운 단어 (Yangi so'z)</span>
+            <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">섹션 {currentSection} • 새로운 단어</span>
             <h2 className={`text-sm font-black ${t.textMain}`}>To'g'ri ma'noni tanlang</h2>
-            
-            <div onClick={() => speakKo(exTarget.ko)} className={`inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 cursor-pointer active:scale-95 transition shadow-sm mx-auto`}>
+            <div onClick={() => speakKo(exTarget.ko)} className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 cursor-pointer mx-auto">
               <Volume2 size={22} />
               <span className="text-2xl font-black">{exTarget.ko}</span>
             </div>
@@ -652,7 +609,7 @@ export default function App() {
                       setSessionMistakes(prev => prev + 1);
                     }
                   }}
-                  className={`p-5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[110px] font-black text-sm transition-all active:scale-95 ${btnStyle}`}
+                  className={`p-5 rounded-3xl border-2 text-center flex flex-col items-center justify-center min-h-[110px] font-black text-sm transition-all ${btnStyle}`}
                 >
                   <span>{opt}</span>
                 </button>
@@ -665,30 +622,29 @@ export default function App() {
               <div className="max-w-md mx-auto flex items-center justify-between">
                 <div>
                   <div className={`font-black text-sm ${exSelected === exTarget.uz ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {exSelected === exTarget.uz ? '✨ 참 잘했어요! (Ajoyib!)' : `❌ Xato! To‘g‘risi: ${exTarget.uz}`}
+                    {exSelected === exTarget.uz ? '✨ 참 잘했어요!' : `❌ Xato! To‘g‘risi: ${exTarget.uz}`}
                   </div>
                 </div>
                 <button
                   onClick={() => {
+                    const nextTotal = totalQuestionsAnswered + 1;
+                    setTotalQuestionsAnswered(nextTotal);
+
+                    // Har 20 ta savoldan keyin avtomatik 2-seksga o'tish
+                    if (nextTotal >= 20 && currentSection === 1) {
+                      setCurrentSection(2);
+                      alert("Tabriklaymiz! Siz 20 ta savolni yakunladingiz va 섹션 2 ga o'tdingiz!");
+                    }
+
                     if (exStep + 1 >= 5) {
-                      if (!completedLevels.includes(currentLevelId + 1) && currentLevelId < exerciseLevels.length) {
-                        setCompletedLevels(prev => [...prev, currentLevelId + 1]);
-                      }
-                      const correctCount = Math.max(0, 5 - sessionMistakes);
-                      const earnedXp = correctCount * 10;
-                      setLevelCompleteData({
-                        levelId: currentLevelId,
-                        xpGained: earnedXp,
-                        scoreText: `${correctCount} / 5 to'g'ri`,
-                        time: '1:00'
-                      });
-                      setProfile(p => ({ ...p, xp: p.xp + earnedXp, streak: p.streak + 1 }));
+                      setLevelCompleteData({ levelId: currentLevelId, xpGained: 50, scoreText: '5 / 5 to\'g\'ri', time: '1:00' });
+                      setProfile(p => ({ ...p, xp: p.xp + 50, streak: p.streak + 1 }));
                     } else {
                       setExStep(s => s + 1);
                       loadNextQuestion();
                     }
                   }}
-                  className="py-3 px-8 rounded-2xl bg-[#58cc02] hover:bg-[#4cb800] text-white font-black text-xs uppercase shadow-lg active:scale-95 transition"
+                  className="py-3 px-8 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-lg"
                 >
                   Davom etish ›
                 </button>
@@ -702,47 +658,17 @@ export default function App() {
     return (
       <div className="space-y-6 pb-28 pt-2">
         <div className="text-center space-y-1">
-          <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi</h2>
-          <p className="text-xs text-slate-400">1-darajadan boshlab cheksiz davom etadi</p>
+          <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi (Seks {currentSection})</h2>
+          <p className="text-xs text-slate-400">Jami bajarilgan savollar: {totalQuestionsAnswered} / 20</p>
         </div>
 
         <div className="flex flex-col items-center space-y-6 py-4 relative">
-          {exerciseLevels.map((lvl, idx) => {
-            const isUnlocked = completedLevels.includes(lvl.id) || lvl.id === 1;
-            const isCompleted = completedLevels.includes(lvl.id + 1) || (lvl.id < Math.max(...completedLevels));
-
-            const offsets = ['translate-x-0', 'translate-x-12', '-translate-x-12', 'translate-x-8', '-translate-x-8'];
-            const alignClass = offsets[idx % offsets.length];
-
-            return (
-              <div key={lvl.id} className={`flex flex-col items-center transition-transform ${alignClass}`}>
-                <button
-                  disabled={!isUnlocked}
-                  onClick={() => startLevelExercise(lvl)}
-                  className={`w-20 h-20 rounded-full flex flex-col items-center justify-center shadow-xl border-4 transition-all active:scale-95 ${
-                    isUnlocked
-                      ? isCompleted 
-                        ? 'bg-amber-400 border-amber-600 text-white' 
-                        : 'bg-[#58cc02] border-emerald-600 text-white animate-bounce'
-                      : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400 cursor-not-allowed'
-                  }`}
-                >
-                  {isUnlocked ? (
-                    <>
-                      <span className="text-2xl">{lvl.icon}</span>
-                      <span className="text-[10px] font-black">{lvl.id}-daraja</span>
-                    </>
-                  ) : (
-                    <Lock size={22} />
-                  )}
-                </button>
-                <div className="mt-2 text-center">
-                  <div className={`text-xs font-black ${t.textMain}`}>{lvl.title}</div>
-                  <div className="text-[10px] text-slate-400 font-bold">{lvl.subtitle}</div>
-                </div>
-              </div>
-            );
-          })}
+          {exerciseLevels.map((lvl) => (
+            <button key={lvl.id} onClick={() => startLevelExercise(lvl)} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl font-black active:scale-95 transition">
+              <span className="text-2xl">{lvl.icon}</span>
+              <span className="text-[10px]">{lvl.id}</span>
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -784,7 +710,7 @@ export default function App() {
     <div className="space-y-4 pb-28 pt-2">
       <div className={`rounded-3xl ${t.card} border p-5 flex items-center justify-between`}>
         <div className="flex items-center gap-3.5">
-          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" equipped={equippedItems} />
+          <ZiyoOwlAvatar className="w-16 h-16 rounded-2xl" />
           <div>
             <h2 className={`font-black text-base ${t.textMain}`}>{profile.name}</h2>
             <p className="text-xs text-slate-400">{currentUser?.email}</p>
@@ -828,7 +754,6 @@ export default function App() {
         {screen === 'profile' && renderProfile()}
       </main>
 
-      {/* Duolingo Style Bottom Navigation Bar: 홈, 채팅/리워드, 목표, 연습/상점, 프로필 */}
       {!exerciseActive && (
         <nav className={`fixed bottom-0 inset-x-0 z-40 ${t.nav} px-4 pt-2.5 pb-6 backdrop-blur-xl shadow-lg`}>
           <div className="max-w-md mx-auto flex items-center justify-around">
