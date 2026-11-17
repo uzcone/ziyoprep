@@ -119,11 +119,11 @@ export default function App() {
   };
 
   const [screen, setScreen] = useState('home');
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark') === 'true');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hs_dark'] === 'true');
   const [selectedBookCode, setSelectedBookCode] = useState('1A');
   const [activeLesson, setActiveLesson] = useState(null);
 
-  // Seksni boshqarish (20 ta savoldan keyin 2-seksga o'tish uchun)
+  // Seksni avtomatik boshqarish (20 ta savoldan keyin 2-seksga o'tish)
   const [currentSection, setCurrentSection] = useState(1);
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
 
@@ -325,7 +325,7 @@ export default function App() {
     );
   }
 
-  // --- HOME SCREEN (Zinapoya & 1A-6B darslar ro'yxati to'liq qaytarildi) ---
+  // --- DUOLINGO STYLE HOME SCREEN (Zinapoya & Seks dizayni rasmga moslab yaratildi) ---
   const renderHome = () => {
     return (
       <div className="space-y-6 pb-28 pt-2 font-sans select-none">
@@ -333,7 +333,7 @@ export default function App() {
         <div className="flex justify-between items-center px-1">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs">🇰🇷</div>
-            <span className="text-xs font-black text-slate-700 dark:text-slate-300">{selectedBookCode}</span>
+            <span className="text-xs font-black text-slate-700 dark:text-slate-300">1</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
@@ -376,80 +376,74 @@ export default function App() {
           </div>
         )}
 
-        {/* Section / Unit Header Banner (Seks avtomatik almashishi) */}
+        {/* Section Header Banner (Seks 1 yoki Seks 2) */}
         <div className="bg-[#58cc02] text-white p-4 rounded-3xl shadow-md flex justify-between items-center">
           <div className="space-y-0.5">
-            <span className="text-[11px] font-black uppercase tracking-wider opacity-90">섹션 {currentSection}, 유닛 10[span_1](start_span)[span_1](end_span)</span>
-            <h2 className="text-base font-black">반려동물에 대해 이야기하기[span_2](start_span)[span_2](end_span)</h2>
+            <span className="text-[11px] font-black uppercase tracking-wider opacity-90">섹션 {currentSection}, 유닛 10</span>
+            <h2 className="text-base font-black">반려동물에 대해 이야기하기</h2>
           </div>
           <button onClick={() => setScreen('vocab')} className="p-2.5 rounded-2xl bg-black/10 hover:bg-black/20 transition">
             <BookMarked size={20} />
           </button>
         </div>
 
-        {/* 1A–6B Kurs tanlash qatori */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {snuBooks.map((b) => (
-            <button key={b.code} onClick={() => setSelectedBookCode(b.code)} className={`px-3.5 h-9 rounded-xl font-black text-xs shrink-0 ${b.code === selectedBookCode ? 'bg-[#58cc02] text-white border-2 border-emerald-600' : `${t.card} border`}`}>
-              {b.code}
-            </button>
-          ))}
-        </div>
-
-        {/* Tanlangan kurs darslari ro'yxati (Asosiy darslar) */}
-        <div className="space-y-2.5">
-          <h3 className={`text-xs font-black uppercase tracking-wider text-slate-400 px-1`}>{selectedBookCode} Darsliklari</h3>
-          {currentBook.lessons.map((lesson) => {
-            const isDone = completedIds.includes(lesson.id);
-            return (
-              <div key={lesson.id} onClick={() => startLesson(lesson)} className={`rounded-2xl ${t.card} border p-3.5 flex justify-between items-center cursor-pointer hover:border-emerald-400 transition`}>
-                <div className="flex items-center gap-3">
-                  <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center ${isDone ? 'bg-[#58cc02] text-white' : 'bg-blue-100 text-blue-700'}`}>{lesson.num}</span>
-                  <div>
-                    <div className={`text-xs font-black ${t.textMain}`}>{lesson.title}</div>
-                    <div className="text-[10px] text-slate-400">{lesson.heroUz}</div>
-                  </div>
-                </div>
-                {isDone ? <CheckCircle2 size={17} className="text-[#58cc02]" /> : <span className="text-slate-300">›</span>}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Zinapoya (Track) qismi */}
-        <div className="flex flex-col items-center space-y-6 py-4 relative">
-          <div className="flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-2xl shadow-lg">
-            <Flame size={20} className="fill-white" />
-            <span className="text-xs font-black">33일[span_3](start_span)[span_3](end_span)</span>
+        {/* Streak badge */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center gap-2 bg-rose-500 text-white px-4 py-2 rounded-2xl shadow-lg">
+            <Flame size={18} className="fill-white" />
+            <span className="text-xs font-black">{profile.streak}일</span>
           </div>
+        </div>
 
-          <div className="flex flex-col items-center space-y-8 w-full">
-            <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl text-3xl font-black active:scale-95 transition">
-              ⭐
-            </button>
-            <div className="flex gap-16">
-              <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-md">
-                <Box size={24} className="text-slate-400" />
-              </div>
-              <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 border-4 border-slate-400 dark:border-slate-600 flex items-center justify-center shadow-md">
-                <BookOpen size={24} className="text-slate-500" />
-              </div>
+        {/* Zinapoya Track (Rasmga mos tarzdagi tugmalar) */}
+        <div className="flex flex-col items-center space-y-8 py-4">
+          <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex items-center justify-center shadow-xl text-3xl font-black active:scale-95 transition">
+            ⭐
+          </button>
+          
+          <div className="flex gap-16">
+            <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-md">
+              <Box size={24} className="text-slate-400" />
             </div>
-            <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
-              <Lock size={26} />
-            </button>
+            <div className="w-16 h-16 rounded-full bg-slate-300 dark:bg-slate-700 border-4 border-slate-400 dark:border-slate-600 flex items-center justify-center shadow-md">
+              <BookOpen size={24} className="text-slate-500" />
+            </div>
           </div>
+
+          <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
+            <Lock size={26} />
+          </button>
+          
+          <button onClick={() => setScreen('review')} className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-700 text-slate-400 flex items-center justify-center shadow-xl active:scale-95 transition">
+            <Lock size={26} />
+          </button>
+        </div>
+
+        {/* Locked Section 2 Card */}
+        <div className={`${t.card} border rounded-3xl p-5 space-y-3 shadow-sm`}>
+          <div className="text-center text-slate-400 text-xs font-bold uppercase">다음 섹션</div>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+              <Lock size={22} />
+            </div>
+            <div>
+              <h3 className={`text-sm font-black ${t.textMain}`}>섹션 {currentSection === 1 ? '2' : '3'}</h3>
+              <p className="text-xs text-slate-400 font-medium leading-tight">기본적인 인사를 위한 단어, 구문, 문법 개념을 익혀요.</p>
+            </div>
+          </div>
+          <button onClick={() => { setCurrentSection(prev => prev + 1); alert("Keyingi seksga o'tildi!"); }} className="w-full py-3 rounded-2xl border text-blue-600 dark:text-blue-400 font-black text-xs uppercase hover:bg-blue-50 transition">
+            여기로 건너뛰할까요?
+          </button>
         </div>
       </div>
     );
   };
 
-  // --- 📚 GRAMMAR LEARNING SCREEN (문법 학습) ---
+  // --- GRAMMAR SCREEN ---
   const renderGrammarScreen = () => {
     const grammarRules = [
       { title: '-아요 / 어요 (Hozirgi zamon rasmiy-hurmatli)', desc: 'Fe’l o‘zaklarida unli tovushga qarab qo‘shiladi.', example: '가다 -> 가요 (Boraman/Boradi)' },
-      { title: '-고 싶다 (Xohishni bildirish)', desc: 'Biror ishni qilishni xohlashni anglatadi.', example: '한국에 가고 싶어요. (Koreyaga bormoqchiman.)' },
-      { title: '-기 때문에 (Sabab-oqibat)', desc: 'Biror ish sodir bo‘lish sababini tushuntiradi.', example: '비가 오기 때문에 안 가요. (Yomg‘ir yog‘ayotgani uchun bormayman.)' }
+      { title: '-고 싶다 (Xohishni bildirish)', desc: 'Biror ishni qilishni xohlashni anglatadi.', example: '한국에 가고 싶어요. (Koreyaga bormoqchiman.)' }
     ];
 
     return (
@@ -458,17 +452,14 @@ export default function App() {
           <button onClick={() => setScreen('home')} className={`flex items-center gap-1.5 text-sm font-black ${t.textMain}`}>
             <ArrowLeft size={16} /> <span>Asosiy sahifa</span>
           </button>
-          <span className="text-xs font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">문법 학습 (Grammatika)</span>
+          <span className="text-xs font-bold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">문법 학습</span>
         </div>
-
         <div className="space-y-3">
           {grammarRules.map((g, idx) => (
             <div key={idx} className={`${t.card} border rounded-3xl p-4 space-y-2 shadow-xs`}>
-              <div className={`text-sm font-black text-purple-600 dark:text-purple-400`}>{g.title}</div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">{g.desc}</p>
-              <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/30 text-xs font-bold text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-900">
-                💡 Misol: {g.example}
-              </div>
+              <div className={`text-sm font-black text-purple-600`}>{g.title}</div>
+              <p className="text-xs text-slate-600">{g.desc}</p>
+              <div className="p-2.5 rounded-2xl bg-purple-50 text-xs font-bold text-purple-700">💡 Misol: {g.example}</div>
             </div>
           ))}
         </div>
@@ -482,7 +473,7 @@ export default function App() {
     return (
       <div className="space-y-3.5 pb-28 pt-2">
         <div className="flex justify-between items-center">
-          <h2 className={`text-base font-black ${t.textMain}`}>단어장 (Barcha Lug‘atlar)</h2>
+          <h2 className={`text-base font-black ${t.textMain}`}>단어장</h2>
           <span className="text-xs font-bold text-indigo-600">{filteredWords.length} ta so'z</span>
         </div>
         <div className="relative">
@@ -504,41 +495,7 @@ export default function App() {
     );
   };
 
-  // --- LESSON SCREEN ---
-  const renderLesson = () => {
-    if (!activeLesson) return null;
-    const currentQ = quizList[qIdx];
-    return (
-      <div className="space-y-3.5 pb-28 pt-2">
-        <button onClick={() => setScreen('home')} className="text-xs font-black text-slate-400 flex items-center gap-1"><ArrowLeft size={15} /> Orqaga</button>
-        <div className={`rounded-2xl ${t.card} border p-4`}>
-          <div className={`text-base font-black ${t.textMain}`}>{activeLesson.title}</div>
-        </div>
-        {currentQ && (
-          <div className={`rounded-3xl ${t.card} border p-4 space-y-3`}>
-            <div className={`text-sm font-black ${t.textMain}`}>{currentQ.q}</div>
-            <div className="space-y-2">
-              {currentQ.opts.map(opt => (
-                <button key={opt} onClick={() => {
-                  if (opt === currentQ.ans) {
-                    setProfile(p => ({ ...p, xp: p.xp + 10 }));
-                    alert("To'g'ri! 🎉 (+10 XP)");
-                    if (qIdx + 1 < quizList.length) setQIdx(qIdx + 1);
-                    else { setCompletedIds(p => [...new Set([...p, activeLesson.id])]); setScreen('home'); }
-                  } else {
-                    setMistakes(m => [...m, { ko: currentQ.ans, uz: currentQ.q }]);
-                    alert("Xato! Xatolar daftariga qo'shildi.");
-                  }
-                }} className={`w-full p-3 rounded-2xl border text-xs font-bold ${t.sub} ${t.textMain}`}>{opt}</button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // --- MASHQ SCREEN (Har 20 ta savoldan keyin 2-seksga o'tish mantiqi) ---
+  // --- MASHQ SCREEN (Har 20 ta savoldan keyin avtomatik 2-seksga o'tish) ---
   const renderReview = () => {
     if (levelCompleteData) {
       return (
@@ -548,15 +505,9 @@ export default function App() {
           </div>
           <div className="space-y-1">
             <h2 className={`text-2xl font-black text-emerald-600`}>참 잘했어요! 대단해요!</h2>
-            <p className="text-xs font-bold text-slate-500">Ajoyib natija! Seks {currentSection} yakunlandi!</p>
+            <p className="text-xs font-bold text-slate-500">Seks {currentSection} yakunlandi!</p>
           </div>
-          <button
-            onClick={() => {
-              setLevelCompleteData(null);
-              setExerciseActive(false);
-            }}
-            className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-xl"
-          >
+          <button onClick={() => { setLevelCompleteData(null); setExerciseActive(false); }} className="w-full py-4 rounded-2xl bg-[#58cc02] text-white font-black text-xs uppercase shadow-xl">
             Davom etish ›
           </button>
         </div>
@@ -577,7 +528,7 @@ export default function App() {
           </div>
 
           <div className="space-y-3 text-center pt-2">
-            <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-950 px-3 py-1 rounded-full">섹션 {currentSection} • 새로운 단어</span>
+            <span className="text-[11px] font-black uppercase text-purple-600 bg-purple-100 px-3 py-1 rounded-full">섹션 {currentSection} • 새로운 단어</span>
             <h2 className={`text-sm font-black ${t.textMain}`}>To'g'ri ma'noni tanlang</h2>
             <div onClick={() => speakKo(exTarget.ko)} className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-600 cursor-pointer mx-auto">
               <Volume2 size={22} />
@@ -661,7 +612,6 @@ export default function App() {
           <h2 className={`text-lg font-black ${t.textMain}`}>ZiyoPrep O‘quv Yo‘lakchasi (Seks {currentSection})</h2>
           <p className="text-xs text-slate-400">Jami bajarilgan savollar: {totalQuestionsAnswered} / 20</p>
         </div>
-
         <div className="flex flex-col items-center space-y-6 py-4 relative">
           {exerciseLevels.map((lvl) => (
             <button key={lvl.id} onClick={() => startLevelExercise(lvl)} className="w-20 h-20 rounded-full bg-[#58cc02] border-b-4 border-[#46a302] text-white flex flex-col items-center justify-center shadow-xl font-black active:scale-95 transition">
